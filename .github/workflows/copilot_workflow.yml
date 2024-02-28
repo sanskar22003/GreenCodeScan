@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch: # Add this trigger
+    inputs: # Add inputs if required
+      ref:
+        description: 'Branch to run the workflow on'
+        required: true
+        default: 'main' # Default branch if not specified
 
 jobs:
   copilot_suggest:
