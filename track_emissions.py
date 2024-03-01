@@ -1,35 +1,47 @@
 import os
 import subprocess
+import csv
 from codecarbon import EmissionsTracker
 
 # Directory containing the scripts
-repository_directory = "track_emissions.py"
+directory = "C:\Users\sansk\OneDrive\Desktop\StaticCodeAnalysis"
 
 # Command to run scripts for each language
 commands = {
-    ".py": "python",  # For Python files
-    ".c": "gcc",      # For C files (replace with appropriate compiler)
-    ".cpp": "g++",    # For C++ files (replace with appropriate compiler)
-    # Add more commands for other languages as needed
+    ".py": "python",
+    ".cpp": "g++",  # Assumes the g++ compiler
+    ".cs": "csc",  # Assumes the .NET Compiler
+    ".java": "java",  # Assumes the Java compiler
 }
 
-# Create a new EmissionsTracker
-tracker = EmissionsTracker()
+# Create a CSV file to store emissions data
+csv_file = "emissions_data.csv"
+with open(csv_file, 'w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(["File Name", "Emissions (kgCO2)"])
 
-# Iterate over the files in the repository directory
-for filename in os.listdir(repository_directory):
-    for extension, command in commands.items():
-        if filename.endswith(extension):
-            filepath = os.path.join(repository_directory, filename)
-            
-            # Start tracking emissions
-            tracker.start()
-            
-            # Run the script using the appropriate command
-            subprocess.run([command, filepath])
-            
-            # Stop tracking emissions
-            tracker.stop()
-            
-            # Print emissions for the current file
-            print(f"Emissions for {filename}: {tracker.emissions}")
+    # Iterate over the scripts in the directory
+    for filename in os.listdir(directory):
+        for extension, command in commands.items():
+            if filename.endswith(extension):
+                filepath = os.path.join(directory, filename)
+
+                # Create a new EmissionsTracker for each script
+                tracker = EmissionsTracker()
+
+                # Start tracking
+                tracker.start()
+
+                # Run the script
+                subprocess.run([command, filepath])
+
+                # Stop tracking
+                tracker.stop()
+
+                # Get the emissions for this script
+                emissions = tracker.emissions
+
+                # Write emissions data to CSV
+                writer.writerow([filename, emissions])
+
+print("Emissions data written to", csv_file)
