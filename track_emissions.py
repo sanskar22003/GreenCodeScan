@@ -3,7 +3,7 @@ import subprocess
 from codecarbon import EmissionsTracker
 
 # Directory containing the scripts
-repository_directory = "C:\\Users\\sansk\\OneDrive\\Desktop\\StaticCodeAnalysis"
+repository_directory = "track_emissions.py"
 
 # Command to run scripts for each language
 commands = {
