@@ -4,7 +4,7 @@ import csv
 from codecarbon import EmissionsTracker
 
 # Directory containing the scripts
-directory = "C:\Users\sansk\OneDrive\Desktop\StaticCodeAnalysis"
+directory = r"C:\Users\sansk\OneDrive\Desktop\StaticCodeAnalysis"
 
 # Command to run scripts for each language
 commands = {
