@@ -10,17 +10,15 @@ directory = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
 
 # Command to run scripts for each language
 commands = {
-    ".py": "python",
-    ".cpp": "g++",  # Assumes the g++ compiler
-    ".cs": "csc",  # Assumes the .NET Compiler
-    ".java": "java",  # Assumes the Java compiler
+    ".py": "pytest",  # Assumes pytest for Python unit tests
+    # Add other commands for other languages as needed
 }
 
 # Create a CSV file to store emissions data
 csv_file = "emissions_data.csv"
 with open(csv_file, 'w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(["Filename", "Timestamp", "Emissions (kgCO2)", "Duration", "CPU Power", "RAM Power", "Energy Consumed"])
+    writer.writerow(["Filename", "Timestamp", "Emissions (kgCO2)", "Duration", "CPU Power", "RAM Power", "Energy Consumed", "Test Results"])
 
     # Iterate over the scripts in the directory
     for filename in os.listdir(directory):
@@ -37,11 +35,13 @@ with open(csv_file, 'w', newline='') as file:
                 # Start tracking
                 tracker.start()
 
-                # Run the script with a timeout
+                # Run the script with a timeout and capture the output
                 try:
-                    subprocess.run([command, filepath], timeout=60)
+                    result = subprocess.run([command, filepath], timeout=60, capture_output=True, text=True)
+                    test_results = result.stdout
                 except TimeoutExpired:
                     print(f"Script {filename} took too long to run and was terminated.")
+                    test_results = "Timeout"
 
                 # Stop tracking
                 tracker.stop()
@@ -56,7 +56,7 @@ with open(csv_file, 'w', newline='') as file:
                 ram_power = emissions_data.ram_power
                 energy_consumed = emissions_data.energy_consumed
 
-                # Write emissions data to CSV
-                writer.writerow([filename, timestamp, emissions_data.emissions, duration, cpu_power, ram_power, energy_consumed])
+                # Write emissions data and test results to CSV
+                writer.writerow([filename, timestamp, emissions_data.emissions, duration, cpu_power, ram_power, energy_consumed, test_results])
 
 print("Emissions data written to", csv_file)
