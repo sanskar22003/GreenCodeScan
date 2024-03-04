@@ -10,7 +10,7 @@ directory = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
 
 # Command to run scripts for each language
 commands = {
-    ".py": os.environ.get('PYTEST'),  # Assumes pytest for Python unit tests
+    ".py": "python",  # Use the Python interpreter to run Python scripts
     # Add other commands for other languages as needed
 }
 
