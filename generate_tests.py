@@ -25,5 +25,5 @@ def test_{filename.replace('.py', '')}():
     try:
         import {filename.replace('.py', '')}
     except Exception as e:
-        pytest.fail(f"Execution failed with {str(e)}")
+        pytest.fail(f"Execution failed with {str(e)}", pytrace=False)
 """)
