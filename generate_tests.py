@@ -1,10 +1,10 @@
 import os
 
 # Directory containing the cloned files
-cloned_files_directory = "C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
+cloned_files_directory = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
 
 # Directory to store the generated test files
-test_files_directory = "C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\tests"
+test_files_directory = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\tests"
 
 # Make sure the test files directory exists
 os.makedirs(test_files_directory, exist_ok=True)
