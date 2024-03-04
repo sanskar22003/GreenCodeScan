@@ -1,4 +1,5 @@
 import os
+import pytest
 
 # Directory containing the cloned files
 cloned_files_directory = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
@@ -27,3 +28,5 @@ def test_{filename.replace('.py', '')}():
     except Exception as e:
         pytest.fail(f"Execution failed with {{str(e)}}", pytrace=False)
 """)
+
+pytest.main(["--junitxml=./report.xml"])
