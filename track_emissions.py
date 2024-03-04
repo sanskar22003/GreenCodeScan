@@ -6,7 +6,7 @@ import datetime
 from subprocess import TimeoutExpired
 
 # Directory containing the scripts
-directory = r"C:\Users\sansk\OneDrive\Desktop\StaticCodeAnalysis"
+directory = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
 
 # Command to run scripts for each language
 commands = {
