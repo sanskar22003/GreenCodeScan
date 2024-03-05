@@ -2,7 +2,6 @@ import os
 import subprocess
 import csv
 from codecarbon import EmissionsTracker
-from codecarbon import track_emissions
 import datetime
 from subprocess import TimeoutExpired
 
@@ -46,7 +45,7 @@ with open(csv_file, 'w', newline='') as file:
                 # Stop tracking
 # Stop tracking
                 tracker.stop()
-                emissions_data = tracker._emissions 
+                emissions_data = tracker.emissions 
                 writer.writerow([filename, emissions_data.emissions, emissions_data.energy_consumed, emissions_data.run_time, emissions_data.cpu_power, emissions_data.ram_power, emissions_data.gpu_power]) # Use dot notation
 
 print("Emissions data written to emissions_data.csv")
