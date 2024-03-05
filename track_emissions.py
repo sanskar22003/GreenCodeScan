@@ -49,9 +49,9 @@ with open(csv_file, 'w', newline='') as file:
 
 # Get the emissions data
                 emissions_data = tracker._emissions
-
+                print(dir(emissions_data))
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                duration = emissions_data.run_time # Use the correct attribute
+                duration = emissions_data.duration # Use the correct attribute
                 cpu_power = emissions_data.cpu_power # Use dot notation
                 ram_power = emissions_data.ram_power # Use dot notation
                 energy_consumed = emissions_data.energy_consumed # Use dot notation
