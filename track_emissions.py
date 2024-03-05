@@ -43,20 +43,20 @@ with open(csv_file, 'w', newline='') as file:
 
                 # Stop tracking
                 # Stop tracking
+# Stop tracking
                 tracker.stop()
 
-# Get the emissions for this script
-               # Stop tracking and get the emissions data
-                emissions_data = tracker.stop()
+# Get the emissions data
+                emissions_data = tracker.emissions
 
 # Get additional data
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                duration = emissions_data.duration
-                cpu_power = emissions_data.cpu_power
-                ram_power = emissions_data.ram_power
-                energy_consumed = emissions_data.energy_consumed
+                duration = emissions_data['duration']
+                cpu_power = emissions_data['cpu_power']
+                ram_power = emissions_data['ram_power']
+                energy_consumed = emissions_data['energy_consumed']
 
 # Write emissions data to CSV
-writer.writerow([filename, timestamp, emissions_data['emissions'], duration, cpu_power, ram_power, energy_consumed])
+                writer.writerow([filename, timestamp, emissions_data['emissions'], duration, cpu_power, ram_power, energy_consumed])
 
 print("Emissions data written to emissions_data.csv")
