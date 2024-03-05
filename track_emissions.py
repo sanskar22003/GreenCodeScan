@@ -4,6 +4,7 @@ import csv
 from codecarbon import EmissionsTracker
 import datetime
 from subprocess import TimeoutExpired
+import pandas as pd
 
 # Directory containing the scripts
 directory = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
@@ -18,7 +19,7 @@ commands = {
 csv_file = "emissions_data.csv"
 with open(csv_file, 'w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(["Filename", "Timestamp", "Emissions (kgCO2)", "Duration (s)", "CPU Power (W)", "RAM Power (W)", "Energy Consumed (kWh)"])
+    writer.writerow(["Filename", "Timestamp", "Project Name", "Run ID", "Duration (s)", "Emissions (kgCO2)", "Emissions Rate"])
 
     # Iterate over the scripts in the directory
     for filename in os.listdir(directory):
@@ -42,17 +43,15 @@ with open(csv_file, 'w', newline='') as file:
                     print(f"Script {filename} took too long to run and was terminated.")
 
                 # Stop tracking
-                # Stop tracking
-# Stop tracking
-                # Stop tracking
                 tracker.stop()
 
-# Get the emissions data
-                emissions_data = tracker._emissions 
+                # Read the emissions data from the CSV file
+                emissions_data = pd.read_csv('codecarbon/emissions.csv').iloc[-1]
 
-# Get additional data
+                # Get additional data
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-# Write emissions data to CSV
-                writer.writerow([filename, timestamp, emissions_data._emissions, emissions_data.duration, emissions_data.cpu_power, emissions_data.ram_power, emissions_data.energy_consumed])
+                # Write emissions data to CSV
+                writer.writerow([filename, timestamp, emissions_data['project_name'], emissions_data['run_id'], emissions_data['duration'], emissions_data['emissions'], emissions_data['emissions_rate']])
+
 print("Emissions data written to emissions_data.csv")
