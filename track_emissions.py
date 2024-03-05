@@ -42,19 +42,20 @@ with open(csv_file, 'w', newline='') as file:
                     print(f"Script {filename} took too long to run and was terminated.")
 
                 # Stop tracking
+                # Stop tracking
                 tracker.stop()
 
-                # Get the emissions for this script
-                emissions_data = tracker.final_emissions_data
+# Get the emissions for this script
+                emissions_data = tracker.get_emissions()
 
-                # Get additional data
+# Get additional data
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                duration = emissions_data.duration
-                cpu_power = emissions_data.cpu_power
-                ram_power = emissions_data.ram_power
-                energy_consumed = emissions_data.energy_consumed
+                duration = emissions_data['duration']
+                cpu_power = emissions_data['cpu_power']
+                ram_power = emissions_data['ram_power']
+                energy_consumed = emissions_data['energy_consumed']
 
-            # Write emissions data to CSV
-                writer.writerow([filename, timestamp, emissions_data.emissions, duration, cpu_power, ram_power, energy_consumed])
+# Write emissions data to CSV
+                writer.writerow([filename, timestamp, emissions_data['emissions'], duration, cpu_power, ram_power, energy_consumed])
 
 print("Emissions data written to emissions_data.csv")
