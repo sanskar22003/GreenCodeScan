@@ -2,6 +2,7 @@ import os
 import subprocess
 import csv
 from codecarbon import EmissionsTracker
+from codecarbon import track_emissions
 import datetime
 from subprocess import TimeoutExpired
 
