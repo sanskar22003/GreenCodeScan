@@ -4,6 +4,7 @@ import csv
 from codecarbon import EmissionsTracker
 import datetime
 from subprocess import TimeoutExpired
+import xml.etree.ElementTree as ET
 
 # Directory containing the scripts
 directory = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
@@ -35,13 +36,11 @@ with open(csv_file, 'w', newline='') as file:
                 # Start tracking
                 tracker.start()
 
-                # Run the script with a timeout and capture the output
+                # Run the script with a timeout
                 try:
-                    result = subprocess.run([command, filepath], timeout=60, capture_output=True, text=True)
-                    test_results = result.stdout
+                    subprocess.run([command, filepath], timeout=60)
                 except TimeoutExpired:
                     print(f"Script {filename} took too long to run and was terminated.")
-                    test_results = "Timeout"
 
                 # Stop tracking
                 tracker.stop()
@@ -53,10 +52,16 @@ with open(csv_file, 'w', newline='') as file:
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 duration = emissions_data.duration
                 cpu_power = emissions_data.cpu_power
-                ram_power = emissions_data.ram_power
-                energy_consumed = emissions_data.energy_consumed
 
-                # Write emissions data and test results to CSV
-                writer.writerow([filename, timestamp, emissions_data.emissions, duration, cpu_power, ram_power, energy_consumed, test_results])
+                # Parse the report.xml file to get the test results
+                tree = ET.parse('report.xml')
+                root = tree.getroot()
+                tests = root.attrib['tests']
+                errors = root.attrib['errors']
+                failures = root.attrib['failures']
+                skipped = root.attrib['skipped']
+
+                # Add the test results to the CSV file
+                writer.writerow([filename, timestamp, emissions_data.kgCO2, duration, cpu_power, emissions_data.ram_power, emissions_data.energy_consumed, f"Tests: {tests}, Errors: {errors}, Failures: {failures}, Skipped: {skipped}"])
 
 print("Emissions data written to", csv_file)
