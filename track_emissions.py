@@ -46,7 +46,8 @@ with open(csv_file, 'w', newline='') as file:
                 tracker.stop()
 
 # Get the emissions for this script
-                emissions_data = tracker.get_emissions()
+               # Stop tracking and get the emissions data
+                emissions_data = tracker.stop()
 
 # Get additional data
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -56,6 +57,6 @@ with open(csv_file, 'w', newline='') as file:
                 energy_consumed = emissions_data['energy_consumed']
 
 # Write emissions data to CSV
-                writer.writerow([filename, timestamp, emissions_data['emissions'], duration, cpu_power, ram_power, energy_consumed])
+writer.writerow([filename, timestamp, emissions_data['emissions'], duration, cpu_power, ram_power, energy_consumed])
 
 print("Emissions data written to emissions_data.csv")
