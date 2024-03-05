@@ -54,12 +54,13 @@ with open(csv_file, 'w', newline='') as file:
                 cpu_power = emissions_data.cpu_power
 
                 # Parse the report.xml file to get the test results
+                # Parse the report.xml file to get the test results
                 tree = ET.parse('report.xml')
                 root = tree.getroot()
-                tests = root.attrib['tests']
-                errors = root.attrib['errors']
-                failures = root.attrib['failures']
-                skipped = root.attrib['skipped']
+                tests = root.attrib.get('tests', '0')
+                errors = root.attrib.get('errors', '0')
+                failures = root.attrib.get('failures', '0')
+                skipped = root.attrib.get('skipped', '0')
 
                 # Add the test results to the CSV file
                 writer.writerow([filename, timestamp, emissions_data.kgCO2, duration, cpu_power, emissions_data.ram_power, emissions_data.energy_consumed, f"Tests: {tests}, Errors: {errors}, Failures: {failures}, Skipped: {skipped}"])
