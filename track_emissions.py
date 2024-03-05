@@ -46,17 +46,7 @@ with open(csv_file, 'w', newline='') as file:
                 # Stop tracking
 # Stop tracking
                 tracker.stop()
-
-# Get the emissions data
-                emissions_data = tracker._emissions
-                print(dir(emissions_data))
-                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                duration = emissions_data.duration # Use the correct attribute
-                cpu_power = emissions_data.cpu_power # Use dot notation
-                ram_power = emissions_data.ram_power # Use dot notation
-                energy_consumed = emissions_data.energy_consumed # Use dot notation
-
-# Write emissions data to CSV
-                writer.writerow([filename, timestamp, emissions_data.emissions, duration, cpu_power, ram_power, energy_consumed]) # Use dot notation
+                emissions_data = tracker._emissions 
+                writer.writerow([filename, emissions_data.emissions, emissions_data.energy_consumed, emissions_data.run_time, emissions_data.cpu_power, emissions_data.ram_power, emissions_data.gpu_power]) # Use dot notation
 
 print("Emissions data written to emissions_data.csv")
