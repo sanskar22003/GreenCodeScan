@@ -52,7 +52,8 @@ with open(csv_file, 'w', newline='') as file:
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 duration = emissions_data.duration
                 cpu_power = emissions_data.cpu_power
-
+                ram_power = emissions_data.ram_power
+                energy_consumed = emissions_data.energy_consumed
                 # Parse the report.xml file to get the test results
                 # Parse the report.xml file to get the test results
                 tree = ET.parse('report.xml')
@@ -63,6 +64,6 @@ with open(csv_file, 'w', newline='') as file:
                 skipped = root.attrib.get('skipped', '0')
 
                 # Add the test results to the CSV file
-                writer.writerow([filename, timestamp, emissions_data.kgCO2, duration, cpu_power, emissions_data.ram_power, emissions_data.energy_consumed, f"Tests: {tests}, Errors: {errors}, Failures: {failures}, Skipped: {skipped}"])
+                writer.writerow([filename, timestamp, emissions_data.emissions, duration, cpu_power, emissions_data.ram_power, emissions_data.energy_consumed, f"Tests: {tests}, Errors: {errors}, Failures: {failures}, Skipped: {skipped}"])
 
 print("Emissions data written to", csv_file)
