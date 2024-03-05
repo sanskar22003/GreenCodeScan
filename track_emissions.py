@@ -48,7 +48,7 @@ with open(csv_file, 'w', newline='') as file:
                 tracker.stop()
 
 # Get the emissions data
-                emissions_data = tracker.emissions
+                emissions_data = tracker._emissions
 
 # Get additional data
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
