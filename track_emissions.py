@@ -4,7 +4,6 @@ import csv
 from codecarbon import EmissionsTracker
 import datetime
 from subprocess import TimeoutExpired
-import xml.etree.ElementTree as ET
 
 # Directory containing the scripts
 directory = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
@@ -19,7 +18,7 @@ commands = {
 csv_file = "emissions_data.csv"
 with open(csv_file, 'w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(["Filename", "Timestamp", "Emissions (kgCO2)", "Duration", "CPU Power", "RAM Power", "Energy Consumed", "Test Results"])
+    writer.writerow(["Filename", "Timestamp", "Emissions (kgCO2)", "Duration (s)", "CPU Power (W)", "RAM Power (W)", "Energy Consumed (kWh)"])
 
     # Iterate over the scripts in the directory
     for filename in os.listdir(directory):
@@ -54,16 +53,8 @@ with open(csv_file, 'w', newline='') as file:
                 cpu_power = emissions_data.cpu_power
                 ram_power = emissions_data.ram_power
                 energy_consumed = emissions_data.energy_consumed
-                # Parse the report.xml file to get the test results
-                # Parse the report.xml file to get the test results
-                tree = ET.parse('report.xml')
-                root = tree.getroot()
-                tests = root.attrib.get('tests', '0')
-                errors = root.attrib.get('errors', '0')
-                failures = root.attrib.get('failures', '0')
-                skipped = root.attrib.get('skipped', '0')
 
-                # Add the test results to the CSV file
-                writer.writerow([filename, timestamp, emissions_data.emissions, duration, cpu_power, emissions_data.ram_power, emissions_data.energy_consumed, f"Tests: {tests}, Errors: {errors}, Failures: {failures}, Skipped: {skipped}"])
+            # Write emissions data to CSV
+                writer.writerow([filename, timestamp, emissions_data.emissions, duration, cpu_power, ram_power, energy_consumed])
 
-print("Emissions data written to", csv_file)
+print("Emissions data written to emissions_data.csv")
