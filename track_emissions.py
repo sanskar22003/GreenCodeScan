@@ -51,10 +51,10 @@ with open(csv_file, 'w', newline='') as file:
 
 # Get additional data
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                duration = emissions_data['duration']
-                cpu_power = emissions_data['cpu_power']
-                ram_power = emissions_data['ram_power']
-                energy_consumed = emissions_data['energy_consumed']
+                duration = emissions_data.duration
+                cpu_power = emissions_data.cpu_power
+                ram_power = emissions_data.ram_power
+                energy_consumed = emissions_data.energy_consumed
 
 # Write emissions data to CSV
 writer.writerow([filename, timestamp, emissions_data['emissions'], duration, cpu_power, ram_power, energy_consumed])
