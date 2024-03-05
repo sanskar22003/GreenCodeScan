@@ -46,6 +46,7 @@ with open(csv_file, 'w', newline='') as file:
 # Stop tracking
                 tracker.stop()
                 emissions_data = tracker._emissions 
+                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 writer.writerow([filename, timestamp, emissions_data.energy_consumed, emissions_data.run_time, emissions_data.cpu_power, emissions_data.ram_power, emissions_data.gpu_power]) # Use dot notation
 
 print("Emissions data written to emissions_data.csv")
