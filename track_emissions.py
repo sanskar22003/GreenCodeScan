@@ -54,5 +54,5 @@ with open(csv_file, 'w', newline='') as file:
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # Write emissions data to CSV
-                writer.writerow([filename, timestamp, emissions_data.emissions, emissions_data.duration, emissions_data.cpu_power, emissions_data.ram_power, emissions_data.gpu_power])
+                writer.writerow([filename, timestamp, emissions_data.kgCO2eq, emissions_data.duration, emissions_data.cpu_power, emissions_data.ram_power, emissions_data.gpu_power])
 print("Emissions data written to emissions_data.csv")
