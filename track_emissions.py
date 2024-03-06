@@ -39,12 +39,12 @@ with open('emissions_data.csv', 'w', newline='') as file:
             tracker.stop()
 
             # Retrieve emissions data from the EmissionsTracker object
-            emissions_data = tracker._emissions # Use the property instead of reading from the CSV file
+            emissions_data = tracker._emissions # Use the attribute instead of the property
 
             # Format the data and timestamp for logging
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            emissions = f"{emissions_data.emissions}"
-            duration = f"{emissions_data.run_time}"
+            emissions = f"{emissions_data._emissions}" # Use the _emissions attribute instead of the emissions attribute
+            duration = f"{emissions_data.duration}"
             cpu_power = f"{emissions_data.cpu_power}"
             ram_power = f"{emissions_data.ram_power}"
             energy_consumed = f"{emissions_data.energy_consumed}"
