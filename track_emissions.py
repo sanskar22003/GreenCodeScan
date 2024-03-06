@@ -23,6 +23,9 @@ for script in os.listdir(scripts_dir):
         # Start the emissions tracker
         tracker.start()
 
+        # Initialize duration
+        duration = None
+
         # Execute the script with a timeout
         try:
             start_time = time.time()
