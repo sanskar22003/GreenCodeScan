@@ -4,6 +4,7 @@ import csv
 from codecarbon import EmissionsTracker
 from datetime import datetime
 import time
+import pandas as pd
 
 # Directory containing the scripts
 scripts_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
