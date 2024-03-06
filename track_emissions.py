@@ -2,58 +2,53 @@ import os
 import subprocess
 import csv
 from codecarbon import EmissionsTracker
-import datetime
-from subprocess import TimeoutExpired
-import pandas as pd
+from datetime import datetime
+import time
 
 # Directory containing the scripts
-directory = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
-
-# Command to run scripts for each language
-commands = {
-    ".py": "python",  # Use the Python interpreter to run Python scripts
-    # Add other commands for other languages as needed
-}
+scripts_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
 
 # Create a CSV file to store emissions data
-csv_file = "emissions_data.csv"
-with open(csv_file, 'w', newline='') as file:
+with open('emissions_data.csv', 'w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(["Filename", "Timestamp", "Project Name", "Run ID", "Duration (s)", "Emissions (kgCO2)", "Emissions Rate"])
+    writer.writerow(["Script Name", "Timestamp", "CO2 Emissions (kg)", "Duration (s)", "CPU Power (W)", "RAM Power (W)", "Total Energy (kWh)"])
 
-# Iterate over the scripts in the directory
-for filename in os.listdir(directory):
-    for extension, command in commands.items():
-        if filename.endswith(extension):
-            filepath = os.path.join(directory, filename)
+# Iterate over each script in the directory
+for script in os.listdir(scripts_dir):
+    if script.endswith('.py'):
+        # Create a new EmissionsTracker for each script
+        tracker = EmissionsTracker()
 
-            # Print the name of the file being scanned
-            print(f"Scanning file: {filename}")
+        # Start the emissions tracker
+        tracker.start()
 
-            # Create a new EmissionsTracker for each script
-            tracker = EmissionsTracker()
+        # Execute the script with a timeout
+        try:
+            start_time = time.time()
+            subprocess.run(['python', os.path.join(scripts_dir, script)], timeout=60)
+            duration = time.time() - start_time
+        except subprocess.TimeoutExpired:
+            print(f"Script {script} exceeded the timeout limit.")
 
-            # Start tracking
-            tracker.start()
+        # Stop the emissions tracker
+        tracker.stop()
 
-            # Run the script with a timeout
-            try:
-                subprocess.run([command, filepath], timeout=60)
-            except TimeoutExpired:
-                print(f"Script {filename} took too long to run and was terminated.")
+        # Read the emissions data from the CSV file
+        emissions_data = pd.read_csv('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').iloc[-1]
 
-            # Stop tracking
-            tracker.stop()
-            
-            # Read the emissions data from the CSV file
-            emissions_data = pd.read_csv('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').iloc[-1]
-            print(emissions_data)
-            # Get additional data
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # Retrieve and format the emissions data
+        data = [
+            script,
+            datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            emissions_data['emissions'],
+            duration,
+            emissions_data['cpu_power'],
+            emissions_data['ram_power'],
+            emissions_data['energy_consumed']
+        ]
 
-            # Write emissions data to CSV
-            with open(csv_file, 'a', newline='') as file:
-                writer = csv.writer(file)
-                writer.writerow([filename, timestamp, emissions_data['project_name'], emissions_data['run_id'], emissions_data['duration'], emissions_data['emissions'], emissions_data['emissions_rate']])
-
+        # Write the data to the CSV file
+        with open('emissions_data.csv', 'a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(data)
 print("Emissions data written to emissions_data.csv")
