@@ -46,7 +46,7 @@ with open(csv_file, 'w', newline='') as file:
                 tracker.stop()
 
                 # Read the emissions data from the CSV file
-                emissions_data = pd.read_csv('codecarbon/emissions.csv').iloc[-1]
+                emissions_data = pd.read_csv('emissions.csv').iloc[-1]
 
                 # Get additional data
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
