@@ -44,10 +44,10 @@ for filename in os.listdir(directory):
 
             # Stop tracking
             tracker.stop()
-            print(emissions)
+            
             # Read the emissions data from the CSV file
             emissions_data = pd.read_csv('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').iloc[-1]
-
+            print(emissions_data)
             # Get additional data
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
