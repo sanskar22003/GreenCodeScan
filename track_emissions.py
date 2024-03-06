@@ -21,38 +21,39 @@ with open(csv_file, 'w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(["Filename", "Timestamp", "Project Name", "Run ID", "Duration (s)", "Emissions (kgCO2)", "Emissions Rate"])
 
-    # Iterate over the scripts in the directory
-    for filename in os.listdir(directory):
-        for extension, command in commands.items():
-            if filename.endswith(extension):
-                filepath = os.path.join(directory, filename)
+# Iterate over the scripts in the directory
+for filename in os.listdir(directory):
+    for extension, command in commands.items():
+        if filename.endswith(extension):
+            filepath = os.path.join(directory, filename)
 
-                # Print the name of the file being scanned
-                print(f"Scanning file: {filename}")
+            # Print the name of the file being scanned
+            print(f"Scanning file: {filename}")
 
-                # Create a new EmissionsTracker for each script
-                tracker = EmissionsTracker()
+            # Create a new EmissionsTracker for each script
+            tracker = EmissionsTracker()
 
-                # Start tracking
-                tracker.start()
+            # Start tracking
+            tracker.start()
 
-                # Run the script with a timeout
-                try:
-                    subprocess.run([command, filepath], timeout=60)
-                except TimeoutExpired:
-                    print(f"Script {filename} took too long to run and was terminated.")
+            # Run the script with a timeout
+            try:
+                subprocess.run([command, filepath], timeout=60)
+            except TimeoutExpired:
+                print(f"Script {filename} took too long to run and was terminated.")
 
-                # Stop tracking
-                tracker.stop()
+            # Stop tracking
+            tracker.stop()
 
-                # Read the emissions data from the CSV file
-                # Read the emissions data from the CSV file
-                emissions_data = pd.read_csv('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').iloc[-1]
+            # Read the emissions data from the CSV file
+            emissions_data = pd.read_csv('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').iloc[-1]
 
-                # Get additional data
-                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            # Get additional data
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                # Write emissions data to CSV
+            # Write emissions data to CSV
+            with open(csv_file, 'a', newline='') as file:
+                writer = csv.writer(file)
                 writer.writerow([filename, timestamp, emissions_data['project_name'], emissions_data['run_id'], emissions_data['duration'], emissions_data['emissions'], emissions_data['emissions_rate']])
 
 print("Emissions data written to emissions_data.csv")
