@@ -26,31 +26,31 @@ with open('emissions_data.csv', 'w', newline='') as file:
             # Initialize duration
             duration = None
 
-            # Execute the script with a timeout
+            # Execute the script with a timeout of 60 seconds
             try:
                 start_time = time.time()
                 subprocess.run(['python', os.path.join(scripts_dir, script)], timeout=60)
                 duration = time.time() - start_time
             except subprocess.TimeoutExpired:
+                # If the script exceeds the timeout, log a message and terminate its execution
                 print(f"Script {script} exceeded the timeout limit.")
 
             # Stop the emissions tracker
             tracker.stop()
 
-            # Read the emissions data from the CSV file
-            emissions_data = pd.read_csv('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').iloc[-1]
+            # Retrieve emissions data from the EmissionsTracker object
+            emissions_data = tracker.emissions # Use the property instead of reading from the CSV file
 
-            # Retrieve and format the emissions data
-            data = [
-                script,
-                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                emissions_data['emissions'],
-                duration,
-                emissions_data['cpu_power'],
-                emissions_data['ram_power'],
-                emissions_data['energy_consumed']
-            ]
+            # Format the data and timestamp for logging
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            emissions = f"{emissions_data.emissions}"
+            duration = f"{emissions_data.run_time}"
+            cpu_power = f"{emissions_data.cpu_power}"
+            ram_power = f"{emissions_data.ram_power}"
+            energy_consumed = f"{emissions_data.energy_consumed}"
 
             # Write the data to the CSV file
-            writer.writerow(data) # Move this line inside the with statement
+            writer.writerow([script, timestamp, emissions, duration, cpu_power, ram_power, energy_consumed])
+
+# Print a message indicating the completion of the script
 print("Emissions data written to emissions_data.csv")
