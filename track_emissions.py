@@ -2,7 +2,7 @@ import os
 import subprocess
 import csv
 from codecarbon import EmissionsTracker
-from datetime import datetime
+from datetime import datetime # Import the datetime class from the datetime module
 import time
 import pandas as pd
 
@@ -43,7 +43,7 @@ with open('emissions_data.csv', 'w', newline='') as file:
             emissions_data = tracker.final_emissions_data # Use the property instead of the attribute
             print(emissions_data)
             # Format the data and timestamp for logging
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") # Use the datetime class instead of the datetime module
             duration = emissions_data.duration
             cpu_power = emissions_data.cpu_power
             ram_power = emissions_data.ram_power
