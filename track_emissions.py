@@ -12,6 +12,9 @@ scripts_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
 # Directory containing the tests
 tests_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\tests"
 
+# Path to pytest executable
+pytest_path = r"C:\Users\sansk\AppData\Local\Programs\Python\Python312\Scripts\pytest.exe"
+
 # Create a CSV file to store emissions data
 with open('emissions_data.csv', 'w', newline='') as file:
     writer = csv.writer(file)
@@ -43,7 +46,7 @@ for script in os.listdir(scripts_dir):
         # Run the tests for the script
         test_script = os.path.join(tests_dir, 'test_' + script)
         if os.path.exists(test_script):
-            test_result = subprocess.run(['pytest', test_script], capture_output=True, text=True)
+            test_result = subprocess.run([pytest_path, test_script], capture_output=True, text=True)
             test_output = test_result.stdout
         else:
             test_output = 'No tests found for script.'
