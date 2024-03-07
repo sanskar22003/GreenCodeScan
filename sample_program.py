@@ -1,18 +1,18 @@
-# sample_program.py
+class Person:
+  def __init__(self, fname, lname):
+    self.firstname = fname
+    self.lastname = lname
 
-def fibonacci(n):
-    if n <= 0:
-        return []
-    elif n == 1:
-        return [0]
-    elif n == 2:
-        return [0, 1]
-    else:
-        fib_sequence = [0, 1]
-        while len(fib_sequence) < n:
-            fib_sequence.append(fib_sequence[-1] + fib_sequence[-2])
-        return fib_sequence
-    
-if __name__ == "__main__":
-    n = int(input("Enter the number of Fibonacci numbers to generate: "))
-    print(f"Fibonacci sequence of {n} numbers:", fibonacci(n))
+  def printname(self):
+    print(self.firstname, self.lastname)
+
+class Student(Person):
+  def __init__(self, fname, lname, year):
+    super().__init__(fname, lname)
+    self.graduationyear = year
+
+  def welcome(self):
+    print("Welcome", self.firstname, self.lastname, "to the class of", self.graduationyear)
+
+x = Student("Mike", "Olsen", 2019)
+x.welcome()
