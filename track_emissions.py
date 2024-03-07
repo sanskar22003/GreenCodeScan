@@ -40,11 +40,11 @@ with open('emissions_data.csv', 'w', newline='') as file:
             tracker.stop()
 
             # Retrieve emissions data from the EmissionsTracker object
-            emissions_data = tracker._emissions # Use the property instead of the attribute
+            emissions_data = tracker.final_emissions_data # Use the property instead of the attribute
 
             # Format the data and timestamp for logging
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        #    emissions = f"{emissions_data.emissions}" # Use the emissions attribute instead of the _emissions attribute
+          #  emissions = f"{emissions_data.emissions}" # Use the emissions attribute instead of the _emissions attribute
             duration = f"{emissions_data.run_time}" # Use the run_time attribute instead of the duration attribute
             cpu_power = f"{emissions_data.cpu_power}"
             ram_power = f"{emissions_data.ram_power}"
@@ -59,7 +59,7 @@ with open('emissions_data.csv', 'w', newline='') as file:
             region_emissions = f"{emissions_data.region_emissions}"
 
             # Write the data to the CSV file
-            writer.writerow([script, timestamp, duration, cpu_power, ram_power, energy_consumed, cloud_provider, cloud_region, cloud_emissions, country_name, country_iso_code, country_emissions, region, region_emissions])
+            writer.writerow([script, timestamp, emissions_data.emissions , duration, cpu_power, ram_power, energy_consumed, cloud_provider, cloud_region, cloud_emissions, country_name, country_iso_code, country_emissions, region, region_emissions])
 
 # Print a message indicating the completion of the script
 print("Emissions data written to emissions_data.csv")
