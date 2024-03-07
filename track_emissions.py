@@ -18,7 +18,7 @@ pytest_path = r"C:\Users\sansk\AppData\Local\Programs\Python\Python312\Scripts\p
 # Create a CSV file to store emissions data
 with open('emissions_data.csv', 'w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(["Filename", "Timestamp", "Emissions (kgCO2)", "Duration", "CPU Power", "RAM Power", "Energy Consumed", "Test Results"])
+    writer.writerow(["Customer Name","Application name", "Timestamp", "Emissions (kgCO2)", "Duration", "emissions_rate", "CPU Power", "GPU Power", "RAM Power", "CPU Energy", "GPU Energy", "RAM Energy", "Energy Consumed", "Test Results"])
 
 # Iterate over each script in the directory
 for script in os.listdir(scripts_dir):
@@ -31,7 +31,7 @@ for script in os.listdir(scripts_dir):
 
         # Initialize duration
         duration = None
-
+        Customer_name = "ZF"
         # Execute the script with a timeout
         try:
             start_time = time.time()
@@ -58,12 +58,18 @@ for script in os.listdir(scripts_dir):
 
             # Retrieve and format the emissions data
             data = [
+                Customer_name,
                 script,
                 datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 emissions_data['emissions'],
                 duration,
+                emissions_data['emissions_rate'],
                 emissions_data['cpu_power'],
+                emissions_data['gpu_power'],
                 emissions_data['ram_power'],
+                emissions_data['cpu_energy'],
+                emissions_data['gpu_energy'],
+                emissions_data['ram_energy'],
                 emissions_data['energy_consumed'],
                 test_output
             ]
