@@ -12,7 +12,7 @@ scripts_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
 # Create a CSV file to store emissions data
 with open('emissions_data.csv', 'w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(["Filename", "Timestamp", "Emissions (kgCO2)", "Duration", "CPU Power", "RAM Power", "Energy Consumed", "Test Results"])
+    writer.writerow(["Filename", "Timestamp", "Emissions (kgCO2)", "Duration", "CPU Power", "RAM Power", "Energy Consumed"])
 
 # Iterate over each script in the directory
 for script in os.listdir(scripts_dir):
@@ -37,24 +37,26 @@ for script in os.listdir(scripts_dir):
         # Stop the emissions tracker
         tracker.stop()
 
-        # Read the emissions data from the CSV file
-        emissions_data = pd.read_csv('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').iloc[-1]
+        # Check if the emissions.csv file is empty
+        if os.stat('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').st_size != 0:
+            # Read the emissions data from the CSV file
+            emissions_data = pd.read_csv('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').iloc[-1]
 
-        # Retrieve and format the emissions data
-        data = [
-            script,
-            datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            emissions_data['emissions'],
-            duration,
-            emissions_data['cpu_power'],
-            emissions_data['ram_power'],
-            emissions_data['energy_consumed']
-        ]
+            # Retrieve and format the emissions data
+            data = [
+                script,
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                emissions_data['emissions'],
+                duration,
+                emissions_data['cpu_power'],
+                emissions_data['ram_power'],
+                emissions_data['energy_consumed']
+            ]
 
-        # Write the data to the CSV file
-        with open('emissions_data.csv', 'a', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(data)
-            file.flush()
+            # Write the data to the CSV file
+            with open('emissions_data.csv', 'a', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(data)
+                file.flush()
 
 print("Emissions data written to emissions_data.csv")
