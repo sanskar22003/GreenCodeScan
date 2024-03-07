@@ -1,4 +1,4 @@
-from your_module_name import Student
+from sample_program import Student
 
 def test_welcome():
     x = Student("Mike", "Olsen", 2019)
