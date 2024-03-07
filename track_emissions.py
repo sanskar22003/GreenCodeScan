@@ -9,10 +9,13 @@ import pandas as pd
 # Directory containing the scripts
 scripts_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
 
+# Directory containing the tests
+tests_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\tests"
+
 # Create a CSV file to store emissions data
 with open('emissions_data.csv', 'w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(["Filename", "Timestamp", "Emissions (kgCO2)", "Duration", "CPU Power", "RAM Power", "Energy Consumed"])
+    writer.writerow(["Filename", "Timestamp", "Emissions (kgCO2)", "Duration", "CPU Power", "RAM Power", "Energy Consumed", "Test Results"])
 
 # Iterate over each script in the directory
 for script in os.listdir(scripts_dir):
@@ -37,6 +40,14 @@ for script in os.listdir(scripts_dir):
         # Stop the emissions tracker
         tracker.stop()
 
+        # Run the tests for the script
+        test_script = os.path.join(tests_dir, 'test_' + script)
+        if os.path.exists(test_script):
+            test_result = subprocess.run(['pytest', test_script], capture_output=True, text=True)
+            test_output = test_result.stdout
+        else:
+            test_output = 'No tests found for script.'
+
         # Check if the emissions.csv file is empty
         if os.stat('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').st_size != 0:
             # Read the emissions data from the CSV file
@@ -50,7 +61,8 @@ for script in os.listdir(scripts_dir):
                 duration,
                 emissions_data['cpu_power'],
                 emissions_data['ram_power'],
-                emissions_data['energy_consumed']
+                emissions_data['energy_consumed'],
+                test_output
             ]
 
             # Write the data to the CSV file
@@ -59,4 +71,4 @@ for script in os.listdir(scripts_dir):
                 writer.writerow(data)
                 file.flush()
 
-print("Emissions data written to emissions_data.csv")
+print("Emissions data and test results written to emissions_data.csv")
