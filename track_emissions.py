@@ -41,7 +41,7 @@ for script in os.listdir(scripts_dir):
         emissions_data = pd.read_csv('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').iloc[-1]
 
 # Retrieve and format the emissions data
-            data = [
+        data = [
                 script,
                 datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 emissions_data['emissions'],
@@ -52,8 +52,8 @@ for script in os.listdir(scripts_dir):
             ]
 
 # Write the data to the CSV file
-            with open('emissions_data.csv', 'a', newline='') as file:
-                writer = csv.writer(file)
-                writer.writerow(data)
+        with open('emissions_data.csv', 'a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(data)
             
 print("Emissions data written to emissions_data.csv")
