@@ -13,7 +13,7 @@ scripts_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
 with open('emissions_data.csv', 'w', newline='') as file:
     writer = csv.writer(file)
     # Write the header row with the column names
-    writer.writerow(["Script Name", "Timestamp", "CO2 Emissions (kg)", "Duration (s)", "CPU Power (W)", "RAM Power (W)", "Total Energy (kWh)", "Cloud Provider", "Cloud Region", "Cloud Emissions (kgCO2)", "Country Name", "Country ISO Code", "Country Emissions (kgCO2)", "Region", "Region Emissions (kgCO2)"])
+   writer.writerow(["Filename", "Timestamp", "Emissions (kgCO2)", "Duration", "CPU Power", "RAM Power", "Energy Consumed", "Test Results"])
 
     # Iterate over each script in the directory
     for script in os.listdir(scripts_dir):
@@ -41,25 +41,16 @@ with open('emissions_data.csv', 'w', newline='') as file:
 
             # Retrieve emissions data from the EmissionsTracker object
             emissions_data = tracker.final_emissions_data # Use the property instead of the attribute
-
+            print(emissions_data)
             # Format the data and timestamp for logging
-            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-          #  emissions = f"{emissions_data.emissions}" # Use the emissions attribute instead of the _emissions attribute
-            duration = f"{emissions_data.run_time}" # Use the run_time attribute instead of the duration attribute
-            cpu_power = f"{emissions_data.cpu_power}"
-            ram_power = f"{emissions_data.ram_power}"
-            energy_consumed = f"{emissions_data.energy_consumed}"
-            cloud_provider = f"{emissions_data.cloud_provider}"
-            cloud_region = f"{emissions_data.cloud_region}"
-            cloud_emissions = f"{emissions_data.cloud_emissions}"
-            country_name = f"{emissions_data.country_name}"
-            country_iso_code = f"{emissions_data.country_iso_code}"
-            country_emissions = f"{emissions_data.country_emissions}"
-            region = f"{emissions_data.region}"
-            region_emissions = f"{emissions_data.region_emissions}"
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            duration = emissions_data.duration
+            cpu_power = emissions_data.cpu_power
+            ram_power = emissions_data.ram_power
+            energy_consumed = emissions_data.energy_consumed
 
             # Write the data to the CSV file
-            writer.writerow([script, timestamp, emissions_data.emissions , duration, cpu_power, ram_power, energy_consumed, cloud_provider, cloud_region, cloud_emissions, country_name, country_iso_code, country_emissions, region, region_emissions])
+   writer.writerow([script, timestamp, emissions_data.emissions, duration, cpu_power, ram_power, energy_consumed, test_results])
 
 # Print a message indicating the completion of the script
 print("Emissions data written to emissions_data.csv")
