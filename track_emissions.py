@@ -50,7 +50,7 @@ with open('emissions_data.csv', 'w', newline='') as file:
             energy_consumed = emissions_data.energy_consumed
 
             # Write the data to the CSV file
-   writer.writerow([script, timestamp, emissions_data.emissions, duration, cpu_power, ram_power, energy_consumed, test_results])
+           writer.writerow([script, timestamp, emissions_data.emissions, duration, cpu_power, ram_power, energy_consumed, test_results])
 
 # Print a message indicating the completion of the script
 print("Emissions data written to emissions_data.csv")
