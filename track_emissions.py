@@ -46,8 +46,8 @@ for script in os.listdir(scripts_dir):
         # Run the tests for the script
         test_script = os.path.join(tests_dir, 'test_' + script)
         if os.path.exists(test_script):
-            test_result = subprocess.run([pytest_path, test_script], capture_output=True, text=True)
-            test_output = test_result.stdout
+            test_result = subprocess.run([pytest_path, '-q', '-rA', test_script], capture_output=True, text=True)
+            test_output = 'Pass' if test_result.returncode == 0 else 'Fail'
         else:
             test_output = 'No tests found for script.'
 
