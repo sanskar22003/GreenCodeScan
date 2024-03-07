@@ -38,9 +38,17 @@ for script in os.listdir(scripts_dir):
         tracker.stop()
 
 # Read the emissions data from the CSV file
-        emissions_data = pd.read_csv('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').iloc[-1]
+        # Read the emissions data from the CSV file
+        emissions_data = pd.read_csv('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv')
 
-# Retrieve and format the emissions data
+# Check if the DataFrame is empty
+        if emissions_data.empty:
+            print(f"No emissions data generated for script {script}.")
+        else:
+    # Retrieve the last row of emissions data
+            emissions_data = emissions_data.iloc[-1]
+
+    # Retrieve and format the emissions data
         data = [
                 script,
                 datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -50,8 +58,8 @@ for script in os.listdir(scripts_dir):
                 emissions_data['ram_power'],
                 emissions_data['energy_consumed']
             ]
-
-# Write the data to the CSV file
+    
+    # Write the data to the CSV file
         with open('emissions_data.csv', 'a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(data)
