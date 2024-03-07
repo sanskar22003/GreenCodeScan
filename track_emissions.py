@@ -37,19 +37,23 @@ for script in os.listdir(scripts_dir):
         # Stop the emissions tracker
         tracker.stop()
 
-        # Retrieve emissions data from the EmissionsTracker object
-        emissions_data = tracker.final_emissions_data
+# Read the emissions data from the CSV file
+        emissions_data = pd.read_csv('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').iloc[-1]
 
-        # Format the data and timestamp for logging
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        duration = emissions_data.duration
-        cpu_power = emissions_data.cpu_power
-        ram_power = emissions_data.ram_power
-        energy_consumed = emissions_data.energy_consumed
+# Retrieve and format the emissions data
+            data = [
+                script,
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                emissions_data['emissions'],
+                duration,
+                emissions_data['cpu_power'],
+                emissions_data['ram_power'],
+                emissions_data['energy_consumed']
+            ]
 
-        # Write the data to the CSV file
-        with open('emissions_data.csv', 'a', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow([script, timestamp, emissions_data.emissions, duration, cpu_power, ram_power, energy_consumed])
-
+# Write the data to the CSV file
+            with open('emissions_data.csv', 'a', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(data)
+            
 print("Emissions data written to emissions_data.csv")
