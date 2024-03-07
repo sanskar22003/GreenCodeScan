@@ -9,6 +9,11 @@ import pandas as pd
 # Directory containing the scripts
 scripts_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
 
+# Create a CSV file to store emissions data
+with open('emissions_data.csv', 'w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(["Filename", "Timestamp", "Emissions (kgCO2)", "Duration", "CPU Power", "RAM Power", "Energy Consumed", "Test Results"])
+
 # Iterate over each script in the directory
 for script in os.listdir(scripts_dir):
     if script.endswith('.py'):
@@ -47,9 +52,8 @@ for script in os.listdir(scripts_dir):
         ]
 
         # Write the data to the CSV file
-        with open('emissions_data.csv', 'w', newline='') as file:
+        with open('emissions_data.csv', 'a', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(["Filename", "Timestamp", "Emissions (kgCO2)", "Duration", "CPU Power", "RAM Power", "Energy Consumed", "Test Results"])
             writer.writerow(data)
             file.flush()
 
