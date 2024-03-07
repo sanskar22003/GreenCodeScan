@@ -13,7 +13,7 @@ scripts_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
 with open('emissions_data.csv', 'w', newline='') as file:
     writer = csv.writer(file)
     # Write the header row with the column names
-   writer.writerow(["Filename", "Timestamp", "Emissions (kgCO2)", "Duration", "CPU Power", "RAM Power", "Energy Consumed", "Test Results"])
+    writer.writerow(["Filename", "Timestamp", "Emissions (kgCO2)", "Duration", "CPU Power", "RAM Power", "Energy Consumed", "Test Results"])
 
     # Iterate over each script in the directory
     for script in os.listdir(scripts_dir):
