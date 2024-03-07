@@ -58,10 +58,11 @@ for script in os.listdir(scripts_dir):
                 emissions_data['ram_power'],
                 emissions_data['energy_consumed']
             ]
-    
+        print(data)
     # Write the data to the CSV file
         with open('emissions_data.csv', 'a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(data)
+            file.flush()
             
 print("Emissions data written to emissions_data.csv")
