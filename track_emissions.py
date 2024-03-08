@@ -62,6 +62,8 @@ for script in os.listdir(scripts_dir):
                 subprocess.run(['javac', os.path.join(scripts_dir, script)], timeout=60)
                 subprocess.run(['java', os.path.splitext(script)[0]], timeout=60)
                 os.chdir(r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline")
+                print('Running command: mvn -Dtest=' + os.path.splitext(script)[0] + 'Test test')
+                print('Current PATH: ' + os.environ['PATH'])
                 test_result = subprocess.run(['mvn', '-Dtest=' + os.path.splitext(script)[0] + 'Test', 'test'], capture_output=True, text=True)
             test_output = 'Pass' if test_result.returncode == 0 else 'Fail'
         else:
