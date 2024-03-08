@@ -21,20 +21,33 @@ with open('emissions_data.csv', 'w', newline='') as file:
     writer.writerow(["Customer Name","Application name", "Timestamp", "Emissions (kgCO2)", "Duration", "emissions_rate", "CPU Power", "GPU Power", "RAM Power", "CPU Energy", "GPU Energy", "RAM Energy", "Energy Consumed", "Test Results"])
 
 # Iterate over each script in the directory
-# Iterate over each script in the directory
-# Iterate over each script in the directory
 for script in os.listdir(scripts_dir):
     if script.endswith(('.py', '.java', '.cpp', '.cs')) and script != 'track_emissions.py':
         # Rest of the code...
         # Create a new EmissionsTracker for each script
         tracker = EmissionsTracker()
 
-        # Start the emissions tracker
-        tracker.start()
-
         # Initialize duration
         duration = None
         Customer_name = "ZF"
+
+        # Run the tests for the script
+        test_script = os.path.join(tests_dir, os.path.splitext(script)[0] + 'Test')
+        if os.path.exists(test_script + '.py') or os.path.exists(test_script + '.java'):
+            if script.endswith('.py'):
+                test_result = subprocess.run([pytest_path, test_script + '.py'], capture_output=True, text=True)
+            elif script.endswith('.java'):
+                os.chdir(tests_dir)
+                print('Running command: mvn -Dtest=' + os.path.splitext(script)[0] + 'Test test')
+                print('Current PATH: ' + os.environ['PATH'])
+                test_result = subprocess.run(['mvn', '-Dtest=' + os.path.splitext(script)[0] + 'Test', 'test'], capture_output=True, text=True)
+            test_output = 'Pass' if test_result.returncode == 0 else 'Fail'
+        else:
+            test_output = 'No tests found for script.'
+
+        # Start the emissions tracker
+        tracker.start()
+
         # Execute the script with a timeout
         try:
             start_time = time.time()
@@ -42,7 +55,7 @@ for script in os.listdir(scripts_dir):
                 subprocess.run(['python', os.path.join(scripts_dir, script)], timeout=60)
             elif script.endswith('.java'):
                 subprocess.run(['javac', os.path.join(scripts_dir, script)], timeout=60)
-                subprocess.run(['java', os.path.splitext(script)[0]], timeout=60)
+                subprocess.run(['java', '-cp', scripts_dir, os.path.splitext(script)[0]], timeout=60)
             # Add commands to run .NET and C++ files here
             duration = time.time() - start_time
         except subprocess.TimeoutExpired:
@@ -50,24 +63,6 @@ for script in os.listdir(scripts_dir):
 
         # Stop the emissions tracker
         tracker.stop()
-
-        # Run the tests for the script
-        # Run the tests for the script
-        # Run the tests for the script
-        test_script = os.path.join(tests_dir, os.path.splitext(script)[0] + 'Test')
-        if os.path.exists(test_script + '.py') or os.path.exists(test_script + '.java'):
-            if script.endswith('.py'):
-                    test_result = subprocess.run([pytest_path, test_script + '.py'], capture_output=True, text=True)
-            elif script.endswith('.java'):
-                subprocess.run(['javac', os.path.join(scripts_dir, script)], timeout=60)
-                subprocess.run(['java', os.path.splitext(script)[0]], timeout=60)
-                os.chdir(r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline")
-                print('Running command: mvn -Dtest=' + os.path.splitext(script)[0] + 'Test test')
-                print('Current PATH: ' + os.environ['PATH'])
-                test_result = subprocess.run(['mvn', '-Dtest=' + os.path.splitext(script)[0] + 'Test', 'test'], capture_output=True, text=True)
-            test_output = 'Pass' if test_result.returncode == 0 else 'Fail'
-        else:
-            test_output = 'No tests found for script.'
 
         # Check if the emissions.csv file is empty
         if os.stat('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').st_size != 0:
