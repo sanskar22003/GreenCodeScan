@@ -9,7 +9,7 @@ import pandas as pd
 # Directory containing the scripts
 scripts_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
 
-# Directory containing the tests
+# Directory containing the Python tests
 tests_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\tests"
 
 # Path to pytest executable
@@ -32,12 +32,12 @@ for script in os.listdir(scripts_dir):
         Customer_name = "ZF"
 
         # Run the tests for the script
-        test_script = os.path.join(tests_dir, os.path.splitext(script)[0] + 'Test')
+        test_script = os.path.join(tests_dir if script.endswith('.py') else scripts_dir, os.path.splitext(script)[0] + 'Test')
         if os.path.exists(test_script + '.py') or os.path.exists(test_script + '.java'):
             if script.endswith('.py'):
                 test_result = subprocess.run([pytest_path, test_script + '.py'], capture_output=True, text=True)
             elif script.endswith('.java'):
-                os.chdir(tests_dir)
+                os.chdir(scripts_dir)
                 print('Running command: mvn -Dtest=' + os.path.splitext(script)[0] + 'Test test')
                 print('Current PATH: ' + os.environ['PATH'])
                 test_result = subprocess.run(['mvn', '-Dtest=' + os.path.splitext(script)[0] + 'Test', 'test'], capture_output=True, text=True)
