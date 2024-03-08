@@ -22,8 +22,10 @@ with open('emissions_data.csv', 'w', newline='') as file:
 
 # Iterate over each script in the directory
 # Iterate over each script in the directory
+# Iterate over each script in the directory
 for script in os.listdir(scripts_dir):
-    if script != 'track_emissions.py':
+    if script.endswith(('.py', '.java', '.cpp', '.cs')) and script != 'track_emissions.py':
+        # Rest of the code...
         # Create a new EmissionsTracker for each script
         tracker = EmissionsTracker()
 
@@ -51,10 +53,11 @@ for script in os.listdir(scripts_dir):
 
         # Run the tests for the script
         # Run the tests for the script
-        test_script = os.path.join(tests_dir, 'test_' + os.path.splitext(script)[0])
-        if os.path.exists(test_script):
+        # Run the tests for the script
+        test_script = os.path.join(tests_dir, os.path.splitext(script)[0] + 'Test')
+        if os.path.exists(test_script + '.py') or os.path.exists(test_script + '.java'):
             if script.endswith('.py'):
-                test_result = subprocess.run([pytest_path, test_script], capture_output=True, text=True)
+                    test_result = subprocess.run([pytest_path, test_script + '.py'], capture_output=True, text=True)
             elif script.endswith('.java'):
                 subprocess.run(['javac', os.path.join(scripts_dir, script)], timeout=60)
                 subprocess.run(['java', os.path.splitext(script)[0]], timeout=60)
