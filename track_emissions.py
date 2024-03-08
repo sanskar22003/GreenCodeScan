@@ -40,7 +40,7 @@ for script in os.listdir(scripts_dir):
                 os.chdir(scripts_dir)
                 print('Running command: mvn -Dtest=' + os.path.splitext(script)[0] + 'Test test')
                 print('Current PATH: ' + os.environ['PATH'])
-                test_result = subprocess.run(['mvn', '-Dtest=' + os.path.splitext(script)[0] + 'Test', 'test'], capture_output=True, text=True)
+                test_result = subprocess.run(['C:\\Users\\sansk\\Downloads\\apache-maven-3.9.6\\bin\\mvn.cmd', '-Dtest=' + os.path.splitext(script)[0] + 'Test', 'test'], capture_output=True, text=True)
             test_output = 'Pass' if test_result.returncode == 0 else 'Fail'
         else:
             test_output = 'No tests found for script.'
