@@ -21,8 +21,9 @@ with open('emissions_data.csv', 'w', newline='') as file:
     writer.writerow(["Customer Name","Application name", "Timestamp", "Emissions (kgCO2)", "Duration", "emissions_rate", "CPU Power", "GPU Power", "RAM Power", "CPU Energy", "GPU Energy", "RAM Energy", "Energy Consumed", "Test Results"])
 
 # Iterate over each script in the directory
+# Iterate over each script in the directory
 for script in os.listdir(scripts_dir):
-    if script.endswith('.py') and script != 'track_emissions.py':
+    if script != 'track_emissions.py':
         # Create a new EmissionsTracker for each script
         tracker = EmissionsTracker()
 
@@ -35,7 +36,12 @@ for script in os.listdir(scripts_dir):
         # Execute the script with a timeout
         try:
             start_time = time.time()
-            subprocess.run(['python', os.path.join(scripts_dir, script)], timeout=60)
+            if script.endswith('.py'):
+                subprocess.run(['python', os.path.join(scripts_dir, script)], timeout=60)
+            elif script.endswith('.java'):
+                subprocess.run(['javac', os.path.join(scripts_dir, script)], timeout=60)
+                subprocess.run(['java', os.path.splitext(script)[0]], timeout=60)
+            # Add commands to run .NET and C++ files here
             duration = time.time() - start_time
         except subprocess.TimeoutExpired:
             print(f"Script {script} exceeded the timeout limit.")
@@ -50,8 +56,10 @@ for script in os.listdir(scripts_dir):
             if script.endswith('.py'):
                 test_result = subprocess.run([pytest_path, test_script], capture_output=True, text=True)
             elif script.endswith('.java'):
+                subprocess.run(['javac', os.path.join(scripts_dir, script)], timeout=60)
+                subprocess.run(['java', os.path.splitext(script)[0]], timeout=60)
+                os.chdir(r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline")
                 test_result = subprocess.run(['mvn', '-Dtest=' + os.path.splitext(script)[0] + 'Test', 'test'], capture_output=True, text=True)
-            # Add commands to run tests for .NET and C++ files here
             test_output = 'Pass' if test_result.returncode == 0 else 'Fail'
         else:
             test_output = 'No tests found for script.'
