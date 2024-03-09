@@ -23,7 +23,7 @@ if not os.path.exists('emissions_data.csv'):
 
 # Iterate over each script in the directory
 for script in os.listdir(scripts_dir):
-    if script.endswith(('.py', '.java', '.cpp', '.cs')) and script != 'track_emissions.py':
+    if script.endswith(('.py', '.java', '.cpp', '.cs')) and script != 'track_emissions.py' and script != 'Java_sampleTest.java' :
         # Rest of the code...
         # Create a new EmissionsTracker for each script
         tracker = EmissionsTracker()
@@ -39,8 +39,8 @@ for script in os.listdir(scripts_dir):
                 test_result = subprocess.run([pytest_path, test_script + '.py'], capture_output=True, text=True)
             elif script.endswith('.java'):
                 os.chdir(scripts_dir)
-                print('Running command: mvn -Dtest=' + os.path.splitext(script)[0] + 'Test test')
-                print('Current PATH: ' + os.environ['PATH'])
+                #print('Running command: mvn -Dtest=' + os.path.splitext(script)[0] + 'Test test')
+                #print('Current PATH: ' + os.environ['PATH'])
                 test_result = subprocess.run(['C:\\Users\\sansk\\Downloads\\apache-maven-3.9.6\\bin\\mvn.cmd', '-Dtest=' + os.path.splitext(script)[0] + 'Test', 'test'], capture_output=True, text=True)
             test_output = 'Pass' if test_result.returncode == 0 else 'Fail'
         else:
