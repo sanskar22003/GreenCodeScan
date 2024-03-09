@@ -15,10 +15,11 @@ tests_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\te
 # Path to pytest executable
 pytest_path = r"C:\Users\sansk\AppData\Local\Programs\Python\Python312\Scripts\pytest.exe"
 
-# Create a CSV file to store emissions data
-with open('emissions_data.csv', 'w', newline='') as file:
-    writer = csv.writer(file)
-    writer.writerow(["Customer Name","Application name", "Timestamp", "Emissions (kgCO2)", "Duration", "emissions_rate", "CPU Power", "GPU Power", "RAM Power", "CPU Energy", "GPU Energy", "RAM Energy", "Energy Consumed", "Test Results"])
+# Check if the CSV file exists, if not create it and write the header
+if not os.path.exists('emissions_data.csv'):
+    with open('emissions_data.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["Customer Name","Application name", "Timestamp", "Emissions (kgCO2)", "Duration", "emissions_rate", "CPU Power", "GPU Power", "RAM Power", "CPU Energy", "GPU Energy", "RAM Energy", "Energy Consumed", "Test Results"])
 
 # Iterate over each script in the directory
 for script in os.listdir(scripts_dir):
