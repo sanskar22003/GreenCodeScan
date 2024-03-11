@@ -19,11 +19,11 @@ pytest_path = r"C:\Users\sansk\AppData\Local\Programs\Python\Python312\Scripts\p
 if not os.path.exists('emissions_data.csv'):
     with open('emissions_data.csv', 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["Customer Name","Application name", "Timestamp", "Emissions (kgCO2)", "Duration", "emissions_rate", "CPU Power", "GPU Power", "RAM Power", "CPU Energy", "GPU Energy", "RAM Energy", "Energy Consumed", "Test Results"])
+        writer.writerow(["Customer Name", "Application name", "File Type", "Timestamp", "Emissions (kgCO2)", "Duration", "emissions_rate", "CPU Power", "GPU Power", "RAM Power", "CPU Energy", "GPU Energy", "RAM Energy", "Energy Consumed", "Test Results"])
 
 # Iterate over each script in the directory
 for script in os.listdir(scripts_dir):
-    if script.endswith(('.py', '.java', '.cpp', '.cs')) and script != 'track_emissions.py' and script != 'Java_sampleTest.java' :
+    if script.endswith(('.py', '.java', '.cpp', '.cs')) and script != 'track_emissions.py' and script != 'Java_sampleTest.java':
         # Rest of the code...
         # Create a new EmissionsTracker for each script
         tracker = EmissionsTracker()
@@ -32,6 +32,8 @@ for script in os.listdir(scripts_dir):
         duration = None
         Customer_name = "ZF"
 
+        # Get the file type
+        _, file_type = os.path.splitext(script)
         # Run the tests for the script
         test_script = os.path.join(tests_dir if script.endswith('.py') else scripts_dir, os.path.splitext(script)[0] + 'Test')
         if os.path.exists(test_script + '.py') or os.path.exists(test_script + '.java'):
@@ -72,26 +74,27 @@ for script in os.listdir(scripts_dir):
 
             # Retrieve and format the emissions data
             data = [
-                Customer_name,
-                script,
-                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                emissions_data['emissions'],
-                duration,
-                emissions_data['emissions_rate'],
-                emissions_data['cpu_power'],
-                emissions_data['gpu_power'],
-                emissions_data['ram_power'],
-                emissions_data['cpu_energy'],
-                emissions_data['gpu_energy'],
-                emissions_data['ram_energy'],
-                emissions_data['energy_consumed'],
-                test_output
-            ]
+            Customer_name,
+            script,
+            file_type,
+            datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            emissions_data['emissions'],
+            duration,
+            emissions_data['emissions_rate'],
+            emissions_data['cpu_power'],
+            emissions_data['gpu_power'],
+            emissions_data['ram_power'],
+            emissions_data['cpu_energy'],
+            emissions_data['gpu_energy'],
+            emissions_data['ram_energy'],
+            emissions_data['energy_consumed'],
+            test_output
+        ]
 
-            # Write the data to the CSV file
-            with open('emissions_data.csv', 'a', newline='') as file:
-                writer = csv.writer(file)
-                writer.writerow(data)
-                file.flush()
+        # Write the data to the CSV file
+        with open('emissions_data.csv', 'a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(data)
+            file.flush()
 
 print("Emissions data and test results written to emissions_data.csv")
