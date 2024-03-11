@@ -1,6 +1,6 @@
 from sample_program_two import Car, Boat, Plane
 
-def test_move():
+def test_move(capsys):
     car1 = Car("Ford", "Mustang")
     boat1 = Boat("Ibiza", "Touring 20")
     plane1 = Plane("Boeing", "747")
@@ -16,6 +16,6 @@ def test_move():
     assert_output(capsys, plane1.move, expected_outputs[2])
 
 def assert_output(capsys, func, expected_output):
-    captured = capsys.readouterr()
     func()
+    captured = capsys.readouterr()
     assert captured.out == expected_output
