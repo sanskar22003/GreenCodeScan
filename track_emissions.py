@@ -5,6 +5,7 @@ from codecarbon import EmissionsTracker
 from datetime import datetime
 import time
 import pandas as pd
+import sys
 
 # Directory containing the scripts
 scripts_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
@@ -38,6 +39,7 @@ for script in os.listdir(scripts_dir):
         test_script = os.path.join(tests_dir if script.endswith('.py') else scripts_dir, os.path.splitext(script)[0] + 'Test')
         if os.path.exists(test_script + '.py') or os.path.exists(test_script + '.java'):
             if script.endswith('.py'):
+                sys.path.append(scripts_dir)
                 test_result = subprocess.run([pytest_path, test_script + '.py'], capture_output=True, text=True)
             elif script.endswith('.java'):
                 os.chdir(scripts_dir)
