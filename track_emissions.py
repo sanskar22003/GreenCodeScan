@@ -24,7 +24,7 @@ if not os.path.exists('emissions_data.csv'):
 
 # Iterate over each script in the directory
 for script in os.listdir(scripts_dir):
-    if script.endswith(('.py', '.java', '.cpp', '.cs')) and script != 'track_emissions.py' and script != 'product_detailsTest.java':
+    if script.endswith(('.py', '.java', '.cpp', '.cs')) and script != 'track_emissions.py' and script != 'product_detailsTest.java' and script != 'server_emissions.py':
         # Rest of the code...
         # Create a new EmissionsTracker for each script
         tracker = EmissionsTracker()
