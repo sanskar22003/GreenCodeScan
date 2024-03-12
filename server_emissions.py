@@ -94,7 +94,7 @@ def calculate_co2_emission(energy_consumption):
             co2_emission_per_kwh = co2_emission_factors[energy_source]['global']
     else:
         # Default to global average CO2
-    emission factor for grid electricity
+        emission factor for grid electricity
         co2_emission_per_kwh = co2_emission_factors['grid']['global']
     
     # Calculate CO2 emission in kilotons (kt)
