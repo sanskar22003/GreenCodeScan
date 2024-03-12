@@ -111,10 +111,13 @@ def update_excel(data):
     df.to_excel('server_data.xlsx', index=False)
 
 def main():
+    start_time = time.time()
     while True:
         data = get_system_info()
         update_excel(data)
         time.sleep(20)  # Sleep for 20 seconds before collecting data again
+        if time.time() - start_time > 60:  # Stop after 1 hour
+            break
 
 if __name__ == "__main__":
     main()
