@@ -75,23 +75,24 @@ for script in os.listdir(scripts_dir):
             emissions_data = pd.read_csv('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').iloc[-1]
 
             # Retrieve and format the emissions data
+            # Retrieve and format the emissions data
             data = [
-            Customer_name,
-            script,
-            file_type,
-            datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            emissions_data['emissions'],
-            duration,
-            emissions_data['emissions_rate'],
-            emissions_data['cpu_power'],
-            emissions_data['gpu_power'],
-            emissions_data['ram_power'],
-            emissions_data['cpu_energy'],
-            emissions_data['gpu_energy'],
-            emissions_data['ram_energy'],
-            emissions_data['energy_consumed'],
-            test_output
-        ]
+                Customer_name,
+                script,
+                file_type,
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "{:.4f}".format(emissions_data['emissions']),  # Format the number to 8 decimal places
+                duration,
+                "{:.4f}".format(emissions_data['emissions_rate']),  # Format the number to 8 decimal places
+                "{:.4f}".format(emissions_data['cpu_power']),  # Format the number to 8 decimal places
+                "{:.4f}".format(emissions_data['gpu_power']),  # Format the number to 8 decimal places
+                "{:.4f}".format(emissions_data['ram_power']),  # Format the number to 8 decimal places
+                "{:.4f}".format(emissions_data['cpu_energy']),  # Format the number to 8 decimal places
+                "{:.4f}".format(emissions_data['gpu_energy']),  # Format the number to 8 decimal places
+                "{:.4f}".format(emissions_data['ram_energy']),  # Format the number to 8 decimal places
+                "{:.4f}".format(emissions_data['energy_consumed']),  # Format the number to 8 decimal places
+                test_output
+            ]
 
         # Write the data to the CSV file
         with open('emissions_data.csv', 'a', newline='') as file:
