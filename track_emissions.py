@@ -76,21 +76,22 @@ for script in os.listdir(scripts_dir):
 
             # Retrieve and format the emissions data
             # Retrieve and format the emissions data
+            # Retrieve and format the emissions data
             data = [
                 Customer_name,
                 script,
                 file_type,
                 datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                "{:.4f}".format(emissions_data['emissions']),  # Format the number to 8 decimal places
+                emissions_data['emissions'] * 1000,  # Convert from kgCO2eq to gCO2eq
                 duration,
-                "{:.4f}".format(emissions_data['emissions_rate']),  # Format the number to 8 decimal places
-                "{:.4f}".format(emissions_data['cpu_power']),  # Format the number to 8 decimal places
-                "{:.4f}".format(emissions_data['gpu_power']),  # Format the number to 8 decimal places
-                "{:.4f}".format(emissions_data['ram_power']),  # Format the number to 8 decimal places
-                "{:.4f}".format(emissions_data['cpu_energy']),  # Format the number to 8 decimal places
-                "{:.4f}".format(emissions_data['gpu_energy']),  # Format the number to 8 decimal places
-                "{:.4f}".format(emissions_data['ram_energy']),  # Format the number to 8 decimal places
-                "{:.4f}".format(emissions_data['energy_consumed']),  # Format the number to 8 decimal places
+                emissions_data['emissions_rate'] * 1000,  # Convert from kgCO2eq to gCO2eq
+                emissions_data['cpu_power'] * 1000,  # Convert from kWh to Wh
+                emissions_data['gpu_power'] * 1000,  # Convert from kWh to Wh
+                emissions_data['ram_power'] * 1000,  # Convert from kWh to Wh
+                emissions_data['cpu_energy'] * 1000,  # Convert from kWh to Wh
+                emissions_data['gpu_energy'] * 1000,  # Convert from kWh to Wh
+                emissions_data['ram_energy'] * 1000,  # Convert from kWh to Wh
+                emissions_data['energy_consumed'] * 1000,  # Convert from kWh to Wh
                 test_output
             ]
 
