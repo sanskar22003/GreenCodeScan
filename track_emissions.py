@@ -85,11 +85,11 @@ for script in os.listdir(scripts_dir):
                 emissions_data['emissions'] * 1000,  # Convert from kgCO2eq to gCO2eq
                 duration,
                 emissions_data['emissions_rate'] * 1000,  # Convert from kgCO2eq to gCO2eq
-                emissions_data['cpu_power'] * 1000,  # Convert from kWh to Wh
-                emissions_data['gpu_power'] * 1000,  # Convert from kWh to Wh
-                emissions_data['ram_power'] * 1000,  # Convert from kWh to Wh
+                emissions_data['cpu_power'],  # Convert from kWh to Wh
+                emissions_data['gpu_power'],  # Convert from kWh to Wh
+                emissions_data['ram_power'],  # Convert from kWh to Wh
                 emissions_data['cpu_energy'] * 1000,  # Convert from kWh to Wh
-                emissions_data['gpu_energy'] * 1000,  # Convert from kWh to Wh
+                emissions_data['gpu_energy'],  # Convert from kWh to Wh
                 emissions_data['ram_energy'] * 1000,  # Convert from kWh to Wh
                 emissions_data['energy_consumed'] * 1000,  # Convert from kWh to Wh
                 test_output
