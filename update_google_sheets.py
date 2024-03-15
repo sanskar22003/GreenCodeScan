@@ -10,7 +10,7 @@ client = gspread.authorize(creds)
 
 # Open the Google Sheets document and get the first sheet
 sheet1 = client.open("Dynamic_Code_Analysis").get_worksheet(0)
-sheet2 = client.open("Server_Tracking_emissions").get_worksheet(1)
+sheet2 = client.open("Server_Tracking_emissions").get_worksheet(0)
 
 # Read the CSV files
 csv_files = [r'C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\emissions_data.csv', r'C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\server_data.xlsx']
