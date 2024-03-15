@@ -17,7 +17,7 @@ csv_files = [r'C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\e
 sheets = [sheet1, sheet2]
 
 for csv_file, sheet in zip(csv_files, sheets):
-    with open(csv_file, 'r') as f:
+    with open(csv_file, 'r', encoding='utf-8') as f:
         csv_reader = csv.reader(f)
         for row in csv_reader:
             # Append each row to the Google Sheets document
