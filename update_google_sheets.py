@@ -19,14 +19,14 @@ excel_file = r'C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\s
 sheets = [sheet1, sheet2]
 
 # Read the CSV file
+# Read the CSV file
 with open(csv_file, 'r', encoding='utf-8') as f:
     csv_reader = csv.reader(f)
-    for row in csv_reader:
-        # Append each row to the Google Sheets document
-        sheets[0].append_row(row)
+    rows = list(csv_reader)
+    # Append all rows to the Google Sheets document at once
+    sheets[0].append_rows(rows)
 
 # Read the Excel file
 df = pd.read_excel(excel_file)
-for row in df.values:
-    # Append each row to the Google Sheets document
-    sheets[1].append_row(row.tolist())
+# Append all rows to the Google Sheets document at once
+sheets[1].append_rows(df.values.tolist())
