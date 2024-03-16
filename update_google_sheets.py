@@ -23,10 +23,10 @@ sheets = [sheet1, sheet2]
 with open(csv_file, 'r', encoding='utf-8') as f:
     csv_reader = csv.reader(f)
     rows = list(csv_reader)
-    # Append all rows to the Google Sheets document at once
-    sheets[0].append_rows(rows)
+    # Append all rows (excluding the header) to the Google Sheets document at once
+    sheets[0].append_rows(rows[1:])
 
 # Read the Excel file
 df = pd.read_excel(excel_file)
-# Append all rows to the Google Sheets document at once
-sheets[1].append_rows(df.values.tolist())
+# Append all rows (excluding the header) to the Google Sheets document at once
+sheets[1].append_rows(df.values.tolist()[1:])
