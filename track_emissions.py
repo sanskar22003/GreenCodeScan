@@ -20,7 +20,7 @@ pytest_path = r"C:\Users\sansk\AppData\Local\Programs\Python\Python312\Scripts\p
 if not os.path.exists('emissions_data.csv'):
     with open('emissions_data.csv', 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["Customer Name", "Application name", "File Type", "Timestamp", "Emissions (gCO2eq)", "Duration", "emissions_rate", "CPU Power", "GPU Power", "RAM Power", "CPU Energy", "GPU Energy", "RAM Energy", "Energy Consumed", "Test Results"])
+        writer.writerow(["Customer Name", "Application name", "File Type", "Timestamp", "Emissions (gCO2eq)", "Duration", "emissions_rate", "CPU Power (KWh)", "GPU Power (KWh)", "RAM Power (KWh)", "CPU Energy (Wh)", "GPU Energy (KWh)", "RAM Energy (Wh)", "Energy Consumed (Wh)", "Test Results"])
 
 # Iterate over each script in the directory
 for script in os.listdir(scripts_dir):
