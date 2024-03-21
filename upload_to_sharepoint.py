@@ -6,15 +6,15 @@ from shareplum.site import Version
 authcookie = Office365('https://sbupune.sharepoint.com', username='SANSKAR.MCA22003@SBUP.EDU.IN', password='Sk@6353910033').GetCookies()
 
 # Initialize the Site
-site = Site('https://sbupune.sharepoint.com/sites/TechMahindraGreenCodePipeline2', version=Version.v365, authcookie=authcookie)
+site = Site('https://sbupune.sharepoint.com/sites/TechMahindraGreenCodePipeline2', authcookie=authcookie)
 
-# Get the document library
-doc_library = site.DocumentLibrary('Pipeline CSVs')
+# Get the folder
+folder = site.Folder('Shared Documents/Pipeline CSVs')
 
 # Upload the files
 with open('C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\emissions_data.csv', 'rb') as file:
-    doc_library.upload_file(file, 'emissions_data.csv')
+    folder.upload_file(file, 'emissions_data.csv')
 
 with open('C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\server_data.xlsx', 'rb') as file:
-    doc_library.upload_file(file, 'server_data.xlsx')
+    folder.upload_file(file, 'server_data.xlsx')
 
