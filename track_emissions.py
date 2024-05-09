@@ -7,23 +7,24 @@ import time
 import pandas as pd
 import sys
 
-# Directory containing the scripts
-scripts_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
-
-# Directory containing the Python tests
-tests_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\tests"
-
-# Path to pytest executable
-pytest_path = r"C:\Users\sansk\AppData\Local\Programs\Python\Python312\Scripts\pytest.exe"
+# Define all paths and constants here
+BASE_DIR = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
+SCRIPTS_DIR = os.path.join(BASE_DIR)
+TESTS_DIR = os.path.join(BASE_DIR, "tests")
+PYTEST_PATH = r"C:\Users\sansk\AppData\Local\Programs\Python\Python312\Scripts\pytest.exe"
+MAVEN_PATH = r"C:\Users\sansk\Downloads\apache-maven-3.9.6\bin\mvn.cmd"
+EMISSIONS_CSV = os.path.join(BASE_DIR, 'emissions.csv')
+EMISSIONS_DATA_CSV = 'emissions_data.csv'
+CUSTOMER_NAME = "ZF"
 
 # Check if the CSV file exists, if not create it and write the header
-if not os.path.exists('emissions_data.csv'):
-    with open('emissions_data.csv', 'w', newline='') as file:
+if not os.path.exists(EMISSIONS_DATA_CSV):
+    with open(EMISSIONS_DATA_CSV, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Customer Name", "Application name", "File Type", "Timestamp", "Emissions (gCO2eq)", "Duration", "emissions_rate", "CPU Power (KWh)", "GPU Power (KWh)", "RAM Power (KWh)", "CPU Energy (Wh)", "GPU Energy (KWh)", "RAM Energy (Wh)", "Energy Consumed (Wh)", "Test Results"])
 
 # Iterate over each script in the directory
-for script in os.listdir(scripts_dir):
+for script in os.listdir(SCRIPTS_DIR):
     if script.endswith(('.py', '.java', '.cpp', '.cs')) and script != 'track_emissions.py' and script != 'product_detailsTest.java' and script != 'server_emissions.py' and script != 'update_google_sheets.py':
         # Rest of the code...
         # Create a new EmissionsTracker for each script
@@ -31,21 +32,18 @@ for script in os.listdir(scripts_dir):
 
         # Initialize duration
         duration = None
-        Customer_name = "ZF"
 
         # Get the file type
         _, file_type = os.path.splitext(script)
         # Run the tests for the script
-        test_script = os.path.join(tests_dir if script.endswith('.py') else scripts_dir, os.path.splitext(script)[0] + 'Test')
+        test_script = os.path.join(TESTS_DIR if script.endswith('.py') else SCRIPTS_DIR, os.path.splitext(script)[0] + 'Test')
         if os.path.exists(test_script + '.py') or os.path.exists(test_script + '.java'):
             if script.endswith('.py'):
-                sys.path.append(scripts_dir)
-                test_result = subprocess.run([pytest_path, test_script + '.py'], capture_output=True, text=True)
+                sys.path.append(SCRIPTS_DIR)
+                test_result = subprocess.run([PYTEST_PATH, test_script + '.py'], capture_output=True, text=True)
             elif script.endswith('.java'):
-                os.chdir(scripts_dir)
-                #print('Running command: mvn -Dtest=' + os.path.splitext(script)[0] + 'Test test')
-                #print('Current PATH: ' + os.environ['PATH'])
-                test_result = subprocess.run(['C:\\Users\\sansk\\Downloads\\apache-maven-3.9.6\\bin\\mvn.cmd', '-Dtest=' + os.path.splitext(script)[0] + 'Test', 'test'], capture_output=True, text=True)
+                os.chdir(SCRIPTS_DIR)
+                test_result = subprocess.run([MAVEN_PATH, '-Dtest=' + os.path.splitext(script)[0] + 'Test', 'test'], capture_output=True, text=True)
             test_output = 'Pass' if test_result.returncode == 0 else 'Fail'
         else:
             test_output = 'No tests found for script.'
@@ -57,10 +55,10 @@ for script in os.listdir(scripts_dir):
         try:
             start_time = time.time()
             if script.endswith('.py'):
-                subprocess.run(['python', os.path.join(scripts_dir, script)], timeout=60)
+                subprocess.run(['python', os.path.join(SCRIPTS_DIR, script)], timeout=60)
             elif script.endswith('.java'):
-                subprocess.run(['javac', os.path.join(scripts_dir, script)], timeout=60)
-                subprocess.run(['java', '-cp', scripts_dir, os.path.splitext(script)[0]], timeout=60)
+                subprocess.run(['javac', os.path.join(SCRIPTS_DIR, script)], timeout=60)
+                subprocess.run(['java', '-cp', SCRIPTS_DIR, os.path.splitext(script)[0]], timeout=60)
             # Add commands to run .NET and C++ files here
             duration = time.time() - start_time
         except subprocess.TimeoutExpired:
@@ -70,15 +68,13 @@ for script in os.listdir(scripts_dir):
         tracker.stop()
 
         # Check if the emissions.csv file is empty
-        if os.stat('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').st_size != 0:
+        if os.stat(EMISSIONS_CSV).st_size != 0:
             # Read the emissions data from the CSV file
-            emissions_data = pd.read_csv('C:/ProgramData/Jenkins/.jenkins/workspace/GreenCodeScanPipeline/emissions.csv').iloc[-1]
+            emissions_data = pd.read_csv(EMISSIONS_CSV).iloc[-1]
 
             # Retrieve and format the emissions data
-            # Retrieve and format the emissions data
-            # Retrieve and format the emissions data
             data = [
-                Customer_name,
+                CUSTOMER_NAME,
                 script,
                 file_type,
                 datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -96,7 +92,7 @@ for script in os.listdir(scripts_dir):
             ]
 
         # Write the data to the CSV file
-        with open('emissions_data.csv', 'a', newline='') as file:
+        with open(EMISSIONS_DATA_CSV, 'a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(data)
             file.flush()
