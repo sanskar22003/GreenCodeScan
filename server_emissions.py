@@ -8,7 +8,7 @@ import os
 # Define all paths and constants here
 EXCEL_FILE = 'server_data.xlsx'
 SLEEP_TIME = 20  # Sleep for 20 seconds before collecting data again
-RUN_TIME = 60 * 60  # Run for 1 hour
+RUN_TIME = 60 * 2  # Run for 1 hour
 
 def get_system_info():
     hostname = socket.gethostname()
