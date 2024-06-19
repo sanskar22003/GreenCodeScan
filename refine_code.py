@@ -14,7 +14,7 @@ client = AzureOpenAI(
 )
 
 assistant = client.beta.assistants.create(
-  name = 'Green IT Code Writer 3',
+  name = 'Green IT Code Writer 4',
   instructions=f"You are a helpful AI assistant who re-factors the code from an uploaded file to make it more efficient" 
     f"You have access to a sandboxed environment for writing and testing code."
     f"You should follow these steps:"
@@ -29,7 +29,7 @@ assistant = client.beta.assistants.create(
 
 directory = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline'
 download_directory = "D:\\Documents\\TechM\\Green_Software_Development\\Third Task\\Projects & Docs\\Assistant api\\Refined Files"
-prompts = ["Make the code energy efficient", "Provide a version of this function that is optimized for energy efficiency ", "Optimize this code to use less CPU resources"]
+prompts = "Provide a version of this function that is optimized for energy efficiency"
 
 for filename in os.listdir(directory):
     if filename.endswith('.py') or filename.endswith('.java'):
