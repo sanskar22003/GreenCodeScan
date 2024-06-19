@@ -29,7 +29,7 @@ assistant = client.beta.assistants.create(
 
 directory = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline'
 download_directory = "D:\\Documents\\TechM\\Green_Software_Development\\Third Task\\Projects & Docs\\Assistant api\\Refined Files"
-prompts = "Provide a version of this function that is optimized for energy efficiency"
+prompts = ["Make the code energy efficient", "Provide a version of this function that is optimized for energy efficiency ", "Optimize this code to use less CPU resources"]
 
 for filename in os.listdir(directory):
     if filename.endswith('.py') or filename.endswith('.java'):
