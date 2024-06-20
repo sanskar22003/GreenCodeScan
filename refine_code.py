@@ -32,8 +32,6 @@ download_directory = "D:\\Documents\\TechM\\Green_Software_Development\\Third Ta
 prompts = ["Make the code energy efficient", "Provide a version of this function that is optimized for energy efficiency ", "Optimize this code to use less CPU resources"]
 
 for filename in os.listdir(directory):
-    if filename == 'contact.py':
-        continue
     if filename.endswith('.py') or filename.endswith('.java'):
         file_path = os.path.join(directory, filename)
         with open(file_path, "rb") as f:
