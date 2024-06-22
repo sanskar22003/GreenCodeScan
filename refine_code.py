@@ -80,9 +80,22 @@ for filename in os.listdir(directory):
             # Assuming the refined code is in the last message
             refined_code = messages[-1]['content']  # This line needs to be adjusted based on the actual structure of the response
 
-            # Save the refined code to a file
-            original_filename = os.path.basename(file_path)
-            new_filename = "refined_" + original_filename
-            with open(os.path.join(download_directory, new_filename), 'w') as code_file:
-                code_file.write(refined_code)
-            print(f"Downloaded refined file: {new_filename}")
+            # Initialize a variable to hold the last message
+            last_message_content = None
+
+# Iterate over the messages to find the last one
+            for message in messages:
+    # Assuming 'message' is a dictionary and has a key 'content' that holds the code
+    # Adjust the key access based on the actual structure of the message object
+                last_message_content = message.content  # Adjust this line based on the actual structure
+
+# Check if we have the last message's content
+            if last_message_content is not None:
+    # Save the refined code to a file
+                original_filename = os.path.basename(file_path)
+                new_filename = "refined_" + original_filename
+                with open(os.path.join(download_directory, new_filename), 'w') as code_file:
+                    code_file.write(last_message_content)
+                print(f"Downloaded refined file: {new_filename}")
+            else:
+                print("No refined code found.")
