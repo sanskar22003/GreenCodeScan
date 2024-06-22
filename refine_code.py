@@ -10,10 +10,10 @@ load_dotenv(dotenv_path=".env", verbose=True, override=True)
 
 # Initialize the AzureOpenAI client
 client = AzureOpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),  
+    api_key="eadf76dd169e4172a463e7375946835f",  
     api_version="2024-02-15-preview",
-    azure_endpoint=os.getenv("AZURE_ENDPOINT")
-)
+    azure_endpoint = "https://green-code-uks.openai.azure.com"
+    )
 
 # Create an assistant
 assistant = client.beta.assistants.create(
