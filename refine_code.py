@@ -1,10 +1,8 @@
 import os
-import time
+import json
 import dotenv
 from dotenv import load_dotenv
-
-# Assuming you have a way to interact with Azure OpenAI
-from azure_openai_client import AzureOpenAI  # Placeholder for actual import
+from openai import AzureOpenAI
 
 # Load environment variables
 load_dotenv(dotenv_path=".env", verbose=True, override=True)
