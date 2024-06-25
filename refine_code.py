@@ -11,10 +11,11 @@ load_dotenv(dotenv_path=".env", verbose=True, override=True)
 
 # Initialize Azure OpenAI client
 client = AzureOpenAI(
-    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+    api_key="eadf76dd169e4172a463e7375946835f",  
     api_version="2024-02-15-preview",
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
-)
+    azure_endpoint = "https://green-code-uks.openai.azure.com"
+    )
+
 
 # Directory where the files are stored and where to download the optimized code
 source_directory = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline'
