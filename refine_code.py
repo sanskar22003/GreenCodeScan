@@ -61,11 +61,13 @@ def apply_prompts(file_object):
 
 # Function to check and wait for run completion
 def wait_for_completion(thread_id):
+    # Assuming you have a way to start a run and get its ID, replace 'your_run_id_here' with the actual run ID
+    run_id = run.id
     run_status = "in_progress"
     while run_status != "completed":
         run = client.beta.threads.runs.retrieve(
             thread_id=thread_id,
-            run_id=run.id
+            run_id=run_id
         )
         run_status = run.status
         if run_status != "completed":
