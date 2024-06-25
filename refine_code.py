@@ -98,6 +98,19 @@ messages = client.beta.threads.messages.list(
 )
 print(messages.model_dump_json(indent=2))
 
+# Extract the content of the latest question only
+data = json.loads(messages.model_dump_json(indent=2))
+code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
+print(code)
+
+# OR
+
+# Download the code file and use the original filename
+content = client.files.content(code)
+original_filename = filename  # Assuming filename is still accessible and holds the original file name
+with open(os.path.join(download_directory, original_filename), "wb") as code_file:
+    code_file.write(content)
+
 # Cleanup
 client.beta.assistants.delete(assistant.id)
 client.beta.threads.delete(thread.id)
