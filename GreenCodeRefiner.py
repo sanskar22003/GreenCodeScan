@@ -37,7 +37,7 @@ def log_processed_file(filename):
 def process_file(filepath):
     # Create an assistant
     assistant = client.beta.assistants.create(
-        name='Green IT Code Writer 2',
+        name='Green IT Code Writer 66',
         instructions="You are a helpful AI assistant who re-factors the code from an uploaded file to make it more efficient"
                      "You have access to a sandboxed environment for writing and testing code."
                      "You should follow these steps:"
