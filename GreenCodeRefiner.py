@@ -1,6 +1,7 @@
 import os
 import json
 import dotenv
+import time
 from dotenv import load_dotenv
 from openai import AzureOpenAI
 
