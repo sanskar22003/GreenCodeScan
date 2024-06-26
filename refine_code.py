@@ -32,10 +32,10 @@ assistant = client.beta.assistants.create(
 
 # Create a thread
 thread = client.beta.threads.create()
-print(thread)
+#print(thread)                                                                                                                                             //Comment
 
 source_directory = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline'
-download_directory = "D:\\Documents\\TechM\\Green_Software_Development\\Third Task\\Projects & Docs\\Assistant api\\Refined Files"
+download_directory = "D:\\Documents\\TechM\\Green_Software_Development\\Third Task\\Projects & Docs\\Assistant api\\Container"
 
 # Track processed files
 processed_files_log = os.path.join(download_directory, "processed_files.log")
@@ -74,7 +74,7 @@ for filename in os.listdir(source_directory):
 
 # Check messages in the thread
 thread_messages = client.beta.threads.messages.list(thread.id)
-print(thread_messages.model_dump_json(indent=2))
+#print(thread_messages.model_dump_json(indent=2))                                                                                                                            //Comment
 
 # Optional code execution
 run = client.beta.threads.runs.create(
@@ -90,18 +90,18 @@ while True:
     )
     if run_status.status == 'completed':
         break
-    time.sleep(5)  # Wait for 5 seconds before checking again
+    time.sleep(180)  # Wait for 5 seconds before checking again                                                            // modify from 5 to 180
 
 # Print messages in the thread post run
 messages = client.beta.threads.messages.list(
     thread_id=thread.id
 )
-print(messages.model_dump_json(indent=2))
+#print(messages.model_dump_json(indent=2))                                                                            //Comment
 
 # Extract the content of the latest question only
 data = json.loads(messages.model_dump_json(indent=2))
 code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
-print(code)
+#print(code)                                                                                                                // Comment
 
 # OR
 
