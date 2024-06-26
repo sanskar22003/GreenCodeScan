@@ -105,11 +105,14 @@ print(code)
 
 # OR
 
-# Download the code file and use the original filename
+# Assuming `client.files.content(code)` retrieves the file content
 content = client.files.content(code)
-original_filename = filename  # Assuming filename is still accessible and holds the original file name
-with open(os.path.join(download_directory, original_filename), "wb") as code_file:
-    code_file.write(content)
+
+# Use the original filename and download directory to construct the file path
+file_path = os.path.join(download_directory, filename)
+
+# Use the content object's method to write to the specified file path
+content.write_to_file(file_path)
 
 # Cleanup
 client.beta.assistants.delete(assistant.id)
