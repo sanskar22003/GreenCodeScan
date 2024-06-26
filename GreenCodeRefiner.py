@@ -58,7 +58,7 @@ def process_file(filepath):
         )
 
     # Create a thread and pass a message
-    print("File" + file.id + "uploaded")
+    print("File" + filename + "uploaded")
     thread = client.beta.threads.create(
         messages=[
             {
