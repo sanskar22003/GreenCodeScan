@@ -106,8 +106,8 @@ for filename in os.listdir(source_directory):
                 f.write(filename + '\n')
 
 # Cleanup
-client.beta.assistants.delete(assistant.id)
-client.beta.threads.delete(thread.id)
+#client.beta.assistants.delete(assistant.id)
+#client.beta.threads.delete(thread.id)
 
 # Check if all files have been refined
 source_files = {file for file in os.listdir(source_directory) if file.endswith(('.py', '.java'))}
