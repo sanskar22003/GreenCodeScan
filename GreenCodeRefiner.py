@@ -49,7 +49,7 @@ def process_file(filepath):
         model="code",
         tools=[{"type": "code_interpreter"}]
     )
-
+    print("Interpreter created")
     # Upload a reference file
     with open(filepath, "rb") as file:
         uploaded_file = client.files.create(
@@ -58,6 +58,7 @@ def process_file(filepath):
         )
 
     # Create a thread and pass a message
+    print("File" + file.id + "uploaded")
     thread = client.beta.threads.create(
         messages=[
             {
@@ -69,11 +70,13 @@ def process_file(filepath):
     )
 
     # Wait for the run to complete
+    print("Prompt applied")
     run = client.beta.threads.runs.create(
         thread_id=thread.id,
         assistant_id=assistant.id
     )
 
+    print("Going to check status")
     while True:
         run_status = client.beta.threads.runs.retrieve(
             thread_id=thread.id,
@@ -85,11 +88,13 @@ def process_file(filepath):
             time.sleep(5)
 
     # Download the refined file
+    print("Status is Completed")
     messages = client.beta.threads.messages.list(
         thread_id=thread.id
     )
     data = json.loads(messages.model_dump_json(indent=2))
     code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
+    print("File content is extracted")
     content = client.files.content(code)
     download_path = os.path.join(download_directory, os.path.basename(filepath))
     content.write_to_file(download_path)
