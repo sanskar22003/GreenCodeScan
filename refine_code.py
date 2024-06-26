@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import time
 import dotenv
@@ -32,10 +33,10 @@ assistant = client.beta.assistants.create(
 
 # Create a thread
 thread = client.beta.threads.create()
-#print(thread)                                                                                                                                             //Comment
+print(thread)
 
 source_directory = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline'
-download_directory = "D:\\Documents\\TechM\\Green_Software_Development\\Third Task\\Projects & Docs\\Assistant api\\Container"
+download_directory = "D:\\Documents\\TechM\\Green_Software_Development\\Third Task\\Projects & Docs\\Assistant api\\Refined Files"
 
 # Track processed files
 processed_files_log = os.path.join(download_directory, "processed_files.log")
@@ -49,7 +50,7 @@ with open(processed_files_log, 'r') as f:
 
 # Modify the part of the code for dynamic file upload
 for filename in os.listdir(source_directory):
-    if filename.endswith(".py") or filename.endswith(".java") and filename not in processed_files:  # Check if file is not processed
+    if (filename.endswith(".py") or filename.endswith(".java")) and filename not in processed_files:
         file_path = os.path.join(source_directory, filename)
         with open(file_path, "rb") as file:
             uploaded_file = client.files.create(
@@ -74,7 +75,7 @@ for filename in os.listdir(source_directory):
 
 # Check messages in the thread
 thread_messages = client.beta.threads.messages.list(thread.id)
-#print(thread_messages.model_dump_json(indent=2))                                                                                                                            //Comment
+print(thread_messages.model_dump_json(indent=2))
 
 # Optional code execution
 run = client.beta.threads.runs.create(
@@ -90,18 +91,20 @@ while True:
     )
     if run_status.status == 'completed':
         break
-    time.sleep(180)  # Wait for 5 seconds before checking again                                                            // modify from 5 to 180
+    time.sleep(5)  # Wait for 5 seconds before checking again
+
+print(run.last_error)
 
 # Print messages in the thread post run
 messages = client.beta.threads.messages.list(
     thread_id=thread.id
 )
-#print(messages.model_dump_json(indent=2))                                                                            //Comment
+print(messages.model_dump_json(indent=2))
 
 # Extract the content of the latest question only
 data = json.loads(messages.model_dump_json(indent=2))
 code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
-#print(code)                                                                                                                // Comment
+print(code)
 
 # OR
 
@@ -115,8 +118,8 @@ file_path = os.path.join(download_directory, filename)
 content.write_to_file(file_path)
 
 # Cleanup
-client.beta.assistants.delete(assistant.id)
-client.beta.threads.delete(thread.id)
+#client.beta.assistants.delete(assistant.id)
+#client.beta.threads.delete(thread.id)
 
 # Check if all files have been refined
 source_files = {file for file in os.listdir(source_directory) if file.endswith(('.py', '.java'))}
@@ -124,5 +127,7 @@ refined_files = {file for file in os.listdir(download_directory) if file.endswit
 
 if source_files.issubset(refined_files):
     print('done')
+    sys.exit(0)  # Success
 else:
     print('pending')
+    sys.exit(1)  # Failure
