@@ -43,6 +43,10 @@ try:
     thread = client.beta.threads.create()
     logging.info(f"Thread created: {thread}")
 
+source_directory = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline'
+download_directory = "D:\\Documents\\TechM\\Green_Software_Development\\Third Task\\Projects & Docs\\Assistant api\\Container"
+
+    
     # Modify the part of the code for dynamic file upload
     for filename in os.listdir(source_directory):
         if (filename.endswith(".py") or filename.endswith(".java")) and filename not in processed_files:
