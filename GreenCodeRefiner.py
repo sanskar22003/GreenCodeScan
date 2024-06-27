@@ -109,15 +109,21 @@ def process_file(filepath):
     log_processed_file(os.path.basename(filepath))
 
 # Main script
-for filename in os.listdir(source_directory):
-    filepath = os.path.join(source_directory, filename)
-    if filename.endswith(('.py', '.java')) and not is_file_processed(filename):
-        process_file(filepath)
+try:
+    for filename in os.listdir(source_directory):
+        filepath = os.path.join(source_directory, filename)
+        if filename.endswith(('.py', '.java')) and not is_file_processed(filename):
+            process_file(filepath)
+except Exception as e:
+    print(f"An error occurred during file processing: {e}")
 
-# Check if all Python and Java files are refined
-source_files = {f for f in os.listdir(source_directory) if f.endswith(('.py', '.java'))}
-downloaded_files = {f for f in os.listdir(download_directory) if f.endswith(('.py', '.java'))}
-if source_files.issubset(downloaded_files):
-    print('done')
-else:
-    print('pending')
+# Final check for 'done' or 'pending'
+try:
+    source_files = {f for f in os.listdir(source_directory) if f.endswith(('.py', '.java'))}
+    downloaded_files = {f for f in os.listdir(download_directory) if f.endswith(('.py', '.java'))}
+    if source_files.issubset(downloaded_files):
+        print('done')
+    else:
+        print('pending')
+except Exception as e:
+    print(f"An error occurred during the final check: {e}")
