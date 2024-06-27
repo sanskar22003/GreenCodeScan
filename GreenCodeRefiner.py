@@ -93,7 +93,13 @@ def process_file(filepath):
         thread_id=thread.id
     )
     data = json.loads(messages.model_dump_json(indent=2))
-    code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
+    # Before accessing the list elements, check if they exist
+    try:
+        code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
+    except (IndexError, KeyError) as e:
+        print(f"Error accessing data: {e}")
+    # Handle the error appropriately, e.g., log it, retry, or skip this file
+        return
     print("File content is extracted")
     content = client.files.content(code)
     download_path = os.path.join(download_directory, os.path.basename(filepath))
