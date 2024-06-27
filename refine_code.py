@@ -34,7 +34,7 @@ assistant = client.beta.assistants.create(
 )
 
 source_directory = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline'
-download_directory = "D:\\Documents\\TechM\\Green_Software_Development\\Third Task\\Projects & Docs\\Assistant api\\Container"
+download_directory = "D:\\Documents\\TechM\\Green_Software_Development\\Third Task\\Projects & Docs\\Assistant api\\Refined Files"
 
 # Track processed files
 processed_files_log = os.path.join(download_directory, "processed_files.log")
