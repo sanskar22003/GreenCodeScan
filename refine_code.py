@@ -114,8 +114,8 @@ source_files = {file for file in os.listdir(source_directory) if file.endswith((
 refined_files = {file for file in os.listdir(download_directory) if file.endswith(('.py', '.java'))}
 
 if source_files.issubset(refined_files):
-    print('All files have been processed.')
+    print('done')
     sys.exit(0)  # Success
 else:
-    print('Some files are still pending processing.')
+    print('pending')
     sys.exit(1)  # Failure
