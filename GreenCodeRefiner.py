@@ -130,13 +130,17 @@ if os.path.exists(log_file_path):
     with open(log_file_path, 'r') as log_file:
         processed_files = set(log_file.read().splitlines())
 
+# Update the downloaded_files set to reflect actual downloaded files
+downloaded_files = {f for f in os.listdir(download_directory) if f.endswith(('.py', '.java'))}
+
 # Debugging: Print file sets before final check
 print(f"Source files: {source_files}")
 print(f"Downloaded files: {downloaded_files}")
+print(f"Processed files: {processed_files}")
 
 # Final check for 'done' or 'pending'
 try:
-    if source_files.issubset(processed_files):
+    if source_files.issubset(downloaded_files) and source_files.issubset(processed_files):
         print('done')
     else:
         print('pending')
