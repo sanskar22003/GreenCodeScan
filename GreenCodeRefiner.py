@@ -34,7 +34,7 @@ def log_processed_file(filename):
         log_file.write(filename + '\n')
 
 # Function to process file
-def process_file(filepath, filename):  # Step 1: Add filename as a parameter
+def process_file(filepath, filename):
     # Create an assistant
     assistant = client.beta.assistants.create(
         name='Green IT Code Writer 66',
@@ -93,12 +93,10 @@ def process_file(filepath, filename):  # Step 1: Add filename as a parameter
         thread_id=thread.id
     )
     data = json.loads(messages.model_dump_json(indent=2))
-    # Before accessing the list elements, check if they exist
     try:
         code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
     except (IndexError, KeyError) as e:
         print(f"Error accessing data: {e}")
-    # Handle the error appropriately, e.g., log it, retry, or skip this file
         return
     print("File content is extracted")
     content = client.files.content(code)
@@ -114,9 +112,8 @@ try:
     for filename in os.listdir(source_directory):
         filepath = os.path.join(source_directory, filename)
         if filename.endswith(('.py', '.java')) and not is_file_processed(filename):
-            process_file(filepath, filename)  # Process each file
-            all_files_processed = False  # Indicate that there was at least one file that needed processing
-    # Use the flag to determine the final message
+            process_file(filepath, filename)
+            all_files_processed = False
     if all_files_processed:
         print('done')
     else:
@@ -124,16 +121,14 @@ try:
 except Exception as e:
     print(f"An error occurred during file processing: {e}")
 
-
 # Improved Final Check
-'''try:
+try:
     source_files = {f for f in os.listdir(source_directory) if f.endswith(('.py', '.java'))}
     downloaded_files = {f for f in os.listdir(download_directory) if f.endswith(('.py', '.java'))}
 
-    # Check if the number of files matches and each source file has a corresponding downloaded file
     if len(source_files) == len(downloaded_files) and all(f in downloaded_files for f in source_files):
         print('done')
     else:
         print('pending')
 except Exception as e:
-    print(f"An error occurred during the final check: {e}")'''
+    print(f"An error occurred during the final check: {e}")
