@@ -34,7 +34,7 @@ def log_processed_file(filename):
         log_file.write(filename + '\n')
 
 # Function to process file
-def process_file(filepath):
+def process_file(filepath, filename):  # Step 1: Add filename as a parameter
     # Create an assistant
     assistant = client.beta.assistants.create(
         name='Green IT Code Writer 66',
@@ -58,7 +58,7 @@ def process_file(filepath):
         )
 
     # Create a thread and pass a message
-    print("File" + filename + "uploaded")
+    print(f"File {filename} uploaded")
     thread = client.beta.threads.create(
         messages=[
             {
@@ -113,7 +113,7 @@ try:
     for filename in os.listdir(source_directory):
         filepath = os.path.join(source_directory, filename)
         if filename.endswith(('.py', '.java')) and not is_file_processed(filename):
-            process_file(filepath)
+            process_file(filepath, filename)  # Pass filename as an argument
 except Exception as e:
     print(f"An error occurred during file processing: {e}")
 
