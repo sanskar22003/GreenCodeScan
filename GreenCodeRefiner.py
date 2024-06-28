@@ -110,12 +110,20 @@ def process_file(filepath, filename):  # Step 1: Add filename as a parameter
 
 # Main script
 try:
+    all_files_processed = True
     for filename in os.listdir(source_directory):
         filepath = os.path.join(source_directory, filename)
         if filename.endswith(('.py', '.java')) and not is_file_processed(filename):
-            process_file(filepath, filename)  # Pass filename as an argument
+            all_files_processed = False
+            process_file(filepath, filename)  # Process each file
+    if all_files_processed:
+        print('done')
+        # Exit the script or break the loop to prevent re-running
+    else:
+        print('pending')
 except Exception as e:
     print(f"An error occurred during file processing: {e}")
+
 
 # Improved Final Check
 try:
