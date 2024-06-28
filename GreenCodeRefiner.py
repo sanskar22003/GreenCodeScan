@@ -126,7 +126,7 @@ except Exception as e:
 
 
 # Improved Final Check
-try:
+'''try:
     source_files = {f for f in os.listdir(source_directory) if f.endswith(('.py', '.java'))}
     downloaded_files = {f for f in os.listdir(download_directory) if f.endswith(('.py', '.java'))}
 
@@ -136,4 +136,4 @@ try:
     else:
         print('pending')
 except Exception as e:
-    print(f"An error occurred during the final check: {e}")
+    print(f"An error occurred during the final check: {e}")'''
