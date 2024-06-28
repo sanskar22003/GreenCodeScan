@@ -30,8 +30,12 @@ def is_file_processed(filename):
 
 # Function to log processed file
 def log_processed_file(filename):
-    with open(log_file_path, 'a') as log_file:
-        log_file.write(filename + '\n')
+    try:
+        with open(log_file_path, 'a') as log_file:
+            log_file.write(filename + '\n')
+        print(f"Logged processed file: {filename}")
+    except Exception as e:
+        print(f"Error logging processed file {filename}: {e}")
 
 # Function to process file
 def process_file(filepath):
