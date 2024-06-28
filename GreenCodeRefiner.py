@@ -104,7 +104,7 @@ def process_file(filepath):
     content = client.files.content(code)
     download_path = os.path.join(download_directory, os.path.basename(filepath))
     content.write_to_file(download_path)
-
+    print("file Downloaded")
     # Log the processed file
     log_processed_file(os.path.basename(filepath))
 
