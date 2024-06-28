@@ -115,9 +115,8 @@ try:
         filepath = os.path.join(source_directory, filename)
         if filename.endswith(('.py', '.java')) and not is_file_processed(filename):
             process_file(filepath, filename)  # Process each file
-        else:
-            all_files_processed = False
-    # Moved the check outside the loop
+            all_files_processed = False  # Indicate that there was at least one file that needed processing
+    # Use the flag to determine the final message
     if all_files_processed:
         print('done')
     else:
