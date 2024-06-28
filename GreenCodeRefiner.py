@@ -117,11 +117,13 @@ try:
 except Exception as e:
     print(f"An error occurred during file processing: {e}")
 
-# Final check for 'done' or 'pending'
+# Improved Final Check
 try:
     source_files = {f for f in os.listdir(source_directory) if f.endswith(('.py', '.java'))}
     downloaded_files = {f for f in os.listdir(download_directory) if f.endswith(('.py', '.java'))}
-    if source_files.issubset(downloaded_files):
+
+    # Check if the number of files matches and each source file has a corresponding downloaded file
+    if len(source_files) == len(downloaded_files) and all(f in downloaded_files for f in source_files):
         print('done')
     else:
         print('pending')
