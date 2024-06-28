@@ -114,11 +114,12 @@ try:
     for filename in os.listdir(source_directory):
         filepath = os.path.join(source_directory, filename)
         if filename.endswith(('.py', '.java')) and not is_file_processed(filename):
-            all_files_processed = False
             process_file(filepath, filename)  # Process each file
+        else:
+            all_files_processed = False
+    # Moved the check outside the loop
     if all_files_processed:
         print('done')
-        # Exit the script or break the loop to prevent re-running
     else:
         print('pending')
 except Exception as e:
