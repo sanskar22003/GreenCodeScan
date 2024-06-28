@@ -117,11 +117,19 @@ try:
 except Exception as e:
     print(f"An error occurred during file processing: {e}")
 
+# Debugging: Print file sets before final check
+print(f"Source files: {source_files}")
+print(f"Downloaded files: {downloaded_files}")
+
 # Final check for 'done' or 'pending'
 try:
     source_files = {f for f in os.listdir(source_directory) if f.endswith(('.py', '.java'))}
     downloaded_files = {f for f in os.listdir(download_directory) if f.endswith(('.py', '.java'))}
-    if source_files.issubset(downloaded_files):
+    processed_files = set()
+    if os.path.exists(log_file_path):
+        with open(log_file_path, 'r') as log_file:
+            processed_files = set(log_file.read().splitlines())
+    if source_files.issubset(processed_files):
         print('done')
     else:
         print('pending')
