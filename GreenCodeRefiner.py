@@ -55,6 +55,7 @@ def process_file(filepath):
             tools=[{"type": "code_interpreter"}]
         )
         print("Interpreter created")
+        print(f"Processing {filename}...")
     # Upload a reference file
         with open(filepath, "rb") as file:
             uploaded_file = client.files.create(
@@ -112,8 +113,12 @@ def process_file(filepath):
         print("file Downloaded")
     # Log the processed file
         log_processed_file(filename)
+        print(f"{filename} processed successfully.")
     except Exception as e:
         print(f"Error processing file {filename}: {e}")
+    finally:
+        # Ensure logging happens even if an error occurs
+        log_processed_file(filename)
 
 # Main script
 try:
