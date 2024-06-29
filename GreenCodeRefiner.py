@@ -20,6 +20,11 @@ client = AzureOpenAI(
     azure_endpoint="https://green-code-uks.openai.azure.com"
 )
 
+# Ensure download directory exists
+if not os.path.exists(download_directory):
+    os.makedirs(download_directory)
+
+
 # Function to check if file is already processed
 def is_file_processed(filename):
     if os.path.exists(log_file_path):
@@ -33,90 +38,96 @@ def log_processed_file(filename):
     with open(log_file_path, 'a') as log_file:
         log_file.write(filename + '\n')
 
-# Function to process file
+# Revised process_file function with improved error handling and verification
 def process_file(filepath):
     filename = os.path.basename(filepath)
-    # Check if the file is already processed
     if is_file_processed(filename):
         print(f"File {filename} is already processed.")
         return
 
+    try:
     # Create an assistant
-    assistant = client.beta.assistants.create(
-        name='Green IT Code Writer 66',
-        instructions="You are a helpful AI assistant who re-factors the code from an uploaded file to make it more efficient"
-                     "You have access to a sandboxed environment for writing and testing code."
-                     "You should follow these steps:"
-                     "1. Re-write the code in the same language as the original code."
-                     "2. Test the re-written code and ensure it functions correctly and same as the original code."
-                     "3. Run the code to confirm that it runs successfully"
-                     "4. If the code runs successfully, share the code as a file that can be downloaded"
-                     "5. If the code is unsuccessful display the error message and try to revise the code and rerun going through the steps from above again.",
-        model="code",
-        tools=[{"type": "code_interpreter"}]
-    )
-    print("Interpreter created")
+        assistant = client.beta.assistants.create(
+            name='Green IT Code Writer 66',
+            instructions="You are a helpful AI assistant who re-factors the code from an uploaded file to make it more efficient"
+                        "You have access to a sandboxed environment for writing and testing code."
+                        "You should follow these steps:"
+                        "1. Re-write the code in the same language as the original code."
+                        "2. Test the re-written code and ensure it functions correctly and same as the original code."
+                        "3. Run the code to confirm that it runs successfully"
+                        "4. If the code runs successfully, share the code as a file that can be downloaded"
+                        "5. If the code is unsuccessful display the error message and try to revise the code and rerun going through the steps from above again.",
+            model="code",
+            tools=[{"type": "code_interpreter"}]
+        )
+        print("Interpreter created")
 
-    # Upload a reference file
-    with open(filepath, "rb") as file:
-        uploaded_file = client.files.create(
-            file=file,
-            purpose='assistants'
+        # Upload a reference file
+        with open(filepath, "rb") as file:
+            uploaded_file = client.files.create(
+                file=file,
+                purpose='assistants'
+            )
+
+        print(f"File {filename} uploaded")
+        # Log the processed file
+        log_processed_file(filename)
+
+        # Create a thread and pass a message
+        thread = client.beta.threads.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": "Make the code energy efficient",
+                    "file_ids": [uploaded_file.id]
+                }
+            ]
         )
 
-    print(f"File {filename} uploaded")
-    # Log the processed file
-    log_processed_file(filename)
-
-    # Create a thread and pass a message
-    thread = client.beta.threads.create(
-        messages=[
-            {
-                "role": "user",
-                "content": "Make the code energy efficient",
-                "file_ids": [uploaded_file.id]
-            }
-        ]
-    )
-
-    # Wait for the run to complete
-    print("Prompt applied")
-    run = client.beta.threads.runs.create(
-        thread_id=thread.id,
-        assistant_id=assistant.id
-    )
-
-    print("Going to check status")
-    while True:
-        run_status = client.beta.threads.runs.retrieve(
+        # Wait for the run to complete
+        print("Prompt applied")
+        run = client.beta.threads.runs.create(
             thread_id=thread.id,
-            run_id=run.id
-        ).status
-        if run_status == 'completed':
-            break
+            assistant_id=assistant.id
+        )
+
+        print("Going to check status")
+        while True:
+            run_status = client.beta.threads.runs.retrieve(
+                thread_id=thread.id,
+                run_id=run.id
+            ).status
+            if run_status == 'completed':
+                break
+            else:
+                time.sleep(5)
+
+        # Print messages in the thread post run
+        messages = client.beta.threads.messages.list(
+            thread_id=thread.id
+        )
+        print(messages.model_dump_json(indent=2))
+
+        # Extract the content of the latest question only
+        data = json.loads(messages.model_dump_json(indent=2))
+        try:
+            code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
+        except (IndexError, KeyError):
+            print("Error extracting file content")
+            return
+
+        print("File content is extracted")
+        content = client.files.content(code)  # Ensure 'code' is correctly obtained
+        if content:  # Verify content is not empty or null
+            download_path = os.path.join(download_directory, filename)
+            with open(download_path, 'wb') as f:
+                f.write(content)
+            print("File downloaded")
+            log_processed_file(filename)  # Log as processed only after successful download
         else:
-            time.sleep(5)
-
-    # Print messages in the thread post run
-    messages = client.beta.threads.messages.list(
-        thread_id=thread.id
-    )
-    print(messages.model_dump_json(indent=2))
-
-    # Extract the content of the latest question only
-    data = json.loads(messages.model_dump_json(indent=2))
-    try:
-        code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
-    except (IndexError, KeyError):
-        print("Error extracting file content")
-        return
-
-    print("File content is extracted")
-    content = client.files.content(code)
-    download_path = os.path.join(download_directory, filename)
-    with open(download_path, 'wb') as f:
-        f.write(content)
-    print("File downloaded")
+            print(f"Failed to download content for {filename}")
+    except Exception as e:
+        print(f"An error occurred while processing {filename}: {e}")
 
 # Main script
 try:
