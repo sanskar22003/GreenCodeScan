@@ -35,6 +35,12 @@ def log_processed_file(filename):
 
 # Function to process file
 def process_file(filepath):
+    filename = os.path.basename(filepath)
+    # Check if the file is already processed
+    if is_file_processed(filename):
+        print(f"File {filename} is already processed.")
+        return
+
     # Create an assistant
     assistant = client.beta.assistants.create(
         name='Green IT Code Writer 66',
@@ -50,6 +56,7 @@ def process_file(filepath):
         tools=[{"type": "code_interpreter"}]
     )
     print("Interpreter created")
+
     # Upload a reference file
     with open(filepath, "rb") as file:
         uploaded_file = client.files.create(
@@ -57,8 +64,11 @@ def process_file(filepath):
             purpose='assistants'
         )
 
+    print(f"File {filename} uploaded")
+    # Log the processed file
+    log_processed_file(filename)
+
     # Create a thread and pass a message
-    print("File" + filename + "uploaded")
     thread = client.beta.threads.create(
         messages=[
             {
@@ -87,26 +97,26 @@ def process_file(filepath):
         else:
             time.sleep(5)
 
-    # Download the refined file
-    print("Status is Completed")
+    # Print messages in the thread post run
     messages = client.beta.threads.messages.list(
         thread_id=thread.id
     )
+    print(messages.model_dump_json(indent=2))
+
+    # Extract the content of the latest question only
     data = json.loads(messages.model_dump_json(indent=2))
-    # Before accessing the list elements, check if they exist
     try:
         code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
-    except (IndexError, KeyError) as e:
-        print(f"Error accessing data: {e}")
-    # Handle the error appropriately, e.g., log it, retry, or skip this file
+    except (IndexError, KeyError):
+        print("Error extracting file content")
         return
+
     print("File content is extracted")
     content = client.files.content(code)
-    download_path = os.path.join(download_directory, os.path.basename(filepath))
-    content.write_to_file(download_path)
-    print("file Downloaded")
-    # Log the processed file
-    log_processed_file(os.path.basename(filepath))
+    download_path = os.path.join(download_directory, filename)
+    with open(download_path, 'wb') as f:
+        f.write(content)
+    print("File downloaded")
 
 # Main script
 try:
