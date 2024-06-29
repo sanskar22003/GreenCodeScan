@@ -48,7 +48,20 @@ def process_file(filepath):
         return
 
     try:
-    # Create an assistant
+        #Create a thread
+        thread = client.beta.threads.create()
+        # Upload a reference file
+        with open(filepath, "rb") as file:
+            uploaded_file = client.files.create(
+                file=file,
+                purpose='assistants'
+            )
+
+        print(f"File {filename} uploaded")
+        # Log the processed file
+        log_processed_file(filename)
+
+        # Create an assistant and a thread to apply prompt
         assistant = client.beta.assistants.create(
             name='Green IT Code Writer 66',
             instructions="You are a helpful AI assistant who re-factors the code from an uploaded file to make it more efficient"
@@ -64,18 +77,6 @@ def process_file(filepath):
         )
         print("Interpreter created")
 
-        # Upload a reference file
-        with open(filepath, "rb") as file:
-            uploaded_file = client.files.create(
-                file=file,
-                purpose='assistants'
-            )
-
-        print(f"File {filename} uploaded")
-        # Log the processed file
-        log_processed_file(filename)
-
-        # Create a thread and pass a message
         thread = client.beta.threads.create(
             messages=[
                 {
