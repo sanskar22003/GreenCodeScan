@@ -68,7 +68,7 @@ for file_name in os.listdir(source_directory):
             log_file.write(f"{file_name}\n")
         uploaded_files.add(file_name)  # Step 3: Add the file name to the set
         break  # Process one file at a time
-    
+
 # Pass a message to thread
 thread = client.beta.threads.create(
     messages=[
