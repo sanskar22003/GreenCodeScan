@@ -125,6 +125,6 @@ source_files = {f for f in os.listdir(source_directory) if f.endswith('.py') or 
 refined_files = {f for f in os.listdir(download_directory) if f.endswith('.py') or f.endswith('.java')}
 
 if source_files.issubset(refined_files):
-    print('done')
+    print('Script-Has-Uploaded-All-Files')
 else:
-    print('pending')
+    print('Script-Has-Remain-Some-Files-To-Uploaded')
