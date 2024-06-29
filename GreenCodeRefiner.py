@@ -5,10 +5,9 @@ import time
 from dotenv import load_dotenv
 from openai import AzureOpenAI
 
-# Paths
+# Define directories
 source_directory = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\tests'
 download_directory = "D:\\Documents\\TechM\\Green_Software_Development\\Third Task\\Projects & Docs\\Assistant api\\Refined Files"
-log_file_path = "processed_files.log"
 
 # Load environment variables
 load_dotenv(dotenv_path=".env", verbose=True, override=True)
@@ -20,110 +19,112 @@ client = AzureOpenAI(
     azure_endpoint="https://green-code-uks.openai.azure.com"
 )
 
-# Function to check if file is already processed
-def is_file_processed(filename):
-    if os.path.exists(log_file_path):
-        with open(log_file_path, 'r') as log_file:
-            processed_files = log_file.read().splitlines()
-            return filename in processed_files
-    return False
+# Create an assistant
+assistant = client.beta.assistants.create(
+    name='Green IT Code Writer 43',
+    instructions=("You are a helpful AI assistant who re-factors the code from an uploaded file to make it more efficient"
+                  "You have access to a sandboxed environment for writing and testing code."
+                  "1. Re-write the code in the same language as the original code."
+                  "2. Test the re-written code and ensure it functions correctly and same as the original code."
+                  "3. Run the code to confirm that it runs successfully"
+                  "4. If the code runs successfully, share the code as a file that can be downloaded"
+                  "5. If the code is unsuccessful display the error message and try to revise the code and rerun."),
+    model="code",
+    tools=[{"type": "code_interpreter"}]
+)
 
-# Function to log processed file
-def log_processed_file(filename):
-    with open(log_file_path, 'a') as log_file:
-        log_file.write(filename + '\n')
+# Create a thread
+thread = client.beta.threads.create()
+print(thread)
 
-# Function to process file
-def process_file(filepath):
-    # Create an assistant
-    assistant = client.beta.assistants.create(
-        name='Green IT Code Writer 66',
-        instructions="You are a helpful AI assistant who re-factors the code from an uploaded file to make it more efficient"
-                     "You have access to a sandboxed environment for writing and testing code."
-                     "You should follow these steps:"
-                     "1. Re-write the code in the same language as the original code."
-                     "2. Test the re-written code and ensure it functions correctly and same as the original code."
-                     "3. Run the code to confirm that it runs successfully"
-                     "4. If the code runs successfully, share the code as a file that can be downloaded"
-                     "5. If the code is unsuccessful display the error message and try to revise the code and rerun going through the steps from above again.",
-        model="code",
-        tools=[{"type": "code_interpreter"}]
-    )
-    print("Interpreter created")
-    # Upload a reference file
-    with open(filepath, "rb") as file:
-        uploaded_file = client.files.create(
-            file=file,
-            purpose='assistants'
-        )
+# Log file creation
+log_file_path = os.path.join(download_directory, "upload_log.txt")
+if not os.path.exists(log_file_path):
+    with open(log_file_path, 'w') as log_file:
+        log_file.write("")
 
-    # Create a thread and pass a message
-    print("File" + filename + "uploaded")
-    thread = client.beta.threads.create(
-        messages=[
-            {
-                "role": "user",
-                "content": "Make the code energy efficient",
-                "file_ids": [uploaded_file.id]
-            }
-        ]
-    )
+# Step 1: Read the log file into a set
+uploaded_files = set()
+if os.path.exists(log_file_path):
+    with open(log_file_path, 'r') as log_file:
+        uploaded_files = {line.strip() for line in log_file}
 
-    # Wait for the run to complete
-    print("Prompt applied")
-    run = client.beta.threads.runs.create(
-        thread_id=thread.id,
-        assistant_id=assistant.id
-    )
+# Upload a reference file
+for file_name in os.listdir(source_directory):
+    if file_name.endswith('.py') or file_name.endswith('.java'):
+        # Step 2: Check if the current file is in the set
+        if file_name in uploaded_files:
+            print(f"{file_name} has already been uploaded. Skipping.")
+            continue  # Skip this file and move to the next one
 
-    print("Going to check status")
-    while True:
-        run_status = client.beta.threads.runs.retrieve(
-            thread_id=thread.id,
-            run_id=run.id
-        ).status
-        if run_status == 'completed':
-            break
-        else:
-            time.sleep(5)
+        file_path = os.path.join(source_directory, file_name)
+        with open(file_path, "rb") as file:
+            uploaded_file = client.files.create(
+                file=file,
+                purpose='assistants'
+            )
+        # Write uploaded file name to log file and add to the set
+        with open(log_file_path, 'a') as log_file:
+            log_file.write(f"{file_name}\n")
+        uploaded_files.add(file_name)  # Step 3: Add the file name to the set
+        break  # Process one file at a time
+    
+# Pass a message to thread
+thread = client.beta.threads.create(
+    messages=[
+        {
+            "role": "user",
+            "content": "Make the code energy efficient",
+            "file_ids": [uploaded_file.id]
+        }
+    ]
+)
 
-    # Download the refined file
-    print("Status is Completed")
-    messages = client.beta.threads.messages.list(
-        thread_id=thread.id
-    )
-    data = json.loads(messages.model_dump_json(indent=2))
-    # Before accessing the list elements, check if they exist
-    try:
-        code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
-    except (IndexError, KeyError) as e:
-        print(f"Error accessing data: {e}")
-    # Handle the error appropriately, e.g., log it, retry, or skip this file
-        return
-    print("File content is extracted")
-    content = client.files.content(code)
-    download_path = os.path.join(download_directory, os.path.basename(filepath))
-    content.write_to_file(download_path)
-    print("file Downloaded")
-    # Log the processed file
-    log_processed_file(os.path.basename(filepath))
+#Check messages in the thread
+thread_messages = client.beta.threads.messages.list(thread.id)
+print(thread_messages.model_dump_json(indent=2))
 
-# Main script
-try:
-    for filename in os.listdir(source_directory):
-        filepath = os.path.join(source_directory, filename)
-        if filename.endswith(('.py', '.java')) and not is_file_processed(filename):
-            process_file(filepath)
-except Exception as e:
-    print(f"An error occurred during file processing: {e}")
+run = client.beta.threads.runs.create(
+  thread_id=thread.id,
+  assistant_id=assistant.id
+)
 
-# Final check for 'done' or 'pending'
-try:
-    source_files = {f for f in os.listdir(source_directory) if f.endswith(('.py', '.java'))}
-    downloaded_files = {f for f in os.listdir(download_directory) if f.endswith(('.py', '.java'))}
-    if source_files.issubset(downloaded_files):
-        print('done')
+# Retrieve the status of the run
+while True:
+    # Retrieve the status of the run
+    run_status = client.beta.threads.runs.retrieve(
+      thread_id=thread.id,
+      run_id=run.id
+    ).status
+    print(f"Current status: {run_status}")
+    
+    # Check if the status is 'completed'
+    if run_status == 'completed':
+        break  # Exit the loop if completed
     else:
-        print('pending')
-except Exception as e:
-    print(f"An error occurred during the final check: {e}")
+        time.sleep(5)  # Wait for 5 seconds before checking again
+      
+#Print messages in the thread post run
+messages = client.beta.threads.messages.list(
+  thread_id=thread.id
+)
+
+print(messages.model_dump_json(indent=2))
+
+#Extract the content of the latest question only
+data = json.loads(messages.model_dump_json(indent=2))
+code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
+print(code)
+
+content = client.files.content(code)
+refined_file_path = os.path.join(download_directory, file_name)  # Reuse file_name from the loop
+code_file = content.write_to_file(refined_file_path)
+
+# Check if all Python and Java files have been refined
+source_files = {f for f in os.listdir(source_directory) if f.endswith('.py') or f.endswith('.java')}
+refined_files = {f for f in os.listdir(download_directory) if f.endswith('.py') or f.endswith('.java')}
+
+if source_files.issubset(refined_files):
+    print('done')
+else:
+    print('pending')
