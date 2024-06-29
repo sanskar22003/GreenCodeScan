@@ -24,14 +24,16 @@ client = AzureOpenAI(
 if not os.path.exists(download_directory):
     os.makedirs(download_directory)
 
+# Ensure log file exists
+if not os.path.exists(log_file_path):
+    with open(log_file_path, 'w') as log_file:
+        log_file.write('')
 
 # Function to check if file is already processed
 def is_file_processed(filename):
-    if os.path.exists(log_file_path):
-        with open(log_file_path, 'r') as log_file:
-            processed_files = log_file.read().splitlines()
-            return filename in processed_files
-    return False
+    with open(log_file_path, 'r') as log_file:
+        processed_files = log_file.read().splitlines()
+        return filename in processed_files
 
 # Function to log processed file
 def log_processed_file(filename):
@@ -142,7 +144,10 @@ except Exception as e:
 try:
     source_files = {f for f in os.listdir(source_directory) if f.endswith(('.py', '.java'))}
     downloaded_files = {f for f in os.listdir(download_directory) if f.endswith(('.py', '.java'))}
-    if source_files.issubset(downloaded_files):
+    processed_files = set()
+    with open(log_file_path, 'r') as log_file:
+        processed_files = {line.strip() for line in log_file.readlines()}
+    if source_files.issubset(processed_files):
         print('done')
     else:
         print('pending')
