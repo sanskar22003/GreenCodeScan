@@ -69,9 +69,9 @@ for script in os.listdir(SCRIPTS_DIR):
         tracker.stop()
 
         # Check if the emissions.csv file is empty
-        if os.stat(EMISSIONS_CSV).st_size != 0:
-            # Read the emissions data from the CSV file
-            emissions_data = pd.read_csv(EMISSIONS_CSV).iloc[-1]
+        emissions_df = pd.read_csv(EMISSIONS_CSV)
+        if not emissions_df.empty:
+            emissions_data = emissions_df.iloc[-1]
 
             # Retrieve and format the emissions data
             data = [
