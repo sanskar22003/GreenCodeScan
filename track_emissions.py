@@ -77,10 +77,13 @@ for script in os.listdir(SCRIPTS_DIR):
         # Stop the emissions tracker
         tracker.stop()
 
-        # Check if the emissions.csv file is empty
-        if os.stat(EMISSIONS_CSV).st_size != 0:
+        emissions_df = pd.read_csv(EMISSIONS_CSV)
+        if not emissions_df.empty:
+                emissions_data = emissions_df.iloc[-1]
+        # Check if the emissions.csv file is empty                            #/////////////////MODIFIED////////////////////////////
+        '''if os.stat(EMISSIONS_CSV).st_size != 0:
             # Read the emissions data from the CSV file
-            emissions_data = pd.read_csv(EMISSIONS_CSV).iloc[-1]
+            emissions_data = pd.read_csv(EMISSIONS_CSV).iloc[-1]'''
 
             # Retrieve and format the emissions data
             data = [
@@ -100,6 +103,8 @@ for script in os.listdir(SCRIPTS_DIR):
                 emissions_data['energy_consumed'] * 1000,  # Convert from kWh to Wh
                 test_output
             ]
+        else:
+            print("EMISSIONS_CSV is empty. No emissions data to process.")
 
         # Write the data to the CSV file
         with open(EMISSIONS_DATA_CSV, 'a', newline='') as file:
