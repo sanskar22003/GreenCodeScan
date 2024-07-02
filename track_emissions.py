@@ -79,7 +79,7 @@ for script in os.listdir(SCRIPTS_DIR):
 
         emissions_df = pd.read_csv(EMISSIONS_CSV)
         if not emissions_df.empty:
-                emissions_data = emissions_df.iloc[-1]
+            emissions_data = emissions_df.iloc[-1]
         # Check if the emissions.csv file is empty                            #/////////////////MODIFIED////////////////////////////
         '''if os.stat(EMISSIONS_CSV).st_size != 0:
             # Read the emissions data from the CSV file
