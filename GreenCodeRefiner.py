@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from openai import AzureOpenAI
 
 # Define directories
-source_directory = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\tests'
+source_directory = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\tests2'
 download_directory = "D:\\Documents\\TechM\\Green_Software_Development\\Third Task\\Projects & Docs\\Assistant api\\Refined Files"
 
 # Load environment variables
