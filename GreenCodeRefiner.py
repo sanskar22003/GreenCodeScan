@@ -20,7 +20,7 @@ client = AzureOpenAI(
 
 # Create an assistant
 assistant = client.beta.assistants.create(
-    name='Green IT Code Writer 43',
+    name='GreenCodeRefiner 1.0',
     instructions=("You are a helpful AI assistant who re-factors the code from an uploaded file to make it more efficient"
                   "You have access to a sandboxed environment for writing and testing code."
                   "1. Re-write the code in the same language as the original code."
