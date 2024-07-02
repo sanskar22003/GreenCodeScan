@@ -8,13 +8,13 @@ import pandas as pd
 import sys
 
 # Define all paths and constants here
-BASE_DIR = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
+BASE_DIR = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\tests2"    #Modified: BASE_DIR = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
 SCRIPTS_DIR = os.path.join(BASE_DIR)
-TESTS_DIR = os.path.join(BASE_DIR, "tests")
+TESTS_DIR = os.path.join(BASE_DIR, "tests2")        #modified: TESTS_DIR = os.path.join(BASE_DIR, "tests")
 PYTEST_PATH = r"C:\Users\sansk\AppData\Local\Programs\Python\Python312\Scripts\pytest.exe"
 MAVEN_PATH = r"C:\Users\sansk\Downloads\apache-maven-3.9.6\bin\mvn.cmd"
 EMISSIONS_CSV = os.path.join(BASE_DIR, 'emissions.csv')
-EMISSIONS_DATA_CSV = 'emissions_data.csv'
+EMISSIONS_DATA_CSV = 'emissions_data_before.csv'        #Modified: EMISSIONS_DATA_CSV = 'emissions_data.csv'
 CUSTOMER_NAME = "ZF"
 
 # Check if the CSV file exists, if not create it and write the header
