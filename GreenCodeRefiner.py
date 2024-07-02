@@ -5,22 +5,23 @@ import time
 from dotenv import load_dotenv
 from openai import AzureOpenAI
 
-# Load environment variables from 'credential.env'
-load_dotenv(dotenv_path="credential.env", verbose=True, override=True)
+# Define directories
+source_directory = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\tests'
+download_directory = "D:\\Documents\\TechM\\Green_Software_Development\\Third Task\\Projects & Docs\\Assistant api\\Refined Files"
 
-source_directory = os.getenv('SOURCE_DIRECTORY')
-download_directory = os.getenv('DOWNLOAD_DIRECTORY')
+# Load environment variables
+load_dotenv(dotenv_path=".env", verbose=True, override=True)
 
-# Initialize AzureOpenAI client with environment variables
+# Initialize AzureOpenAI client
 client = AzureOpenAI(
-    api_key=os.getenv('API_KEY'),
-    api_version=os.getenv('API_VERSION'),
-    azure_endpoint=os.getenv('AZURE_ENDPOINT')
+    api_key="eadf76dd169e4172a463e7375946835f",
+    api_version="2024-02-15-preview",
+    azure_endpoint="https://green-code-uks.openai.azure.com"
 )
 
 # Create an assistant
 assistant = client.beta.assistants.create(
-    name='GreenCodeRefiner 2.0',
+    name='GreenCodeRefiner 3.0',
     instructions=("You are a helpful AI assistant who re-factors the code from an uploaded file to make it more efficient"
                   "You have access to a sandboxed environment for writing and testing code."
                   "1. Re-write the code in the same language as the original code."
@@ -36,7 +37,6 @@ assistant = client.beta.assistants.create(
 thread = client.beta.threads.create()
 print(thread)
 
-uploaded_file = None
 # Log file creation
 log_file_path = os.path.join(download_directory, "upload_log.txt")
 if not os.path.exists(log_file_path):
