@@ -36,6 +36,7 @@ assistant = client.beta.assistants.create(
 thread = client.beta.threads.create()
 print(thread)
 
+uploaded_file = None
 # Log file creation
 log_file_path = os.path.join(download_directory, "upload_log.txt")
 if not os.path.exists(log_file_path):
