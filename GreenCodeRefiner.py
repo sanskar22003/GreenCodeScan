@@ -5,18 +5,17 @@ import time
 from dotenv import load_dotenv
 from openai import AzureOpenAI
 
-# Define directories
-source_directory = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\tests'
-download_directory = "D:\\Documents\\TechM\\Green_Software_Development\\Third Task\\Projects & Docs\\Assistant api\\Refined Files"
+# Load environment variables from 'credential.env'
+load_dotenv(dotenv_path="credential.env", verbose=True, override=True)
 
-# Load environment variables
-load_dotenv(dotenv_path=".env", verbose=True, override=True)
+source_directory = os.getenv('SOURCE_DIRECTORY')
+download_directory = os.getenv('DOWNLOAD_DIRECTORY')
 
-# Initialize AzureOpenAI client
+# Initialize AzureOpenAI client with environment variables
 client = AzureOpenAI(
-    api_key="eadf76dd169e4172a463e7375946835f",
-    api_version="2024-02-15-preview",
-    azure_endpoint="https://green-code-uks.openai.azure.com"
+    api_key=os.getenv('API_KEY'),
+    api_version=os.getenv('API_VERSION'),
+    azure_endpoint=os.getenv('AZURE_ENDPOINT')
 )
 
 # Create an assistant
