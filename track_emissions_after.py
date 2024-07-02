@@ -67,6 +67,9 @@ for script in os.listdir(SCRIPTS_DIR):
 
         # Stop the emissions tracker
         tracker.stop()
+        
+                # Initialize data with a default value
+        data = [CUSTOMER_NAME, script, file_type, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), "No data"] + [None] * 10  # Adjust the default values as needed
 
         # Check if the emissions.csv file is empty
         emissions_df = pd.read_csv(EMISSIONS_CSV)
