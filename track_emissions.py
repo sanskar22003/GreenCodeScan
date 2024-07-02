@@ -74,17 +74,12 @@ for script in os.listdir(SCRIPTS_DIR):
         except subprocess.TimeoutExpired:
             print(f"Script {script} exceeded the timeout limit.")
 
-        # Stop the emissions tracker
+                # Stop the emissions tracker
         tracker.stop()
 
         emissions_df = pd.read_csv(EMISSIONS_CSV)
         if not emissions_df.empty:
             emissions_data = emissions_df.iloc[-1]
-        # Check if the emissions.csv file is empty                            #/////////////////MODIFIED////////////////////////////
-        '''if os.stat(EMISSIONS_CSV).st_size != 0:
-            # Read the emissions data from the CSV file
-            emissions_data = pd.read_csv(EMISSIONS_CSV).iloc[-1]'''
-
             # Retrieve and format the emissions data
             data = [
                 CUSTOMER_NAME,
@@ -105,6 +100,8 @@ for script in os.listdir(SCRIPTS_DIR):
             ]
         else:
             print("EMISSIONS_CSV is empty. No emissions data to process.")
+            # Ensure 'data' variable is defined even if EMISSIONS_CSV is empty to avoid NameError
+            data = [CUSTOMER_NAME, script, file_type, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), "No data"] * 9  # Adjust according to your needs
 
         # Write the data to the CSV file
         with open(EMISSIONS_DATA_CSV, 'a', newline='') as file:
