@@ -8,7 +8,7 @@ import pandas as pd
 import sys
 
 # Define all paths and constants here
-BASE_DIR = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\tests2"    #Modified: BASE_DIR = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
+BASE_DIR = r"D:\Documents\TechM\Green_Software_Development\Third Task\Projects & Docs\Assistant api\Refined Files"    #Modified: BASE_DIR = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
 SCRIPTS_DIR = os.path.join(BASE_DIR)
 TESTS_DIR = os.path.join(BASE_DIR, "tests2")        #modified: TESTS_DIR = os.path.join(BASE_DIR, "tests")
 PYTEST_PATH = r"C:\Users\sansk\AppData\Local\Programs\Python\Python312\Scripts\pytest.exe"
