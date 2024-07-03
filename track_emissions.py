@@ -101,7 +101,7 @@ for script in os.listdir(SCRIPTS_DIR):
         else:
             print("EMISSIONS_CSV is empty. No emissions data to process.")
             # Ensure 'data' variable is defined even if EMISSIONS_CSV is empty to avoid NameError
-            data = [CUSTOMER_NAME, script, file_type, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), "No data"] * 9  # Adjust according to your needs
+            data = [CUSTOMER_NAME, script, file_type, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), emissions_data['emissions'] * 1000, duration, emissions_data['emissions_rate'] * 1000, emissions_data['cpu_power'], emissions_data['gpu_power'], emissions_data['ram_power'], emissions_data['cpu_energy'] * 1000, emissions_data['gpu_energy'], emissions_data['ram_energy'] * 1000, emissions_data['energy_consumed'] * 1000, test_output] * 1  # Adjust according to your needs
 
         # Write the data to the CSV file
         with open(EMISSIONS_DATA_CSV, 'a', newline='') as file:
