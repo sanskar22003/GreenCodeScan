@@ -8,22 +8,22 @@ import pandas as pd
 import sys
 
 # Define all paths and constants here
-BASE_DIR = r"D:\Documents\TechM\Green_Software_Development\Third Task\Projects & Docs\Assistant api\Refined Files"    #Modified: BASE_DIR = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
+BASE_DIR = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline"
 SCRIPTS_DIR = os.path.join(BASE_DIR)
-TESTS_DIR = os.path.join(BASE_DIR, "tests2")        #modified: TESTS_DIR = os.path.join(BASE_DIR, "tests")
+TESTS_DIR = os.path.join(BASE_DIR, "tests")
 PYTEST_PATH = r"C:\Users\sansk\AppData\Local\Programs\Python\Python312\Scripts\pytest.exe"
 MAVEN_PATH = r"C:\Users\sansk\Downloads\apache-maven-3.9.6\bin\mvn.cmd"
 EMISSIONS_CSV = os.path.join(BASE_DIR, 'emissions.csv')
-EMISSIONS_DATA_CSV = 'emissions_data_before.csv'        #Modified: EMISSIONS_DATA_CSV = 'emissions_data.csv'
+EMISSIONS_DATA_CSV = 'emissions_data.csv'
 CUSTOMER_NAME = "ZF"
 
 #Added \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-# Ensure the EMISSIONS_CSV file exists, if not create it and write the header
+'''# Ensure the EMISSIONS_CSV file exists, if not create it and write the header
 if not os.path.exists(EMISSIONS_CSV):
     with open(EMISSIONS_CSV, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["Customer Name", "Application name", "File Type", "Timestamp", "Emissions (gCO2eq)", "Duration", "emissions_rate", "CPU Power (KWh)", "GPU Power (KWh)", "RAM Power (KWh)", "CPU Energy (Wh)", "GPU Energy (KWh)", "RAM Energy (Wh)", "Energy Consumed (Wh)", "Test Results"])
-
+'''
 #\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 
@@ -77,9 +77,11 @@ for script in os.listdir(SCRIPTS_DIR):
                 # Stop the emissions tracker
         tracker.stop()
 
-        emissions_df = pd.read_csv(EMISSIONS_CSV)
-        if not emissions_df.empty:
-            emissions_data = emissions_df.iloc[-1]
+    # Check if the emissions.csv file is empty
+        if os.stat(EMISSIONS_CSV).st_size != 0:
+        # Read the emissions data from the CSV file
+            emissions_data = pd.read_csv(EMISSIONS_CSV).iloc[-1]
+    
             # Retrieve and format the emissions data
             data = [
                 CUSTOMER_NAME,
@@ -98,12 +100,8 @@ for script in os.listdir(SCRIPTS_DIR):
                 emissions_data['energy_consumed'] * 1000,  # Convert from kWh to Wh
                 test_output
             ]
-        else:
-            print("EMISSIONS_CSV is empty. No emissions data to process.")
-            # Ensure 'data' variable is defined even if EMISSIONS_CSV is empty to avoid NameError
-            data = [CUSTOMER_NAME, script, file_type, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'No Data'] * 1  
 
-        # Write the data to the CSV file
+    # Write the data to the CSV file
         with open(EMISSIONS_DATA_CSV, 'a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(data)
