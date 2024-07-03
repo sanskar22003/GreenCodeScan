@@ -51,9 +51,10 @@ if os.path.exists(log_file_path):
         uploaded_files = {line.strip() for line in log_file}
 
 # Upload a reference file
+file_processed = False  # Flag to indicate if a new file has been processed
 for file_name in os.listdir(source_directory):
     if file_name.endswith('.py') or file_name.endswith('.java'):
-        # Step 2: Check if the current file is in the set
+        # Check if the current file is in the set
         if file_name in uploaded_files:
             print(f"{file_name} has already been uploaded. Skipping.")
             continue  # Skip this file and move to the next one
@@ -67,19 +68,23 @@ for file_name in os.listdir(source_directory):
         # Write uploaded file name to log file and add to the set
         with open(log_file_path, 'a') as log_file:
             log_file.write(f"{file_name}\n")
-        uploaded_files.add(file_name)  # Step 3: Add the file name to the set
+        uploaded_files.add(file_name)
+        file_processed = True  # Set the flag to True as a file has been processed
+
+        # Pass a message to thread for the uploaded file
+        thread = client.beta.threads.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": "Make the code energy efficient",
+                    "file_ids": [uploaded_file.id]
+                }
+            ]
+        )
         break  # Process one file at a time
 
-# Pass a message to thread
-thread = client.beta.threads.create(
-    messages=[
-        {
-            "role": "user",
-            "content": "Make the code energy efficient",
-            "file_ids": [uploaded_file.id]
-        }
-    ]
-)
+if not file_processed:
+    print("No new files were processed.")
 
 #Check messages in the thread
 thread_messages = client.beta.threads.messages.list(thread.id)
