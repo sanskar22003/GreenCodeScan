@@ -24,7 +24,7 @@ else:
 # Only create the file if it does not exist
 if file_needs_creation:
     # Code content to write in the Python file
-    code_content = """
+    code_content = r"""
     import os
     import subprocess
     import csv
