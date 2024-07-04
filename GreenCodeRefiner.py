@@ -115,7 +115,26 @@ messages = client.beta.threads.messages.list(
   thread_id=thread.id
 )
 
-print(messages.model_dump_json(indent=2))
+# Extract the content of the latest question only, with safety checks
+data = json.loads(messages.model_dump_json(indent=2))
+
+# Initialize code to None
+code = None
+
+# Check if data and nested structures exist and are not empty
+if data['data'] and data['data'][0]['content'] and data['data'][0]['content'][0]['text']['annotations']:
+    # Now it's safe to access the first element
+    code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
+
+# Proceed only if code is not None
+if code:
+    content = client.files.content(code)
+    refined_file_path = os.path.join(download_directory, file_name)  # Reuse file_name from the loop
+    code_file = content.write_to_file(refined_file_path)
+else:
+    print("No code found or annotations list is empty.")
+
+'''print(messages.model_dump_json(indent=2))
 
 #Extract the content of the latest question only
 data = json.loads(messages.model_dump_json(indent=2))
@@ -124,7 +143,7 @@ print(code)
 
 content = client.files.content(code)
 refined_file_path = os.path.join(download_directory, file_name)  # Reuse file_name from the loop
-code_file = content.write_to_file(refined_file_path)
+code_file = content.write_to_file(refined_file_path) '''
 
 # Check if all Python and Java files have been refined
 source_files = {f for f in os.listdir(source_directory) if f.endswith('.py') or f.endswith('.java')}
