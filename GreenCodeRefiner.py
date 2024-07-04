@@ -19,10 +19,10 @@ client = AzureOpenAI(
     api_version="2024-02-15-preview",
     azure_endpoint="https://green-code-uks.openai.azure.com"
 )
-unique_name = f"GreenCodeRefiner {uuid.uuid4()}"
+#unique_name = f"GreenCodeRefiner {uuid.uuid4()}"
 # Create an assistant
 assistant = client.beta.assistants.create(
-    name=unique_name,
+    name="GreenCodeRefiner 346",
     instructions=("You are a helpful AI assistant who re-factors the code from an uploaded file to make it more efficient"
                   "You have access to a sandboxed environment for writing and testing code."
                   "1. Re-write the code in the same language as the original code."
