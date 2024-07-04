@@ -10,6 +10,12 @@ from openai import AzureOpenAI
 source_directory = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\tests2'
 download_directory = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\Refined Files"
 
+#////////////////////////////////
+# Check if the download directory exists, if not, create it
+if not os.path.exists(download_directory):
+    os.makedirs(download_directory)
+#///////////////////////////////
+
 # Load environment variables
 load_dotenv(dotenv_path=".env", verbose=True, override=True)
 
