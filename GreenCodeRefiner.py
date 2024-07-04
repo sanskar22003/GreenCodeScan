@@ -44,17 +44,7 @@ MAVEN_PATH = r"C:\Users\sansk\Downloads\apache-maven-3.9.6\bin\mvn.cmd"
 EMISSIONS_CSV = os.path.join(BASE_DIR, 'emissions.csv')
 EMISSIONS_DATA_CSV = 'emissions_data_after.csv'
 CUSTOMER_NAME = "ZF"
-    
-    #Added \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-    '''# Ensure the EMISSIONS_CSV file exists, if not create it and write the header
-    if not os.path.exists(EMISSIONS_CSV):
-        with open(EMISSIONS_CSV, 'w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(["Customer Name", "Application name", "File Type", "Timestamp", "Emissions (gCO2eq)", "Duration", "emissions_rate", "CPU Power (KWh)", "GPU Power (KWh)", "RAM Power (KWh)", "CPU Energy (Wh)", "GPU Energy (KWh)", "RAM Energy (Wh)", "Energy Consumed (Wh)", "Test Results"])
-    '''
-    #\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-    
-    
+   
 # Check if the CSV file exists, if not create it and write the header
 if not os.path.exists(EMISSIONS_DATA_CSV):
     with open(EMISSIONS_DATA_CSV, 'w', newline='') as file:
