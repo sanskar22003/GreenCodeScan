@@ -21,6 +21,7 @@ class Plane:
 
   def move(self):
     print("Fly!")
+    print("hello")
 
 car1 = Car("Ford", "Mustang")       #Create a Car class
 boat1 = Boat("Ibiza", "Touring 20") #Create a Boat class
