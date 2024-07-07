@@ -2,8 +2,8 @@ import pandas as pd
 import os
 
 # Define file paths
-emissions_path = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\tests2\\emissions_data.csv"
-emissions_after_path = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\Refined Files\\emissions_data_after.csv"
+emissions_path = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\tests2\\before_emissions_data.csv"
+emissions_after_path = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\Refined Files\\after_emissions_data.csv"
 result_folder_path = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\Result"
 
 # Read CSV files
