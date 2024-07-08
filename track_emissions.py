@@ -21,12 +21,12 @@ def process_folder(BASE_DIR, EMISSIONS_DATA_CSV):
             writer = csv.writer(file)
             writer.writerow(["Customer Name", "Application name", "File Type", "Timestamp", "Emissions (gCO2eq)", "Duration", "emissions_rate", "CPU Power (KWh)", "GPU Power (KWh)", "RAM Power (KWh)", "CPU Energy (Wh)", "GPU Energy (KWh)", "RAM Energy (Wh)", "Energy Consumed (Wh)", "Test Results"])
 
-    # Before accessing EMISSIONS_CSV, ensure it exists to avoid FileNotFoundError
+   ''' # Before accessing EMISSIONS_CSV, ensure it exists to avoid FileNotFoundError
     if not os.path.exists(EMISSIONS_CSV):
         with open(EMISSIONS_CSV, 'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(["Customer Name", "Application name", "File Type", "Timestamp", "Emissions (gCO2eq)", "Duration", "emissions_rate", "CPU Power (KWh)", "GPU Power (KWh)", "RAM Power (KWh)", "CPU Energy (Wh)", "GPU Energy (KWh)", "RAM Energy (Wh)", "Energy Consumed (Wh)", "Test Results"])
-            
+     '''       
     # Iterate over each script in the directory
     for script in os.listdir(SCRIPTS_DIR):
         if script.endswith(('.py', '.java', '.cpp', '.cs')) and script != 'track_emissions.py' and script != 'product_detailsTest.java' and script != 'server_emissions.py' and script != 'update_google_sheets.py':
@@ -59,6 +59,13 @@ def process_folder(BASE_DIR, EMISSIONS_DATA_CSV):
                 print(f"Script {script} exceeded the timeout limit.")
 
             tracker.stop()
+
+            emissions_csv_default_path = 'emissions.csv'  # Default path where codecarbon saves the file
+            emissions_csv_target_path = os.path.join(BASE_DIR, 'emissions.csv')  # Target path as per your script
+
+# Check if the file exists at the default location and move it
+            if os.path.exists(emissions_csv_default_path):
+                shutil.move(emissions_csv_default_path, emissions_csv_target_path)
 
             if os.stat(EMISSIONS_CSV).st_size != 0:
                 emissions_data = pd.read_csv(EMISSIONS_CSV).iloc[-1]
