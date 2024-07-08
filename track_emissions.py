@@ -6,6 +6,7 @@ from datetime import datetime
 import time
 import pandas as pd
 import sys
+import shutil
 
 def process_folder(BASE_DIR, EMISSIONS_DATA_CSV):
     SCRIPTS_DIR = os.path.join(BASE_DIR)
