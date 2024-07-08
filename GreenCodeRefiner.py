@@ -55,38 +55,48 @@ if os.path.exists(log_file_path):
     with open(log_file_path, 'r') as log_file:
         uploaded_files = {line.strip() for line in log_file}
 
-# Upload a reference file
-file_processed = False  # Flag to indicate if a new file has been processed
-for file_name in os.listdir(source_directory):
-    if file_name.endswith('.py') or file_name.endswith('.java'):
-        # Check if the current file is in the set
-        if file_name in uploaded_files:
-            print(f"{file_name} has already been uploaded. Skipping.")
-            continue  # Skip this file and move to the next one
+# Function to process and upload files
+def process_and_upload_files(source_directory, relative_path=""):
+    file_processed = False  # Flag to indicate if a new file has been processed
+    for root, dirs, files in os.walk(source_directory):
+        for file_name in files:
+            if file_name.endswith('.py') or file_name.endswith('.java'):
+                # Construct relative file path
+                relative_file_path = os.path.join(relative_path, file_name)
+                # Check if the current file is in the set
+                if relative_file_path in uploaded_files:
+                    print(f"{relative_file_path} has already been uploaded. Skipping.")
+                    continue  # Skip this file and move to the next one
 
-        file_path = os.path.join(source_directory, file_name)
-        with open(file_path, "rb") as file:
-            uploaded_file = client.files.create(
-                file=file,
-                purpose='assistants'
-            )
-        # Write uploaded file name to log file and add to the set
-        with open(log_file_path, 'a') as log_file:
-            log_file.write(f"{file_name}\n")
-        uploaded_files.add(file_name)
-        file_processed = True  # Set the flag to True as a file has been processed
+                full_file_path = os.path.join(root, file_name)
+                with open(full_file_path, "rb") as file:
+                    uploaded_file = client.files.create(
+                        file=file,
+                        purpose='assistants'
+                    )
+                # Write uploaded file name to log file and add to the set
+                with open(log_file_path, 'a') as log_file:
+                    log_file.write(f"{relative_file_path}\n")
+                uploaded_files.add(relative_file_path)
+                file_processed = True  # Set the flag to True as a file has been processed
 
-        # Pass a message to thread for the uploaded file
-        thread = client.beta.threads.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": "Make the code energy efficient",
-                    "file_ids": [uploaded_file.id]
-                }
-            ]
-        )
-        break  # Process one file at a time
+                # Pass a message to thread for the uploaded file
+                thread = client.beta.threads.create(
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": "Make the code energy efficient",
+                            "file_ids": [uploaded_file.id]
+                        }
+                    ]
+                )
+                break  # Process one file at a time
+        if file_processed:
+            break  # Exit if a file has been processed
+    return file_processed
+
+# Call the function to process and upload files
+file_processed = process_and_upload_files(source_directory)
 
 if not file_processed:
     print("No new files were processed.")
