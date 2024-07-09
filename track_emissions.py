@@ -8,13 +8,19 @@ import pandas as pd
 import sys
 import shutil
 
-def process_folder(BASE_DIR, EMISSIONS_DATA_CSV):
+def process_folder(BASE_DIR, EMISSIONS_DATA_CSV, RESULT_DIR):
     SCRIPTS_DIR = os.path.join(BASE_DIR)
     TESTS_DIR = os.path.join(BASE_DIR, "tests")
     PYTEST_PATH = r"C:\Users\sansk\AppData\Local\Programs\Python\Python312\Scripts\pytest.exe"
     MAVEN_PATH = r"C:\Users\sansk\Downloads\apache-maven-3.9.6\bin\mvn.cmd"
-    EMISSIONS_CSV = os.path.join(BASE_DIR, 'emissions.csv')
     CUSTOMER_NAME = "ZF"
+
+    # Ensure the 'result' directory exists
+    if not os.path.exists(RESULT_DIR):
+        os.makedirs(RESULT_DIR)
+
+    # Adjust the path for emissions.csv to be within the 'result' directory
+    EMISSIONS_CSV = os.path.join(RESULT_DIR, 'emissions.csv')
 
     # Check if the CSV file exists, if not create it and write the header
     if not os.path.exists(EMISSIONS_DATA_CSV):
@@ -56,9 +62,9 @@ def process_folder(BASE_DIR, EMISSIONS_DATA_CSV):
             tracker.stop()
 
             emissions_csv_default_path = 'emissions.csv'  # Default path where codecarbon saves the file
-            emissions_csv_target_path = os.path.join(BASE_DIR, 'emissions.csv')  # Target path as per your script
+            emissions_csv_target_path = EMISSIONS_CSV  # Adjusted target path within 'result' directory
 
-# Check if the file exists at the default location and move it
+            # Check if the file exists at the default location and move it
             if os.path.exists(emissions_csv_default_path):
                 shutil.move(emissions_csv_default_path, emissions_csv_target_path)
 
@@ -92,7 +98,8 @@ def process_folder(BASE_DIR, EMISSIONS_DATA_CSV):
 # Define paths
 source_folder = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\tests2"
 refined_folder = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\Refined files"
+result_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\result"
 
 # Process each folder
-process_folder(source_folder, os.path.join(source_folder, 'before_emissions_data.csv'))
-process_folder(refined_folder, os.path.join(refined_folder, 'after_emissions_data.csv'))
+process_folder(source_folder, os.path.join(result_dir, 'before_emissions_data.csv'), result_dir)
+process_folder(refined_folder, os.path.join(result_dir, 'after_emissions_data.csv'), result_dir)
