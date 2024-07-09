@@ -8,7 +8,8 @@ from openai import AzureOpenAI
 
 # Define directories
 source_directory = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\tests2'
-download_directory = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\Refined Files"
+download_directory = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\Green_Refined_Files"
+#download_directory = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\Refined Files"
 
 # Function to ensure directory structure in download_directory mirrors source_directory
 def ensure_directory_structure(path):
