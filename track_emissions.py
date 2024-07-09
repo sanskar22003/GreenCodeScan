@@ -96,8 +96,8 @@ def process_folder(BASE_DIR, EMISSIONS_DATA_CSV, RESULT_DIR, suffix):
 
 # Define paths
 source_folder = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\tests2"
-refined_folder = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\Refined files"
-result_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\Refined files\Result"
+refined_folder = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\Green_Refined_Files"
+result_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\Green_Refined_Files\Result"
 
 # Process each folder with suffix
 process_folder(source_folder, os.path.join(result_dir, 'main_before_emissions_data.csv'), result_dir, 'before_in-detail')
