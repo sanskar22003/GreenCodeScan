@@ -90,6 +90,9 @@ for file_path in find_files(source_directory, ['.py', '.java']):
     refined_file_directory = os.path.join(download_directory, os.path.dirname(relative_path))
     ensure_directory_structure(refined_file_directory)
 
+    # Adjust the refined_file_path to include subdirectories correctly
+    refined_file_path = os.path.join(refined_file_directory, file_name)  # Corrected path
+
     # Pass a message to thread for the uploaded file
     thread = client.beta.threads.create(
         messages=[
@@ -106,7 +109,7 @@ if not file_processed:
     print("No new files were processed.")
 
 # Further processing and refinement logic remains the same
-#Check messages in the thread
+# Check messages in the thread
 thread_messages = client.beta.threads.messages.list(thread.id)
 print(thread_messages.model_dump_json(indent=2))
 
@@ -130,7 +133,7 @@ while True:
     else:
         time.sleep(5)  # Wait for 5 seconds before checking again
       
-#Print messages in the thread post run
+# Print messages in the thread post run
 messages = client.beta.threads.messages.list(
   thread_id=thread.id
 )
@@ -149,7 +152,7 @@ if data['data'] and data['data'][0]['content'] and data['data'][0]['content'][0]
 # Proceed only if code is not None
 if code:
     content = client.files.content(code)
-    refined_file_path = os.path.join(download_directory, file_name)  # Reuse file_name from the loop
+    # Use the corrected refined_file_path
     code_file = content.write_to_file(refined_file_path)
 else:
     print("No code found or annotations list is empty.")
