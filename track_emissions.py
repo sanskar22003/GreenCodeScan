@@ -8,7 +8,7 @@ import pandas as pd
 import sys
 import shutil
 
-def process_folder(BASE_DIR, EMISSIONS_DATA_CSV, RESULT_DIR):
+def process_folder(BASE_DIR, EMISSIONS_DATA_CSV, RESULT_DIR, suffix):
     SCRIPTS_DIR = os.path.join(BASE_DIR)
     TESTS_DIR = os.path.join(BASE_DIR, "tests")
     PYTEST_PATH = r"C:\Users\sansk\AppData\Local\Programs\Python\Python312\Scripts\pytest.exe"
@@ -19,8 +19,8 @@ def process_folder(BASE_DIR, EMISSIONS_DATA_CSV, RESULT_DIR):
     if not os.path.exists(RESULT_DIR):
         os.makedirs(RESULT_DIR)
 
-    # Adjust the path for emissions.csv to be within the 'result' directory
-    EMISSIONS_CSV = os.path.join(RESULT_DIR, 'emissions.csv')
+    # Adjust the path for emissions.csv to be within the 'result' directory with suffix
+    EMISSIONS_CSV = os.path.join(RESULT_DIR, f'emissions_{suffix}.csv')
 
     # Check if the CSV file exists, if not create it and write the header
     if not os.path.exists(EMISSIONS_DATA_CSV):
@@ -28,7 +28,6 @@ def process_folder(BASE_DIR, EMISSIONS_DATA_CSV, RESULT_DIR):
             writer = csv.writer(file)
             writer.writerow(["Customer Name", "Application name", "File Type", "Timestamp", "Emissions (gCO2eq)", "Duration", "emissions_rate", "CPU Power (KWh)", "GPU Power (KWh)", "RAM Power (KWh)", "CPU Energy (Wh)", "GPU Energy (KWh)", "RAM Energy (Wh)", "Energy Consumed (Wh)", "Test Results"])
 
-    # Iterate over each script in the directory
     for script in os.listdir(SCRIPTS_DIR):
         if script.endswith(('.py', '.java', '.cpp', '.cs')) and script != 'track_emissions.py' and script != 'product_detailsTest.java' and script != 'server_emissions.py' and script != 'update_google_sheets.py':
             tracker = EmissionsTracker()
@@ -62,7 +61,7 @@ def process_folder(BASE_DIR, EMISSIONS_DATA_CSV, RESULT_DIR):
             tracker.stop()
 
             emissions_csv_default_path = 'emissions.csv'  # Default path where codecarbon saves the file
-            emissions_csv_target_path = EMISSIONS_CSV  # Adjusted target path within 'result' directory
+            emissions_csv_target_path = EMISSIONS_CSV  # Adjusted target path within 'result' directory with suffix
 
             # Check if the file exists at the default location and move it
             if os.path.exists(emissions_csv_default_path):
@@ -100,6 +99,6 @@ source_folder = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipelin
 refined_folder = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\Refined files"
 result_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\Refined files\Result"
 
-# Process each folder
-process_folder(source_folder, os.path.join(result_dir, 'before_emissions_data.csv'), result_dir)
-process_folder(refined_folder, os.path.join(result_dir, 'after_emissions_data.csv'), result_dir)
+# Process each folder with suffix
+process_folder(source_folder, os.path.join(result_dir, 'before_emissions_data.csv'), result_dir, 'before')
+process_folder(refined_folder, os.path.join(result_dir, 'after_emissions_data.csv'), result_dir, 'after')
