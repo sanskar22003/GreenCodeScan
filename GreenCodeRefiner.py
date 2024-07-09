@@ -1,7 +1,7 @@
 import os
 import json
 import dotenv
-import uuid  # Import UUID module
+import uuid
 import time
 from dotenv import load_dotenv
 from openai import AzureOpenAI
@@ -10,11 +10,22 @@ from openai import AzureOpenAI
 source_directory = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\tests2'
 download_directory = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\Refined Files"
 
+# Function to ensure directory structure in download_directory mirrors source_directory
+def ensure_directory_structure(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+        print(f"Folder '{path}' created.")
+
+# Function to recursively find files with specific extensions
+def find_files(directory, extensions):
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith(tuple(extensions)):
+                yield os.path.join(root, file)
+
 # Check if the download directory exists, if not, create it
-if not os.path.exists(download_directory):
-    os.makedirs(download_directory)
-    print(f"Folder '{download_directory}' created.")
-    
+ensure_directory_structure(download_directory)
+
 # Load environment variables
 load_dotenv(dotenv_path=".env", verbose=True, override=True)
 
@@ -55,42 +66,46 @@ if os.path.exists(log_file_path):
     with open(log_file_path, 'r') as log_file:
         uploaded_files = {line.strip() for line in log_file}
 
-# Upload a reference file
+# Upload and refine files
 file_processed = False  # Flag to indicate if a new file has been processed
-for file_name in os.listdir(source_directory):
-    if file_name.endswith('.py') or file_name.endswith('.java'):
-        # Check if the current file is in the set
-        if file_name in uploaded_files:
-            print(f"{file_name} has already been uploaded. Skipping.")
-            continue  # Skip this file and move to the next one
+for file_path in find_files(source_directory, ['.py', '.java']):
+    relative_path = os.path.relpath(file_path, source_directory)
+    file_name = os.path.basename(file_path) 
+    if relative_path in uploaded_files:
+        print(f"{relative_path} has already been uploaded. Skipping.")
+        continue
 
-        file_path = os.path.join(source_directory, file_name)
-        with open(file_path, "rb") as file:
-            uploaded_file = client.files.create(
-                file=file,
-                purpose='assistants'
-            )
-        # Write uploaded file name to log file and add to the set
-        with open(log_file_path, 'a') as log_file:
-            log_file.write(f"{file_name}\n")
-        uploaded_files.add(file_name)
-        file_processed = True  # Set the flag to True as a file has been processed
-
-        # Pass a message to thread for the uploaded file
-        thread = client.beta.threads.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": "Make the code energy efficient",
-                    "file_ids": [uploaded_file.id]
-                }
-            ]
+    with open(file_path, "rb") as file:
+        uploaded_file = client.files.create(
+            file=file,
+            purpose='assistants'
         )
-        break  # Process one file at a time
+    # Write uploaded file name to log file and add to the set
+    with open(log_file_path, 'a') as log_file:
+        log_file.write(f"{relative_path}\n")
+    uploaded_files.add(relative_path)
+    file_processed = True
+
+    # Ensure directory structure for refined files mirrors source directory
+    refined_file_directory = os.path.join(download_directory, os.path.dirname(relative_path))
+    ensure_directory_structure(refined_file_directory)
+
+    # Pass a message to thread for the uploaded file
+    thread = client.beta.threads.create(
+        messages=[
+            {
+                "role": "user",
+                "content": "Make the code energy efficient",
+                "file_ids": [uploaded_file.id]
+            }
+        ]
+    )
+    break  # Process one file at a time
 
 if not file_processed:
     print("No new files were processed.")
 
+# Further processing and refinement logic remains the same
 #Check messages in the thread
 thread_messages = client.beta.threads.messages.list(thread.id)
 print(thread_messages.model_dump_json(indent=2))
@@ -138,17 +153,6 @@ if code:
     code_file = content.write_to_file(refined_file_path)
 else:
     print("No code found or annotations list is empty.")
-
-'''print(messages.model_dump_json(indent=2))
-
-#Extract the content of the latest question only
-data = json.loads(messages.model_dump_json(indent=2))
-code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
-print(code)
-
-content = client.files.content(code)
-refined_file_path = os.path.join(download_directory, file_name)  # Reuse file_name from the loop
-code_file = content.write_to_file(refined_file_path) '''
 
 # Check if all Python and Java files have been refined
 source_files = {f for f in os.listdir(source_directory) if f.endswith('.py') or f.endswith('.java')}
