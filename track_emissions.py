@@ -100,5 +100,5 @@ refined_folder = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeli
 result_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\Refined files\Result"
 
 # Process each folder with suffix
-process_folder(source_folder, os.path.join(result_dir, 'before_emissions_data.csv'), result_dir, 'before')
-process_folder(refined_folder, os.path.join(result_dir, 'after_emissions_data.csv'), result_dir, 'after')
+process_folder(source_folder, os.path.join(result_dir, 'main_before_emissions_data.csv'), result_dir, 'before_in-detail')
+process_folder(refined_folder, os.path.join(result_dir, 'main_after_emissions_data.csv'), result_dir, 'after-in-detail')
