@@ -67,13 +67,6 @@ if os.path.exists(log_file_path):
     with open(log_file_path, 'r') as log_file:
         uploaded_files = {line.strip() for line in log_file}
 
-# Refinement prompts
-refinement_prompts = [
-    "Make the code more energy efficient",
-    "Eliminate any redundant or dead code",
-    "Simplify complex algorithms to reduce computational load"
-]
-
 # Upload and refine files
 file_processed = False  # Flag to indicate if a new file has been processed
 for file_path in find_files(source_directory, ['.py', '.java']):
@@ -83,33 +76,34 @@ for file_path in find_files(source_directory, ['.py', '.java']):
         print(f"{relative_path} has already been uploaded. Skipping.")
         continue
 
-    refined_file_path = os.path.join(green_refined_directory, relative_path)  # Corrected path
-    current_file_path = file_path  # Start with the original file path
-
-    for prompt in refinement_prompts:
-        with open(current_file_path, "rb") as file:
-            uploaded_file = client.files.create(
-                file=file,
-                purpose='assistants'
-            )
-
-        # Pass a message to thread for the uploaded file
-        thread = client.beta.threads.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt,
-                    "file_ids": [uploaded_file.id]
-                }
-            ]
+    with open(file_path, "rb") as file:
+        uploaded_file = client.files.create(
+            file=file,
+            purpose='assistants'
         )
-        current_file_path = refined_file_path
-
-        
+    # Write uploaded file name to log file and add to the set
     with open(log_file_path, 'a') as log_file:
         log_file.write(f"{relative_path}\n")
     uploaded_files.add(relative_path)
     file_processed = True
+
+    # Ensure directory structure for refined files mirrors source directory
+    refined_file_directory = os.path.join(green_refined_directory, os.path.dirname(relative_path))
+    ensure_directory_structure(refined_file_directory)
+
+    # Adjust the refined_file_path to include subdirectories correctly
+    refined_file_path = os.path.join(refined_file_directory, file_name)  # Corrected path
+
+    # Pass a message to thread for the uploaded file
+    thread = client.beta.threads.create(
+        messages=[
+            {
+                "role": "user",
+                "content": "Make the code energy efficient",
+                "file_ids": [uploaded_file.id]
+            }
+        ]
+    )
     break  # Process one file at a time
 
 if not file_processed:
@@ -172,16 +166,3 @@ if source_files.issubset(refined_files):
     print('Script-Has-Uploaded-All-Files')
 else:
     print('Script-Has-Remain-Some-Files-To-Uploaded')
-
-# Step 1: Verify the existence of the file
-if not os.path.exists(refined_file_path):
-    print(f"File not found: {refined_file_path}")
-    # Step 3: Ensure directory creation
-    ensure_directory_structure(os.path.dirname(refined_file_path))
-    # You might need to create the file or handle the error appropriately here
-else:
-    # Step 4: Logging for debugging
-    print(f"Opening file: {refined_file_path}")
-    # Proceed with file operations
-    with open(refined_file_path, "rb") as file:
-        # Your file processing logic here
