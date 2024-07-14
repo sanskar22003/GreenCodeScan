@@ -1,10 +1,14 @@
 import pandas as pd
 import os
+from dotenv import load_dotenv
 
-# Define file paths
-emissions_path = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\Green_Refined_Files\\Result\\main_before_emissions_data.csv"
-emissions_after_path = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\Green_Refined_Files\\Result\\main_after_emissions_data.csv"
-result_folder_path = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\Green_Refined_Files\\Result"
+# Load environment variables
+load_dotenv(dotenv_path=".env", verbose=True, override=True)
+
+# Define file paths using environment variables
+emissions_path = os.getenv('EMISSIONS_PATH')
+emissions_after_path = os.getenv('EMISSIONS_AFTER_PATH')
+result_folder_path = os.getenv('RESULT_FOLDER_PATH')
 
 # Read CSV files
 emissions_df = pd.read_csv(emissions_path)
