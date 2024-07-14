@@ -12,6 +12,7 @@ load_dotenv(dotenv_path=".env", verbose=True, override=True)
 # Define directories using environment variables
 source_directory = os.getenv('SOURCE_DIRECTORY')
 green_refined_directory = os.getenv('GREEN_REFINED_DIRECTORY')
+temp_directory = os.path.join(green_refined_directory, 'temp')
 
 # Initialize AzureOpenAI client using environment variables
 client = AzureOpenAI(
@@ -24,13 +25,13 @@ unique_name = f"GreenCodeRefiner {uuid.uuid4()}"
 # Create an assistant
 assistant = client.beta.assistants.create(
     name=unique_name,
-    instructions=("You are a helpful AI assistant who re-factors the code from an uploaded file to make it more efficient"
-                  "You have access to a sandboxed environment for writing and testing code."
-                  "1. Re-write the code in the same language as the original code."
-                  "2. Test the re-written code and ensure it functions correctly and same as the original code."
-                  "3. Run the code to confirm that it runs successfully"
-                  "4. If the code runs successfully, share the code as a file that can be downloaded"
-                  "5. If the code is unsuccessful display the error message and try to revise the code and rerun."),
+    instructions=("You are a helpful AI assistant who re-factors the code from an uploaded file to make it more efficient. "
+                  "You have access to a sandboxed environment for writing and testing code. "
+                  "1. Re-write the code in the same language as the original code. "
+                  "2. Test the re-written code and ensure it functions correctly and same as the original code. "
+                  "3. Run the code to confirm that it runs successfully. "
+                  "4. If the code runs successfully, share the code as a file that can be downloaded. "
+                  "5. If the code is unsuccessful, display the error message and try to revise the code and rerun."),
     model="code",
     tools=[{"type": "code_interpreter"}]
 )
@@ -54,6 +55,7 @@ def find_files(directory, extensions):
 
 # Check if the download directory exists, if not, create it
 ensure_directory_structure(green_refined_directory)
+ensure_directory_structure(temp_directory)
 
 # Log file creation
 log_file_path = os.path.join(green_refined_directory, "upload_log.txt")
@@ -67,8 +69,62 @@ if os.path.exists(log_file_path):
     with open(log_file_path, 'r') as log_file:
         uploaded_files = {line.strip() for line in log_file}
 
+# Define the prompts
+prompts = [
+    "Make the code more energy efficient",
+    "Eliminate any redundant or dead code",
+    "Simplify complex algorithms to reduce computational load"
+]
+
+# Function to process a file with the given prompt
+def process_file_with_prompt(file_id, prompt, refined_file_path):
+    # Create a thread with the prompt
+    thread = client.beta.threads.create(
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+                "file_ids": [file_id]
+            }
+        ]
+    )
+
+    run = client.beta.threads.runs.create(
+      thread_id=thread.id,
+      assistant_id=assistant.id
+    )
+
+    # Retrieve the status of the run
+    while True:
+        run_status = client.beta.threads.runs.retrieve(
+          thread_id=thread.id,
+          run_id=run.id
+        ).status
+        print(f"Current status: {run_status}")
+
+        if run_status == 'completed':
+            break
+        else:
+            time.sleep(5)
+
+    messages = client.beta.threads.messages.list(
+      thread_id=thread.id
+    )
+
+    data = json.loads(messages.model_dump_json(indent=2))
+
+    code = None
+    if data['data'] and data['data'][0]['content'] and data['data'][0]['content'][0]['text']['annotations']:
+        code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
+
+    if code:
+        content = client.files.content(code)
+        content.write_to_file(refined_file_path)
+    else:
+        print("No code found or annotations list is empty.")
+
 # Upload and refine files
-file_processed = False  # Flag to indicate if a new file has been processed
+file_processed = False
 for file_path in find_files(source_directory, ['.py', '.java']):
     relative_path = os.path.relpath(file_path, source_directory)
     file_name = os.path.basename(file_path)
@@ -81,82 +137,32 @@ for file_path in find_files(source_directory, ['.py', '.java']):
             file=file,
             purpose='assistants'
         )
-    # Write uploaded file name to log file and add to the set
+
     with open(log_file_path, 'a') as log_file:
         log_file.write(f"{relative_path}\n")
     uploaded_files.add(relative_path)
     file_processed = True
 
-    # Ensure directory structure for refined files mirrors source directory
-    refined_file_directory = os.path.join(green_refined_directory, os.path.dirname(relative_path))
-    ensure_directory_structure(refined_file_directory)
+    refined_temp_file_path = os.path.join(temp_directory, file_name)
+    ensure_directory_structure(os.path.dirname(refined_temp_file_path))
 
-    # Adjust the refined_file_path to include subdirectories correctly
-    refined_file_path = os.path.join(refined_file_directory, file_name)  # Corrected path
+    for prompt in prompts:
+        process_file_with_prompt(uploaded_file.id, prompt, refined_temp_file_path)
 
-    # Pass a message to thread for the uploaded file
-    thread = client.beta.threads.create(
-        messages=[
-            {
-                "role": "user",
-                "content": "Make the code energy efficient",
-                "file_ids": [uploaded_file.id]
-            }
-        ]
-    )
-    break  # Process one file at a time
+    final_refined_directory = os.path.join(green_refined_directory, os.path.dirname(relative_path))
+    ensure_directory_structure(final_refined_directory)
+
+    final_refined_file_path = os.path.join(final_refined_directory, file_name)
+    os.rename(refined_temp_file_path, final_refined_file_path)
+
+    break
 
 if not file_processed:
     print("No new files were processed.")
 
-# Further processing and refinement logic remains the same
 # Check messages in the thread
 thread_messages = client.beta.threads.messages.list(thread.id)
 print(thread_messages.model_dump_json(indent=2))
-
-run = client.beta.threads.runs.create(
-  thread_id=thread.id,
-  assistant_id=assistant.id
-)
-
-# Retrieve the status of the run
-while True:
-    # Retrieve the status of the run
-    run_status = client.beta.threads.runs.retrieve(
-      thread_id=thread.id,
-      run_id=run.id
-    ).status
-    print(f"Current status: {run_status}")
-
-    # Check if the status is 'completed'
-    if run_status == 'completed':
-        break  # Exit the loop if completed
-    else:
-        time.sleep(5)  # Wait for 5 seconds before checking again
-
-# Print messages in the thread post run
-messages = client.beta.threads.messages.list(
-  thread_id=thread.id
-)
-
-# Extract the content of the latest question only, with safety checks
-data = json.loads(messages.model_dump_json(indent=2))
-
-# Initialize code to None
-code = None
-
-# Check if data and nested structures exist and are not empty
-if data['data'] and data['data'][0]['content'] and data['data'][0]['content'][0]['text']['annotations']:
-    # Now it's safe to access the first element
-    code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
-
-# Proceed only if code is not None
-if code:
-    content = client.files.content(code)
-    # Use the corrected refined_file_path
-    code_file = content.write_to_file(refined_file_path)
-else:
-    print("No code found or annotations list is empty.")
 
 # Check if all Python and Java files have been refined
 source_files = {f for f in os.listdir(source_directory) if f.endswith('.py') or f.endswith('.java')}
