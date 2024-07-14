@@ -105,11 +105,12 @@ for file_path in find_files(source_directory, ['.py', '.java']):
         )
         current_file_path = refined_file_path
 
+        
     with open(log_file_path, 'a') as log_file:
-            log_file.write(f"{relative_path}\n")
-        uploaded_files.add(relative_path)
-        file_processed = True
-        break  # Process one file at a time
+        log_file.write(f"{relative_path}\n")
+    uploaded_files.add(relative_path)
+    file_processed = True
+    break  # Process one file at a time
 
 if not file_processed:
     print("No new files were processed.")
