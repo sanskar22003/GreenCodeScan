@@ -7,12 +7,16 @@ import time
 import pandas as pd
 import sys
 import shutil
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv(dotenv_path=".env", verbose=True, override=True)
 
 def process_folder(BASE_DIR, EMISSIONS_DATA_CSV, RESULT_DIR, suffix):
     SCRIPTS_DIR = os.path.join(BASE_DIR)
     TESTS_DIR = os.path.join(BASE_DIR, "tests")
-    PYTEST_PATH = r"C:\Users\sansk\AppData\Local\Programs\Python\Python312\Scripts\pytest.exe"
-    MAVEN_PATH = r"C:\Users\sansk\Downloads\apache-maven-3.9.6\bin\mvn.cmd"
+    PYTEST_PATH = os.getenv('PYTEST_PATH')
+    MAVEN_PATH = os.getenv('MAVEN_PATH')
     CUSTOMER_NAME = "ZF"
 
     # Ensure the 'result' directory exists
@@ -94,10 +98,10 @@ def process_folder(BASE_DIR, EMISSIONS_DATA_CSV, RESULT_DIR, suffix):
 
     print(f"Emissions data and test results written to {EMISSIONS_DATA_CSV}")
 
-# Define paths
-source_folder = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\tests2"
-refined_folder = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\Green_Refined_Files"
-result_dir = r"C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\Green_Refined_Files\Result"
+# Define paths using environment variables
+source_folder = os.getenv('SOURCE_FOLDER')
+refined_folder = os.getenv('REFINED_FOLDER')
+result_dir = os.getenv('RESULT_DIR')
 
 # Process each folder with suffix
 process_folder(source_folder, os.path.join(result_dir, 'main_before_emissions_data.csv'), result_dir, 'before_in-detail')
