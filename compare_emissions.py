@@ -6,13 +6,13 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=".env", verbose=True, override=True)
 
 # Define file paths using environment variables
-emissions_path = os.getenv('EMISSIONS_PATH')
-emissions_after_path = os.getenv('EMISSIONS_AFTER_PATH')
-result_folder_path = os.getenv('RESULT_FOLDER_PATH')
+result_source_dir = os.getenv('RESULT_SOURCE_DIR')
+result_green_refined_directory = os.getenv('RESULT_GREEN_REFINED_DIRECTORY')
+result_folder_path = os.getenv('RESULT_DIR')
 
 # Read CSV files
-emissions_df = pd.read_csv(emissions_path)
-emissions_after_df = pd.read_csv(emissions_after_path)
+emissions_df = pd.read_csv(result_source_dir)
+emissions_after_df = pd.read_csv(result_green_refined_directory)
 
 # Merge dataframes on common columns
 merged_df = emissions_df.merge(emissions_after_df, on=["Customer Name", "Application name", "File Type"], suffixes=('_before', '_after'))
