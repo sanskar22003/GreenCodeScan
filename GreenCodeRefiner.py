@@ -11,7 +11,7 @@ load_dotenv(dotenv_path=".env", verbose=True, override=True)
 
 # Define directories using environment variables
 source_directory = os.getenv('SOURCE_DIRECTORY')
-download_directory = os.getenv('DOWNLOAD_DIRECTORY')
+green_refined_directory = os.getenv('GREEN_REFINED_DIRECTORY')
 
 # Initialize AzureOpenAI client using environment variables
 client = AzureOpenAI(
@@ -53,10 +53,10 @@ def find_files(directory, extensions):
                 yield os.path.join(root, file)
 
 # Check if the download directory exists, if not, create it
-ensure_directory_structure(download_directory)
+ensure_directory_structure(green_refined_directory)
 
 # Log file creation
-log_file_path = os.path.join(download_directory, "upload_log.txt")
+log_file_path = os.path.join(green_refined_directory, "upload_log.txt")
 if not os.path.exists(log_file_path):
     with open(log_file_path, 'w') as log_file:
         log_file.write("")
@@ -88,7 +88,7 @@ for file_path in find_files(source_directory, ['.py', '.java']):
     file_processed = True
 
     # Ensure directory structure for refined files mirrors source directory
-    refined_file_directory = os.path.join(download_directory, os.path.dirname(relative_path))
+    refined_file_directory = os.path.join(green_refined_directory, os.path.dirname(relative_path))
     ensure_directory_structure(refined_file_directory)
 
     # Adjust the refined_file_path to include subdirectories correctly
@@ -160,7 +160,7 @@ else:
 
 # Check if all Python and Java files have been refined
 source_files = {f for f in os.listdir(source_directory) if f.endswith('.py') or f.endswith('.java')}
-refined_files = {f for f in os.listdir(download_directory) if f.endswith('.py') or f.endswith('.java')}
+refined_files = {f for f in os.listdir(green_refined_directory) if f.endswith('.py') or f.endswith('.java')}
 
 if source_files.issubset(refined_files):
     print('Script-Has-Uploaded-All-Files')
