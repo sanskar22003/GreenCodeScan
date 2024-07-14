@@ -172,3 +172,16 @@ if source_files.issubset(refined_files):
     print('Script-Has-Uploaded-All-Files')
 else:
     print('Script-Has-Remain-Some-Files-To-Uploaded')
+
+# Step 1: Verify the existence of the file
+if not os.path.exists(refined_file_path):
+    print(f"File not found: {refined_file_path}")
+    # Step 3: Ensure directory creation
+    ensure_directory_structure(os.path.dirname(refined_file_path))
+    # You might need to create the file or handle the error appropriately here
+else:
+    # Step 4: Logging for debugging
+    print(f"Opening file: {refined_file_path}")
+    # Proceed with file operations
+    with open(refined_file_path, "rb") as file:
+        # Your file processing logic here
