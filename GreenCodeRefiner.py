@@ -78,6 +78,7 @@ prompts = [
 
 # Function to process a file with the given prompt
 def process_file_with_prompt(file_id, prompt, refined_file_path):
+    print(f"Applying prompt: {prompt}")
     # Create a thread with the prompt
     thread = client.beta.threads.create(
         messages=[
@@ -120,6 +121,7 @@ def process_file_with_prompt(file_id, prompt, refined_file_path):
     if code:
         content = client.files.content(code)
         content.write_to_file(refined_file_path)
+        print(f"File refined with prompt: {prompt}")
     else:
         print("No code found or annotations list is empty.")
 
@@ -154,19 +156,26 @@ for file_path in find_files(source_directory, ['.py', '.java']):
 
     final_refined_file_path = os.path.join(final_refined_directory, file_name)
     os.rename(refined_temp_file_path, final_refined_file_path)
+    print(f"File moved to final location: {final_refined_file_path}")
 
     break
 
 if not file_processed:
     print("No new files were processed.")
 
+# Ensure temp directory is empty
+if not os.listdir(temp_directory):
+    print("Temp directory is empty.")
+else:
+    print("Temp directory is not empty.")
+
 # Check messages in the thread
 thread_messages = client.beta.threads.messages.list(thread.id)
 print(thread_messages.model_dump_json(indent=2))
 
 # Check if all Python and Java files have been refined
-source_files = {f for f in os.listdir(source_directory) if f.endswith('.py') or f.endswith('.java')}
-refined_files = {f for f in os.listdir(green_refined_directory) if f.endswith('.py') or f.endswith('.java')}
+source_files = {os.path.relpath(os.path.join(root, file), source_directory) for root, _, files in os.walk(source_directory) for file in files if file.endswith('.py') or file.endswith('.java')}
+refined_files = {os.path.relpath(os.path.join(root, file), green_refined_directory) for root, _, files in os.walk(green_refined_directory) for file in files if file.endswith('.py') or file.endswith('.java')}
 
 if source_files.issubset(refined_files):
     print('Script-Has-Uploaded-All-Files')
