@@ -99,10 +99,10 @@ def process_folder(BASE_DIR, EMISSIONS_DATA_CSV, RESULT_DIR, suffix):
     print(f"Emissions data and test results written to {EMISSIONS_DATA_CSV}")
 
 # Define paths using environment variables
-source_folder = os.getenv('SOURCE_FOLDER')
-refined_folder = os.getenv('REFINED_FOLDER')
+source_directory = os.getenv('SOURCE_DIRECTORY')
+green_refined_directory = os.getenv('GREEN_REFINED_DIRECTORY')
 result_dir = os.getenv('RESULT_DIR')
 
 # Process each folder with suffix
-process_folder(source_folder, os.path.join(result_dir, 'main_before_emissions_data.csv'), result_dir, 'before_in-detail')
-process_folder(refined_folder, os.path.join(result_dir, 'main_after_emissions_data.csv'), result_dir, 'after-in-detail')
+process_folder(source_directory, os.path.join(result_dir, 'main_before_emissions_data.csv'), result_dir, 'before_in-detail')
+process_folder(green_refined_directory, os.path.join(result_dir, 'main_after_emissions_data.csv'), result_dir, 'after-in-detail')
