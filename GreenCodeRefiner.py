@@ -6,36 +6,20 @@ import time
 from dotenv import load_dotenv
 from openai import AzureOpenAI
 
-# Define directories
-source_directory = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\tests2'
-download_directory = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\Green_Refined_Files"
-#download_directory = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\Refined Files"
-
-# Function to ensure directory structure in download_directory mirrors source_directory
-def ensure_directory_structure(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
-        print(f"Folder '{path}' created.")
-
-# Function to recursively find files with specific extensions
-def find_files(directory, extensions):
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            if file.endswith(tuple(extensions)):
-                yield os.path.join(root, file)
-
-# Check if the download directory exists, if not, create it
-ensure_directory_structure(download_directory)
-
 # Load environment variables
 load_dotenv(dotenv_path=".env", verbose=True, override=True)
 
-# Initialize AzureOpenAI client
+# Define directories using environment variables
+source_directory = os.getenv('SOURCE_DIRECTORY')
+download_directory = os.getenv('DOWNLOAD_DIRECTORY')
+
+# Initialize AzureOpenAI client using environment variables
 client = AzureOpenAI(
-    api_key="eadf76dd169e4172a463e7375946835f",
-    api_version="2024-02-15-preview",
-    azure_endpoint="https://green-code-uks.openai.azure.com"
+    api_key=os.getenv('AZURE_API_KEY'),
+    api_version=os.getenv('AZURE_API_VERSION'),
+    azure_endpoint=os.getenv('AZURE_ENDPOINT')
 )
+
 unique_name = f"GreenCodeRefiner {uuid.uuid4()}"
 # Create an assistant
 assistant = client.beta.assistants.create(
@@ -55,6 +39,22 @@ assistant = client.beta.assistants.create(
 thread = client.beta.threads.create()
 print(thread)
 
+# Function to ensure directory structure in download_directory mirrors source_directory
+def ensure_directory_structure(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+        print(f"Folder '{path}' created.")
+
+# Function to recursively find files with specific extensions
+def find_files(directory, extensions):
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith(tuple(extensions)):
+                yield os.path.join(root, file)
+
+# Check if the download directory exists, if not, create it
+ensure_directory_structure(download_directory)
+
 # Log file creation
 log_file_path = os.path.join(download_directory, "upload_log.txt")
 if not os.path.exists(log_file_path):
@@ -71,7 +71,7 @@ if os.path.exists(log_file_path):
 file_processed = False  # Flag to indicate if a new file has been processed
 for file_path in find_files(source_directory, ['.py', '.java']):
     relative_path = os.path.relpath(file_path, source_directory)
-    file_name = os.path.basename(file_path) 
+    file_name = os.path.basename(file_path)
     if relative_path in uploaded_files:
         print(f"{relative_path} has already been uploaded. Skipping.")
         continue
@@ -127,13 +127,13 @@ while True:
       run_id=run.id
     ).status
     print(f"Current status: {run_status}")
-    
+
     # Check if the status is 'completed'
     if run_status == 'completed':
         break  # Exit the loop if completed
     else:
         time.sleep(5)  # Wait for 5 seconds before checking again
-      
+
 # Print messages in the thread post run
 messages = client.beta.threads.messages.list(
   thread_id=thread.id
