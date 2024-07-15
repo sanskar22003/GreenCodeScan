@@ -1,39 +1,34 @@
-# Import the SharePoint client libraries
-Add-Type -Path "C:\Program Files\SharePoint Online Management Shell\Microsoft.Online.SharePoint.PowerShell\Microsoft.SharePoint.Client.dll"
-Add-Type -Path "C:\Program Files\SharePoint Online Management Shell\Microsoft.Online.SharePoint.PowerShell\Microsoft.SharePoint.Client.Runtime.dll"
+from office365.runtime.auth.authentication_context import AuthenticationContext
+from office365.sharepoint.client_context import ClientContext
+from office365.sharepoint.files.file_creation_information import FileCreationInformation
+import os
 
-# Set the variables
-$siteUrl = "https://sbupune.sharepoint.com/sites/TechMahindraGreenCodePipeline2"
-$listName = "Pipeline CSVs"
-$folderName = ""  # No subfolder
-$username = "SANSKAR.MCA22003@SBUP.EDU.IN"
-$password = ConvertTo-SecureString "Sk@6353910033" -AsPlainText -Force
+site_url = "https://sbupune.sharepoint.com/sites/TechMahindraGreenCodePipeline2"
+list_name = "Pipeline CSVs"
+username = "SANSKAR.MCA22003@SBUP.EDU.IN"
+password = "Sk@6353910033"
 
-# Create a credential object
-$credential = New-Object Microsoft.SharePoint.Client.SharePointOnlineCredentials($username, $password)
+file_paths = [
+    "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\emissions_data.csv",
+    "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\server_data.xlsx"
+]
 
-# Connect to the SharePoint site
-$context = New-Object Microsoft.SharePoint.Client.ClientContext($siteUrl)
-$context.Credentials = $credential
-
-# Get the list and folder
-$list = $context.Web.Lists.GetByTitle($listName)
-$folder = $list.RootFolder  # No subfolder
-$context.Load($list)
-$context.Load($folder)
-$context.ExecuteQuery()
-
-# Upload the files
-$files = @("C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\emissions_data.csv", "C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\server_data.xlsx")
-foreach ($filePath in $files) {
-    $fileContent = [System.IO.File]::ReadAllBytes($filePath)
-    $fileInfo = New-Object Microsoft.SharePoint.Client.FileCreationInformation
-    $fileInfo.Content = $fileContent
-    $fileInfo.Url = [System.IO.Path]::GetFileName($filePath)
-    $fileInfo.Overwrite = $true
-    $file = $folder.Files.Add($fileInfo)
-    $context.Load($file)
-    $context.ExecuteQuery()
-
-    Write-Host "File uploaded successfully: $filePath"
-}
+ctx_auth = AuthenticationContext(site_url)
+if ctx_auth.acquire_token_for_user(username, password):
+    ctx = ClientContext(site_url, ctx_auth)
+    web = ctx.web
+    ctx.load(web)
+    ctx.execute_query()
+    for file_path in file_paths:
+        with open(file_path, 'rb') as content_file:
+            file_content = content_file.read()
+        list_obj = ctx.web.lists.get_by_title(list_name)
+        info = FileCreationInformation()
+        info.content = file_content
+        info.url = os.path.basename(file_path)
+        info.overwrite = True
+        upload_file = list_obj.root_folder.files.add(info)
+        ctx.execute_query()
+        print(f"File uploaded successfully: {os.path.basename(file_path)}")
+else:
+    print("Authentication failed")
