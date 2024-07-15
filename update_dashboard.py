@@ -1,7 +1,8 @@
 # Import the SharePoint client libraries
 from office365.sharepoint.client_context import ClientContext
-from office365.sharepoint.files.file_creation_information import FileCreationInformation
+from office365.sharepoint.files.file import File
 from office365.runtime.auth.authentication_context import AuthenticationContext
+from office365.sharepoint.files.file_creation_information import FileCreationInformation
 
 # Set the variables
 site_url = "https://sbupune.sharepoint.com/sites/TechMahindraGreenCodePipeline2"
