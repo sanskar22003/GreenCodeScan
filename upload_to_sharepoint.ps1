@@ -1,24 +1,13 @@
-# Load environment variables from .env file
-$envPath = "C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\.env"
-if (Test-Path $envPath) {
-    $env = Get-Content $envPath | ForEach-Object {
-        if ($_ -match '^([^=]+)=(.*)$') {
-            $key = $matches[1].Trim()
-            $value = $matches[2].Trim().Trim('"')
-            Set-Item -Path "ENV:\$key" -Value $value
-        }
-    }
-}
-
 # Import the SharePoint client libraries
-Add-Type -Path "$($env:SHAREPOINT_CLIENT_LIB_PATH)\Microsoft.Online.SharePoint.PowerShell\Microsoft.SharePoint.Client.dll"
-Add-Type -Path "$($env:SHAREPOINT_CLIENT_LIB_PATH)\Microsoft.Online.SharePoint.PowerShell\Microsoft.SharePoint.Client.Runtime.dll"
+Add-Type -Path "C:\Program Files\SharePoint Online Management Shell\Microsoft.Online.SharePoint.PowerShell\Microsoft.SharePoint.Client.dll"
+Add-Type -Path "C:\Program Files\SharePoint Online Management Shell\Microsoft.Online.SharePoint.PowerShell\Microsoft.SharePoint.Client.Runtime.dll"
 
 # Set the variables
-$siteUrl = $env:SITE_URL
-$listName = $env:LIST_NAME
-$username = $env:USERNAME
-$password = ConvertTo-SecureString $env:PASSWORD -AsPlainText -Force
+$siteUrl = "https://sbupune.sharepoint.com/sites/TechMahindraGreenCodePipeline2"
+$listName = "Pipeline CSVs"
+$folderName = ""  # No subfolder
+$username = "SANSKAR.MCA22003@SBUP.EDU.IN"
+$password = ConvertTo-SecureString "Sk@6353910033" -AsPlainText -Force
 
 # Create a credential object
 $credential = New-Object Microsoft.SharePoint.Client.SharePointOnlineCredentials($username, $password)
@@ -29,14 +18,14 @@ $context.Credentials = $credential
 
 # Get the list and folder
 $list = $context.Web.Lists.GetByTitle($listName)
-$folder = $list.RootFolder
+$folder = $list.RootFolder  # No subfolder
 $context.Load($list)
 $context.Load($folder)
 $context.ExecuteQuery()
 
 # Upload the files
-$filesToUpload = ConvertFrom-Json $env:FILES_TO_UPLOAD
-foreach ($filePath in $filesToUpload) {
+$files = @("C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\emissions_data.csv", "C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\server_data.xlsx")
+foreach ($filePath in $files) {
     $fileContent = [System.IO.File]::ReadAllBytes($filePath)
     $fileInfo = New-Object Microsoft.SharePoint.Client.FileCreationInformation
     $fileInfo.Content = $fileContent
