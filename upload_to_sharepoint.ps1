@@ -5,20 +5,20 @@ if (Test-Path $envPath) {
         if ($_ -match '^([^=]+)=(.*)$') {
             $key = $matches[1].Trim()
             $value = $matches[2].Trim().Trim('"')
-            [System.Collections.DictionaryEntry]::new($key, $value)
+            Set-Item -Path "ENV:\$key" -Value $value
         }
-    } | ConvertTo-Dictionary
+    }
 }
 
 # Import the SharePoint client libraries
-Add-Type -Path "$($env['SHAREPOINT_CLIENT_LIB_PATH'])\Microsoft.Online.SharePoint.PowerShell\Microsoft.SharePoint.Client.dll"
-Add-Type -Path "$($env['SHAREPOINT_CLIENT_LIB_PATH'])\Microsoft.Online.SharePoint.PowerShell\Microsoft.SharePoint.Client.Runtime.dll"
+Add-Type -Path "$($env:SHAREPOINT_CLIENT_LIB_PATH)\Microsoft.Online.SharePoint.PowerShell\Microsoft.SharePoint.Client.dll"
+Add-Type -Path "$($env:SHAREPOINT_CLIENT_LIB_PATH)\Microsoft.Online.SharePoint.PowerShell\Microsoft.SharePoint.Client.Runtime.dll"
 
 # Set the variables
-$siteUrl = $env['SITE_URL']
-$listName = $env['LIST_NAME']
-$username = $env['USERNAME']
-$password = ConvertTo-SecureString $env['PASSWORD'] -AsPlainText -Force
+$siteUrl = $env:SITE_URL
+$listName = $env:LIST_NAME
+$username = $env:USERNAME
+$password = ConvertTo-SecureString $env:PASSWORD -AsPlainText -Force
 
 # Create a credential object
 $credential = New-Object Microsoft.SharePoint.Client.SharePointOnlineCredentials($username, $password)
@@ -35,7 +35,7 @@ $context.Load($folder)
 $context.ExecuteQuery()
 
 # Upload the files
-$filesToUpload = ConvertFrom-Json $env['FILES_TO_UPLOAD']
+$filesToUpload = ConvertFrom-Json $env:FILES_TO_UPLOAD
 foreach ($filePath in $filesToUpload) {
     $fileContent = [System.IO.File]::ReadAllBytes($filePath)
     $fileInfo = New-Object Microsoft.SharePoint.Client.FileCreationInformation
