@@ -138,10 +138,10 @@ file_processed = False
 for file_path in find_files(source_directory, ['.py', '.java']):
     relative_path = os.path.relpath(file_path, source_directory)
     file_name = os.path.basename(file_path)
-    
-    # Skip excluded files
-    if file_name in excluded_files:
-        print(f"Skipping excluded file: {file_name}")
+
+    # Skip excluded files and the green_refined_folder
+    if file_name in excluded_files or relative_path.startswith(green_refined_directory):
+        print(f"Skipping excluded file or directory: {file_name}")
         continue
     
     if relative_path in uploaded_files:
