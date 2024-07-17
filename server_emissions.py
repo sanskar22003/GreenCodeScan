@@ -4,6 +4,7 @@ import socket
 from datetime import datetime
 import time
 import os
+from dotenv import load_dotenv
 
 # Define all paths and constants here
 RESULT_DIR = os.getenv('RESULT_DIR')
