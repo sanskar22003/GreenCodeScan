@@ -125,11 +125,25 @@ def process_file_with_prompt(file_id, prompt, refined_file_path):
     else:
         print("No code found or annotations list is empty.")
 
+# List of files to exclude from processing
+excluded_files = {
+    'GreenCodeRefiner.py',
+    'compare_emissions.py',
+    'server_emissions.py',
+    'track_emissions.py'
+}
+
 # Upload and refine files
 file_processed = False
 for file_path in find_files(source_directory, ['.py', '.java']):
     relative_path = os.path.relpath(file_path, source_directory)
     file_name = os.path.basename(file_path)
+    
+    # Skip excluded files
+    if file_name in excluded_files:
+        print(f"Skipping excluded file: {file_name}")
+        continue
+    
     if relative_path in uploaded_files:
         print(f"{relative_path} has already been uploaded. Skipping.")
         continue
