@@ -6,6 +6,9 @@ import time
 import os
 from dotenv import load_dotenv
 
+# Load environment variables
+load_dotenv(dotenv_path=".env", verbose=True, override=True)
+
 # Define all paths and constants here
 RESULT_DIR = os.getenv('RESULT_DIR')
 EXCEL_FILE = os.path.join(RESULT_DIR, 'server_data.xlsx')
