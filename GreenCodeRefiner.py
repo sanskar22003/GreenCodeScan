@@ -91,15 +91,15 @@ def process_file_with_prompt(file_id, prompt, refined_file_path):
     )
 
     run = client.beta.threads.runs.create(
-      thread_id=thread.id,
-      assistant_id=assistant.id
+        thread_id=thread.id,
+        assistant_id=assistant.id
     )
 
     # Retrieve the status of the run
     while True:
         run_status = client.beta.threads.runs.retrieve(
-          thread_id=thread.id,
-          run_id=run.id
+            thread_id=thread.id,
+            run_id=run.id
         ).status
         print(f"Current status: {run_status}")
 
@@ -109,7 +109,7 @@ def process_file_with_prompt(file_id, prompt, refined_file_path):
             time.sleep(5)
 
     messages = client.beta.threads.messages.list(
-      thread_id=thread.id
+        thread_id=thread.id
     )
 
     data = json.loads(messages.model_dump_json(indent=2))
@@ -122,8 +122,10 @@ def process_file_with_prompt(file_id, prompt, refined_file_path):
         content = client.files.content(code)
         content.write_to_file(refined_file_path)
         print(f"File refined with prompt: {prompt}")
+        return True
     else:
         print("No code found or annotations list is empty.")
+        return False
 
 # List of files to exclude from processing
 excluded_files = {
@@ -162,15 +164,21 @@ for file_path in find_files(source_directory, ['.py', '.java']):
     refined_temp_file_path = os.path.join(temp_directory, file_name)
     ensure_directory_structure(os.path.dirname(refined_temp_file_path))
 
+    refined_success = False
     for prompt in prompts:
-        process_file_with_prompt(uploaded_file.id, prompt, refined_temp_file_path)
+        refined_success = process_file_with_prompt(uploaded_file.id, prompt, refined_temp_file_path)
+        if not refined_success:
+            break
 
-    final_refined_directory = os.path.join(green_refined_directory, os.path.dirname(relative_path))
-    ensure_directory_structure(final_refined_directory)
+    if refined_success:
+        final_refined_directory = os.path.join(green_refined_directory, os.path.dirname(relative_path))
+        ensure_directory_structure(final_refined_directory)
 
-    final_refined_file_path = os.path.join(final_refined_directory, file_name)
-    os.rename(refined_temp_file_path, final_refined_file_path)
-    print(f"File moved to final location: {final_refined_file_path}")
+        final_refined_file_path = os.path.join(final_refined_directory, file_name)
+        os.rename(refined_temp_file_path, final_refined_file_path)
+        print(f"File moved to final location: {final_refined_file_path}")
+    else:
+        print(f"Failed to refine the file: {file_path}")
 
     break
 
