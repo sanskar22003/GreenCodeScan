@@ -140,7 +140,7 @@ for file_path in find_files(source_directory, ['.py', '.java']):
     file_name = os.path.basename(file_path)
 
     # Skip excluded files and the green_refined_folder
-    if file_name in excluded_files or relative_path.startswith(Green_Refined_Files):
+    if file_name in excluded_files or relative_path.startswith(green_refined_directory):
         print(f"Skipping excluded file or directory: {file_name}")
         continue
     
