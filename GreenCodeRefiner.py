@@ -165,12 +165,18 @@ for file_path in find_files(source_directory, ['.py', '.java']):
     for prompt in prompts:
         process_file_with_prompt(uploaded_file.id, prompt, refined_temp_file_path)
 
-    final_refined_directory = os.path.join(green_refined_directory, os.path.dirname(relative_path))
-    ensure_directory_structure(final_refined_directory)
-
-    final_refined_file_path = os.path.join(final_refined_directory, file_name)
-    os.rename(refined_temp_file_path, final_refined_file_path)
-    print(f"File moved to final location: {final_refined_file_path}")
+    if os.path.exists(refined_temp_file_path):
+        try:
+            final_refined_directory = os.path.join(green_refined_directory, os.path.dirname(relative_path))
+            ensure_directory_structure(final_refined_directory)
+    
+            final_refined_file_path = os.path.join(final_refined_directory, file_name)
+            os.rename(refined_temp_file_path, final_refined_file_path)
+            print(f"File moved to final location: {final_refined_file_path}")
+        except Exception as e:
+            print(f"Error moving file: {e}")
+    else:
+        print(f"File does not exist: {refined_temp_file_path}, cannot rename.")
 
     break
 
