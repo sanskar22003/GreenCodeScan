@@ -139,9 +139,9 @@ for file_path in find_files(source_directory, ['.py', '.java']):
     relative_path = os.path.relpath(file_path, source_directory)
     file_name = os.path.basename(file_path)
 
-    # Skip excluded files and the green_refined_folder
-    if file_name in excluded_files or relative_path.startswith(green_refined_directory):
-        print(f"Skipping excluded file or directory: {file_name}")
+    # Skip excluded files and the green_refined_folder and its subdirectories
+    if file_name in excluded_files or relative_path.startswith(os.path.relpath(green_refined_directory, source_directory)):
+        print(f"Skipping excluded file or directory: {relative_path}")
         continue
     
     if relative_path in uploaded_files:
@@ -165,18 +165,12 @@ for file_path in find_files(source_directory, ['.py', '.java']):
     for prompt in prompts:
         process_file_with_prompt(uploaded_file.id, prompt, refined_temp_file_path)
 
-    if os.path.exists(refined_temp_file_path):
-        try:
-            final_refined_directory = os.path.join(green_refined_directory, os.path.dirname(relative_path))
-            ensure_directory_structure(final_refined_directory)
-    
-            final_refined_file_path = os.path.join(final_refined_directory, file_name)
-            os.rename(refined_temp_file_path, final_refined_file_path)
-            print(f"File moved to final location: {final_refined_file_path}")
-        except Exception as e:
-            print(f"Error moving file: {e}")
-    else:
-        print(f"File does not exist: {refined_temp_file_path}, cannot rename.")
+    final_refined_directory = os.path.join(green_refined_directory, os.path.dirname(relative_path))
+    ensure_directory_structure(final_refined_directory)
+
+    final_refined_file_path = os.path.join(final_refined_directory, file_name)
+    os.rename(refined_temp_file_path, final_refined_file_path)
+    print(f"File moved to final location: {final_refined_file_path}")
 
     break
 
