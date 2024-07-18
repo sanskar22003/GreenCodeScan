@@ -16,7 +16,8 @@ def process_folder(BASE_DIR, EMISSIONS_DATA_CSV, RESULT_DIR, suffix):
     PYTEST_PATH = os.getenv('PYTEST_PATH')
     MAVEN_PATH = os.getenv('MAVEN_PATH')
     CUSTOMER_NAME = "ZF"
-
+    javac_path = 'C:\\Program Files\\Java\\jdk-21\\bin\\javac.exe'
+    
     # Ensure the 'result' directory exists
     if not os.path.exists(RESULT_DIR):
         os.makedirs(RESULT_DIR)
@@ -58,7 +59,7 @@ def process_folder(BASE_DIR, EMISSIONS_DATA_CSV, RESULT_DIR, suffix):
                     if script.endswith('.py'):
                         subprocess.run(['python', script_path], timeout=60)
                     elif script.endswith('.java'):
-                        subprocess.run(['javac', script_path], timeout=60)
+                        subprocess.run([javac_path, script_path], timeout=60)
                         subprocess.run(['java', '-cp', root, os.path.splitext(script)[0]], timeout=60)
                     duration = time.time() - start_time
                 except subprocess.TimeoutExpired:
