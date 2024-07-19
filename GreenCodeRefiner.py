@@ -199,6 +199,16 @@ print(thread_messages.model_dump_json(indent=2))
 source_files = {os.path.relpath(os.path.join(root, file), source_directory) for root, _, files in os.walk(source_directory) for file in files if file.endswith('.py') or file.endswith('.java')}
 refined_files = {os.path.relpath(os.path.join(root, file), green_refined_directory) for root, _, files in os.walk(green_refined_directory) for file in files if file.endswith('.py') or file.endswith('.java')}
 
+# Exclude specific files and the Green_Refined_Files directory from comparison
+excluded_from_comparison = excluded_files.union(
+    {os.path.relpath(file, source_directory) for file in [
+        os.path.join(source_directory, 'Green_Refined_Files')
+    ]}
+)
+
+source_files -= excluded_from_comparison
+refined_files -= excluded_from_comparison
+
 if source_files.issubset(refined_files):
     print('Script-Has-Uploaded-All-Files')
 else:
