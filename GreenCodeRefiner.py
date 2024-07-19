@@ -96,6 +96,7 @@ def process_file_with_prompt(file_id, prompt, refined_file_path):
     )
 
     # Retrieve the status of the run
+    start_time = time.time()
     while True:
         run_status = client.beta.threads.runs.retrieve(
             thread_id=thread.id,
@@ -105,6 +106,9 @@ def process_file_with_prompt(file_id, prompt, refined_file_path):
 
         if run_status == 'completed':
             break
+        elif time.time() - start_time > 600:  # Timeout after 10 minutes
+            print("Processing timed out.")
+            return False
         else:
             time.sleep(5)
 
@@ -156,11 +160,6 @@ for file_path in find_files(source_directory, ['.py', '.java']):
             purpose='assistants'
         )
 
-    with open(log_file_path, 'a') as log_file:
-        log_file.write(f"{relative_path}\n")
-    uploaded_files.add(relative_path)
-    file_processed = True
-
     refined_temp_file_path = os.path.join(temp_directory, file_name)
     ensure_directory_structure(os.path.dirname(refined_temp_file_path))
 
@@ -177,6 +176,11 @@ for file_path in find_files(source_directory, ['.py', '.java']):
         final_refined_file_path = os.path.join(final_refined_directory, file_name)
         os.rename(refined_temp_file_path, final_refined_file_path)
         print(f"File moved to final location: {final_refined_file_path}")
+
+        with open(log_file_path, 'a') as log_file:
+            log_file.write(f"{relative_path}\n")
+        uploaded_files.add(relative_path)
+        file_processed = True
     else:
         print(f"Failed to refine the file: {file_path}")
 
