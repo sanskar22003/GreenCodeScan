@@ -4,11 +4,10 @@ pipeline {
     environment {
         PATH = "C:\\Users\\sansk\\Downloads\\apache-maven-3.9.6\\bin;$PATH"
         REPO_PATH = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline"
-        //REPO_PATH_UNREFINED_FILES = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\tests2"
-        //REPO_PATH_REFINED_FILES = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\Refined Files"
         PYTHON_PATH = "C:\\Users\\sansk\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
         CAST_HIGHLIGHT_PATH = "C:\\Users\\sansk\\Downloads\\Highlight-Automation-Command"
         PYTEST_PATH = "C:\\Users\\sansk\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\pytest.exe"
+        SHAREPOINT_PS_SCRIPT_PATH = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\upload_to_sharepoint.ps1'
         CLIENT_NAME = "ZF"
     }
     
@@ -30,15 +29,6 @@ pipeline {
                 }
             }
         }
-        //stage('Stage 3: Static Code Analysis') {
-            //steps {
-                //dir("${env.CAST_HIGHLIGHT_PATH}") {
-                  //  catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                    //    bat "java -jar HighlightAutomation.jar --perlInstallDir \"C:\\Program Files\\CAST\\HighlightAgent\\strawberry\\perl\" --workingDir \"C:\\Users\\sansk\\OneDrive\\Desktop\\score\" --sourceDir \"${env.REPO_PATH}\" --analyzerDir \"${env.CAST_HIGHLIGHT_PATH}\\perl\" --login \"kedar.deo@techmahindra.com\" --password \"GreenIT123#\" --applicationId 18326 --companyId 2369 --serverUrl \"https://app.casthighlight.com\""
-                    //}
-                //}
-            //}
-        //}
         stage('Stage 3: Green Code Refiner') {
             steps {
                 dir("${env.REPO_PATH}") {
@@ -60,6 +50,7 @@ pipeline {
                 }
             }
         }
+
         stage('Stage 4: Dynamic Code Analysis') {
             steps {
                 dir("${env.REPO_PATH}") {
@@ -71,18 +62,7 @@ pipeline {
                 }
             }
         }
-        //stage('Stage 5: Dynamic Code Analysis - After') {
-            //steps {
-                //dir("${env.REPO_PATH_REFINED_FILES}") {
-                    //withEnv(["PYTEST=${env.PYTEST_PATH}"]) {
-                        //catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                         //   bat "${env.PYTHON_PATH} track_emissions_after.py"
-                    //    }
-                //    }
-            //    }
-        //    }
-    //    }
-        stage('Stage 6: Compare emission') {
+        stage('Stage 5: Compare emission') {
             steps {
                 dir("${env.REPO_PATH}") {
                     withEnv(["PYTEST=${env.PYTEST_PATH}"]) {
@@ -93,54 +73,11 @@ pipeline {
                 }
             }
         }
-        //stage('Stage 5: Update Dashboard') {
-          //  steps {
-          //      bat "${env.PYTHON_PATH} update_google_sheets.py"
-         //   }
-      //  }
-        stage('Stage 6:  Update Dashboard') {
+        stage('Stage 6: Update Dashboard') {
             steps {
-                powershell '''
-                # Import the SharePoint client libraries
-                Add-Type -Path "C:\\Program Files\\SharePoint Online Management Shell\\Microsoft.Online.SharePoint.PowerShell\\Microsoft.SharePoint.Client.dll"
-                Add-Type -Path "C:\\Program Files\\SharePoint Online Management Shell\\Microsoft.Online.SharePoint.PowerShell\\Microsoft.SharePoint.Client.Runtime.dll"
-
-                # Set the variables
-                $siteUrl = "https://sbupune.sharepoint.com/sites/TechMahindraGreenCodePipeline2"
-                $listName = "Pipeline CSVs"
-                $folderName = ""  # No subfolder
-                $username = "SANSKAR.MCA22003@SBUP.EDU.IN"
-                $password = ConvertTo-SecureString "Sk@6353910033" -AsPlainText -Force
-            
-                # Create a credential object
-                $credential = New-Object Microsoft.SharePoint.Client.SharePointOnlineCredentials($username, $password)
-
-                # Connect to the SharePoint site
-                $context = New-Object Microsoft.SharePoint.Client.ClientContext($siteUrl)
-                $context.Credentials = $credential
-        
-                # Get the list and folder
-                $list = $context.Web.Lists.GetByTitle($listName)
-                $folder = $list.RootFolder  # No subfolder
-                $context.Load($list)
-                $context.Load($folder)
-                $context.ExecuteQuery()
-
-                # Upload the files
-                $files = @("C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\emissions_data.csv", "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\server_data.xlsx")
-                foreach ($filePath in $files) {
-                    $fileContent = [System.IO.File]::ReadAllBytes($filePath)
-                    $fileInfo = New-Object Microsoft.SharePoint.Client.FileCreationInformation
-                    $fileInfo.Content = $fileContent
-                    $fileInfo.Url = [System.IO.Path]::GetFileName($filePath)
-                    $fileInfo.Overwrite = $true
-                    $file = $folder.Files.Add($fileInfo)
-                    $context.Load($file)
-                    $context.ExecuteQuery()
-        
-                    Write-Host "File uploaded successfully: $filePath"
-                }
-                '''
+                powershell """
+                & '${env.SHAREPOINT_PS_SCRIPT_PATH}'
+                """
             }
         }
     }
