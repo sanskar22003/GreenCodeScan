@@ -106,7 +106,7 @@ def process_file_with_prompt(file_id, prompt, refined_file_path):
 
         if run_status == 'completed':
             break
-        elif time.time() - start_time > 600:  # Timeout after 10 minutes
+        elif time.time() - start_time > 1200:  # Timeout after 10 minutes
             print("Processing timed out.")
             return False
         else:
