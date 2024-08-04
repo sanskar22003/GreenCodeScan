@@ -141,7 +141,7 @@ excluded_files = {
 
 # Upload and refine files
 file_processed = False
-for file_path in find_files(source_directory, ['.py', '.java']):
+for file_path in find_files(source_directory, ['.py', '.java', '.xml', '.php', '.cpp']):
     relative_path = os.path.relpath(file_path, source_directory)
     file_name = os.path.basename(file_path)
 
@@ -199,9 +199,9 @@ else:
 thread_messages = client.beta.threads.messages.list(thread.id)
 print(thread_messages.model_dump_json(indent=2))
 
-# Check if all Python and Java files have been refined
-source_files = {os.path.relpath(os.path.join(root, file), source_directory) for root, _, files in os.walk(source_directory) for file in files if file.endswith('.py') or file.endswith('.java')}
-refined_files = {os.path.relpath(os.path.join(root, file), green_refined_directory) for root, _, files in os.walk(green_refined_directory) for file in files if file.endswith('.py') or file.endswith('.java')}
+# Check if all relevant files have been refined
+source_files = {os.path.relpath(os.path.join(root, file), source_directory) for root, _, files in os.walk(source_directory) for file in files if file.endswith(('.py', '.java', '.xml', '.php', '.cpp'))}
+refined_files = {os.path.relpath(os.path.join(root, file), green_refined_directory) for root, _, files in os.walk(green_refined_directory) for file in files if file.endswith(('.py', '.java', '.xml', '.php', '.cpp'))}
 
 # Exclude specific files and the Green_Refined_Files directory from comparison
 excluded_from_comparison = excluded_files.union(
