@@ -1,0 +1,23 @@
+# Libraries for server_emissions.py
+pandas
+psutil
+python-dotenv
+openpyxl
+
+# Libraries for GreenCodeRefiner.py
+pandas
+psutil
+python-dotenv
+openai
+azure-ai-formrecognizer
+
+# Libraries for Track_emissions.py
+codecarbon
+pandas
+python-dotenv
+pytest
+
+# Libraries for compare_emissions.py
+pandas
+python-dotenv
+
