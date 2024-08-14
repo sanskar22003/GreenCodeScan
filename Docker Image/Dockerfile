@@ -13,7 +13,9 @@ COPY GreenCodeRefiner.py /app/
 COPY track_emissions.py /app/
 COPY compare_emissions.py /app/
 COPY upload_to_sharePoint.ps1 /app/
-COPY .env /app/
+# Copy Unix-style .env file into the container
+COPY .env.unix /app/.env
+
 
 # Install Python dependencies (if any)
 COPY requirements.txt /app/
