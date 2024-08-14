@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  script-runner:
+    build: .
+    volumes:
+      - ${SOURCE_DIRECTORY}:/app/source:rw
+      - ${GREEN_REFINED_DIRECTORY}:/app/Green_Refined_Files:rw
+    environment:
+      - SOURCE_DIRECTORY=/app/source
+      - GREEN_REFINED_DIRECTORY=/app/Green_Refined_Files
+    entrypoint: ["sh", "-c", "python /app/server_emissions.py && python /app/GreenCodeRefiner.py && python /app/track_emissions.py && python /app/compare_emissions.py && powershell -File /app/upload_to_sharePoint.ps1"]
