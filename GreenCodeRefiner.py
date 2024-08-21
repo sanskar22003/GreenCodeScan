@@ -21,6 +21,13 @@ client = AzureOpenAI(
     azure_endpoint=os.getenv('AZURE_ENDPOINT')
 )
 
+if not os.path.exists(green_refined_directory):
+    # Create the directory
+    os.makedirs(green_refined_directory)
+    print(f"Directory '{green_refined_directory}' created successfully!")
+else:
+    print(f"Directory '{green_refined_directory}' already exists.")
+
 unique_name = f"GreenCodeRefiner {uuid.uuid4()}"
 # Create an assistant
 assistant = client.beta.assistants.create(
@@ -200,18 +207,33 @@ thread_messages = client.beta.threads.messages.list(thread.id)
 print(thread_messages.model_dump_json(indent=2))
 
 # Check if all relevant files have been refined
-source_files = {os.path.relpath(os.path.join(root, file), source_directory) for root, _, files in os.walk(source_directory) for file in files if file.endswith(('.py', '.java', '.xml', '.php', '.cpp'))}
-refined_files = {os.path.relpath(os.path.join(root, file), green_refined_directory) for root, _, files in os.walk(green_refined_directory) for file in files if file.endswith(('.py', '.java', '.xml', '.php', '.cpp'))}
+source_files = {
+    os.path.relpath(os.path.join(root, file), source_directory)
+    for root, _, files in os.walk(source_directory)
+    for file in files
+    if file.endswith(('.py', '.java', '.xml', '.php', '.cpp'))
+}
+
+refined_files = {
+    os.path.relpath(os.path.join(root, file), green_refined_directory)
+    for root, _, files in os.walk(green_refined_directory)
+    for file in files
+    if file.endswith(('.py', '.java', '.xml', '.php', '.cpp'))
+}
+
+print("Source files:", source_files)
+print("Refined files:", refined_files)
 
 # Exclude specific files and the Green_Refined_Files directory from comparison
-excluded_from_comparison = excluded_files.union(
-    {os.path.relpath(file, source_directory) for file in [
-        os.path.join(source_directory, 'Green_Refined_Files')
-    ]}
-)
+excluded_from_comparison = excluded_files.union({
+    os.path.relpath(os.path.join(source_directory, 'Green_Refined_Files'), source_directory)
+})
 
-source_files -= excluded_from_comparison
-refined_files -= excluded_from_comparison
+# Remove excluded files from the comparison
+source_files = {
+    file for file in source_files
+    if not (file in excluded_from_comparison or file.startswith('Green_Refined_Files'))
+}
 
 if source_files.issubset(refined_files):
     print('Script-Has-Uploaded-All-Files')
