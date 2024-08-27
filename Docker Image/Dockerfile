@@ -4,17 +4,12 @@ FROM python:3.9-slim
 # Set working directory in the container
 WORKDIR /app
 
-# Copy the .env file into the container
-COPY .env .env
+# Copy all necessary files into the container
+COPY server_emissions.py GreenCodeRefiner.py track_emissions.py compare_emissions.py .env requirements.txt /app/
 
-# Copy all Python scripts and the PowerShell script into the container
-COPY server_emissions.py GreenCodeRefiner.py track_emissions.py compare_emissions.py upload_to_sharepoint.ps1 /app/
+# Set the environment variable to specify the source directory
+ENV SOURCE_DIRECTORY=/app/source
 
-# Install required Python packages (assume you have a requirements.txt if needed)
-COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Install PowerShell for running PowerShell scripts
 # Install required dependencies for PowerShell
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -27,5 +22,8 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Run the scripts in sequence
-CMD ["bash", "-c", "python server_emissions.py && python GreenCodeRefiner.py && python track_emissions.py && python compare_emissions.py && pwsh upload_to_sharePoint.ps1"]
+# Install required Python packages from requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Command to copy scripts, .env file, and SharePoint DLLs to the source directory on the host system
+CMD ["bash", "-c", "cp /app/*.py /app/.env ${SOURCE_DIRECTORY} && cd ${SOURCE_DIRECTORY} && python server_emissions.py && python GreenCodeRefiner.py && python track_emissions.py && python compare_emissions.py"]
