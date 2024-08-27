@@ -73,12 +73,12 @@ pipeline {
                 }
             }
         }
-        stage('Stage 6: Update Dashboard') {
-            steps {
-                powershell """
-                & '${env.SHAREPOINT_PS_SCRIPT_PATH}'
-                """
-            }
-        }
+        // stage('Stage 6: Update Dashboard') {
+        //     steps {
+        //         powershell """
+        //         & '${env.SHAREPOINT_PS_SCRIPT_PATH}'
+        //         """
+        //     }
+        // }
     }
 }
