@@ -7,11 +7,12 @@ from dotenv import load_dotenv
 from openai import AzureOpenAI
 
 # Load environment variables
-load_dotenv(dotenv_path=".env", verbose=True, override=True)
+env_path = os.path.abspath(".env")
+load_dotenv(dotenv_path=env_path, verbose=True, override=True)
 
-# Define directories using environment variables
-source_directory = os.getenv('SOURCE_DIRECTORY')
-green_refined_directory = os.getenv('GREEN_REFINED_DIRECTORY')
+# Remove the '.env' part to get the SOURCE_DIRECTORY
+source_directory = os.path.dirname(env_path)
+green_refined_directory = os.path.join(source_directory, 'Green_Refined_Files')
 temp_directory = os.path.join(green_refined_directory, 'temp')
 
 # Initialize AzureOpenAI client using environment variables
