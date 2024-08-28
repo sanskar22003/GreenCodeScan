@@ -3,12 +3,14 @@ import os
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv(dotenv_path=".env", verbose=True, override=True)
+env_path = os.path.abspath(".env")
+load_dotenv(dotenv_path=env_path, verbose=True, override=True)
 
-# Define file paths using environment variables
-result_source_dir = os.getenv('RESULT_SOURCE_DIR')
-result_green_refined_directory = os.getenv('RESULT_GREEN_REFINED_DIRECTORY')
-result_folder_path = os.getenv('RESULT_DIR')
+# Remove the '.env' part to get the SOURCE_DIRECTORY
+SOURCE_DIRECTORY = os.path.dirname(env_path)
+result_source_dir = os.path.join(SOURCE_DIRECTORY, 'Green_Refined_Files', 'Result', 'main_before_emissions_data.csv')
+result_green_refined_directory = os.path.join(SOURCE_DIRECTORY, 'Green_Refined_Files', 'Result', 'main_after_emissions_data.csv')
+result_folder_path = os.path.join(SOURCE_DIRECTORY, 'Green_Refined_Files', 'Result')
 
 # Read CSV files
 emissions_df = pd.read_csv(result_source_dir)
