@@ -10,13 +10,19 @@ import shutil
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv(dotenv_path=".env", verbose=True, override=True)
+env_path = os.path.abspath(".env")
+load_dotenv(dotenv_path=env_path, verbose=True, override=True)
+
+# Remove the '.env' part to get the SOURCE_DIRECTORY
+SOURCE_DIRECTORY = os.path.dirname(env_path)
+GREEN_REFINED_DIRECTORY = os.path.join(SOURCE_DIRECTORY, 'Green_Refined_Files')
+RESULT_DIR = os.path.join(SOURCE_DIRECTORY, 'Green_Refined_Files', 'Result')
 
 def process_folder(BASE_DIR, EMISSIONS_DATA_CSV, RESULT_DIR, suffix):
     PYTEST_PATH = os.getenv('PYTEST_PATH')
     MAVEN_PATH = os.getenv('MAVEN_PATH')
     CUSTOMER_NAME = "ZF"
-    javac_path = 'C:\\Program Files\\Java\\jdk-21\\bin\\javac.exe'
+    javac_path = os.getenv('JAVAC_PATH')
     
     # Ensure the 'result' directory exists
     if not os.path.exists(RESULT_DIR):
@@ -101,11 +107,6 @@ def process_folder(BASE_DIR, EMISSIONS_DATA_CSV, RESULT_DIR, suffix):
 
     print(f"Emissions data and test results written to {EMISSIONS_DATA_CSV}")
 
-# Define paths using environment variables
-source_directory = os.getenv('SOURCE_DIRECTORY')
-green_refined_directory = os.getenv('GREEN_REFINED_DIRECTORY')
-result_dir = os.getenv('RESULT_DIR')
-
 # Process each folder with suffix
-process_folder(source_directory, os.path.join(result_dir, 'main_before_emissions_data.csv'), result_dir, 'before-in-detail')
-process_folder(green_refined_directory, os.path.join(result_dir, 'main_after_emissions_data.csv'), result_dir, 'after-in-detail')
+process_folder(SOURCE_DIRECTORY, os.path.join(RESULT_DIR, 'main_before_emissions_data.csv'), RESULT_DIR, 'before-in-detail')
+process_folder(GREEN_REFINED_DIRECTORY, os.path.join(RESULT_DIR, 'main_after_emissions_data.csv'), RESULT_DIR, 'after-in-detail')
