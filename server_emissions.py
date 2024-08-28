@@ -7,10 +7,12 @@ import os
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv(dotenv_path=".env", verbose=True, override=True)
+env_path = os.path.abspath(".env")
+load_dotenv(dotenv_path=env_path, verbose=True, override=True)
 
-# Define all paths and constants here
-RESULT_DIR = os.getenv('RESULT_DIR')
+# Remove the '.env' part to get the SOURCE_DIRECTORY
+SOURCE_DIRECTORY = os.path.dirname(env_path)
+RESULT_DIR = os.path.join(SOURCE_DIRECTORY, 'Green_Refined_Files', 'Result')
 EXCEL_FILE = os.path.join(RESULT_DIR, 'server_data.xlsx')
 SLEEP_TIME = 20  # Sleep for 20 seconds before collecting data again
 RUN_TIME = 60 * 2  # Run for 1 hour
@@ -97,12 +99,16 @@ def update_excel(data):
     except FileNotFoundError:
         df = pd.DataFrame(columns=['Date', 'Time', 'Host-name', 'IP address', 'CPU usage', 'RAM usage', 'Disk usage', 'Network usage', 'Energy consumption (KWH)', 'CO2 emission (kt)'])
 
-    # Exclude empty or all-NA columns before concatenation
-    df = df.dropna(how='all', axis=1)
-
-    # Concatenate with new data
-    df = pd.concat([df, pd.DataFrame(data, index=[0])], ignore_index=True)
+    # Convert the data dictionary into a DataFrame
+    new_data = pd.DataFrame(data, index=[0])
+    
+    # Ensure new_data is not empty before concatenation
+    if not new_data.empty:
+        df = pd.concat([df, new_data], ignore_index=True)
+    
+    # Save the updated DataFrame back to the Excel file
     df.to_excel(EXCEL_FILE, index=False)
+
 
 def main():
     start_time = time.time()
