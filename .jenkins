@@ -33,23 +33,32 @@ pipeline {
             steps {
                 dir("${env.REPO_PATH}") {
                     catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                        script {
-                            def result = ''
-                            while (true) {
-                                result = bat(script: "${env.PYTHON_PATH} GreenCodeRefiner.py", returnStdout: true).trim()
-                                if (result.contains('Script-Has-Uploaded-All-Files')) {
-                                    break
-                                } else if (result.contains('Script-Has-Remain-Some-Files-To-Uploaded')) {
-                                    echo "Rerunning GreenCodeRefiner.py due to pending tasks..."
-                                } else {
-                                    error "Unexpected result from GreenCodeRefiner.py: ${result}"
-                                }
-                            }
-                        }
+                        bat "${env.PYTHON_PATH} GreenCodeRefiner.py"
                     }
                 }
             }
         }
+        // stage('Stage 3: Green Code Refiner') {
+        //     steps {
+        //         dir("${env.REPO_PATH}") {
+        //             catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+        //                 script {
+        //                     def result = ''
+        //                     while (true) {
+        //                         result = bat(script: "${env.PYTHON_PATH} GreenCodeRefiner.py", returnStdout: true).trim()
+        //                         if (result.contains('Script-Has-Uploaded-All-Files')) {
+        //                             break
+        //                         } else if (result.contains('Script-Has-Remain-Some-Files-To-Uploaded')) {
+        //                             echo "Rerunning GreenCodeRefiner.py due to pending tasks..."
+        //                         } else {
+        //                             error "Unexpected result from GreenCodeRefiner.py: ${result}"
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        //}
 
         stage('Stage 4: Dynamic Code Analysis') {
             steps {
