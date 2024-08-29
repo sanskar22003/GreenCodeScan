@@ -197,46 +197,77 @@ for file_path in find_files(source_directory, ['.py', '.java', '.xml', '.php', '
 if not file_processed:
     print("No new files were processed.")
 
-# Ensure temp directory is empty
-if not os.listdir(temp_directory):
-    print("Temp directory is empty.")
-else:
-    print("Temp directory is not empty.")
+# Process files until all source files are refined
+def process_files():
+    while True:
+        # Reload the list of source and refined files
+        source_files = {
+            os.path.relpath(os.path.join(root, file), source_directory)
+            for root, _, files in os.walk(source_directory)
+            for file in files
+            if file.endswith(('.py', '.java', '.xml', '.php', '.cpp'))
+        }
 
-# Check messages in the thread
-thread_messages = client.beta.threads.messages.list(thread.id)
-print(thread_messages.model_dump_json(indent=2))
+        refined_files = {
+            os.path.relpath(os.path.join(root, file), green_refined_directory)
+            for root, _, files in os.walk(green_refined_directory)
+            for file in files
+            if file.endswith(('.py', '.java', '.xml', '.php', '.cpp'))
+        }
 
-# Check if all relevant files have been refined
-source_files = {
-    os.path.relpath(os.path.join(root, file), source_directory)
-    for root, _, files in os.walk(source_directory)
-    for file in files
-    if file.endswith(('.py', '.java', '.xml', '.php', '.cpp'))
-}
+        # Exclude specific files and directories from comparison
+        excluded_from_comparison = excluded_files.union({
+            os.path.relpath(os.path.join(source_directory, 'Green_Refined_Files'), source_directory)
+        })
 
-refined_files = {
-    os.path.relpath(os.path.join(root, file), green_refined_directory)
-    for root, _, files in os.walk(green_refined_directory)
-    for file in files
-    if file.endswith(('.py', '.java', '.xml', '.php', '.cpp'))
-}
+        source_files = {
+            file for file in source_files
+            if not (file in excluded_from_comparison or file.startswith('Green_Refined_Files'))
+        }
 
-print("Source files:", source_files)
-print("Refined files:", refined_files)
+        # Check if all source files are present in the refined files
+        if source_files.issubset(refined_files):
+            print('Script-Has-Uploaded-All-Files')
+            break  # Exit the loop if all files are refined
+        else:
+            print('Script-Has-Remain-Some-Files-To-Uploaded')
 
-# Exclude specific files and the Green_Refined_Files directory from comparison
-excluded_from_comparison = excluded_files.union({
-    os.path.relpath(os.path.join(source_directory, 'Green_Refined_Files'), source_directory)
-})
+            # Process any remaining files
+            for file_path in source_files - refined_files:
+                print(f"Processing remaining file: {file_path}")
+                relative_path = os.path.relpath(file_path, source_directory)
+                file_name = os.path.basename(file_path)
 
-# Remove excluded files from the comparison
-source_files = {
-    file for file in source_files
-    if not (file in excluded_from_comparison or file.startswith('Green_Refined_Files'))
-}
+                if file_name in excluded_files or relative_path.startswith(os.path.relpath(green_refined_directory, source_directory)):
+                    continue
+                
+                with open(file_path, "rb") as file:
+                    uploaded_file = client.files.create(
+                        file=file,
+                        purpose='assistants'
+                    )
 
-if source_files.issubset(refined_files):
-    print('Script-Has-Uploaded-All-Files')
-else:
-    print('Script-Has-Remain-Some-Files-To-Uploaded')
+                refined_temp_file_path = os.path.join(temp_directory, file_name)
+                ensure_directory_structure(os.path.dirname(refined_temp_file_path))
+
+                refined_success = False
+                for prompt in prompts:
+                    refined_success = process_file_with_prompt(uploaded_file.id, prompt, refined_temp_file_path)
+                    if not refined_success:
+                        break
+
+                if refined_success:
+                    final_refined_directory = os.path.join(green_refined_directory, os.path.dirname(relative_path))
+                    ensure_directory_structure(final_refined_directory)
+
+                    final_refined_file_path = os.path.join(final_refined_directory, file_name)
+                    os.rename(refined_temp_file_path, final_refined_file_path)
+                    print(f"File moved to final location: {final_refined_file_path}")
+
+                    with open(log_file_path, 'a') as log_file:
+                        log_file.write(f"{relative_path}\n")
+                    uploaded_files.add(relative_path)
+                else:
+                    print(f"Failed to refine the file: {file_path}")
+
+process_files()
