@@ -50,17 +50,33 @@ def ensure_directory_structure(path):
         os.makedirs(path)
         print(f"Folder '{path}' created.")
 
-# Function to recursively find files with specific extensions and store them in a list
-def find_files(directory, extensions):
-    file_list = []
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            if file.endswith(tuple(extensions)):
-                file_list.append(os.path.join(root, file))
-    return file_list
+# List of files to exclude from processing
+excluded_files = {
+    'GreenCodeRefiner.py',
+    'compare_emissions.py',
+    'server_emissions.py',
+    'track_emissions.py'
+}
 
-# Store files with specific extensions in a list
-file_list = find_files(source_directory, ['.py', '.java', '.xml', '.php', '.cpp'])
+## Corrected function to recursively find files with specific extensions while excluding specified files and folders
+def find_files(directory, extensions, excluded_files, green_refined_directory):
+    for root, dirs, files in os.walk(directory):
+        # Skip the Green_Refined_Files directory
+        if os.path.commonpath([green_refined_directory, root]) == green_refined_directory:
+            continue
+        
+        for file in files:
+            # Skip excluded files
+            if file in excluded_files:
+                continue
+
+            if file.endswith(tuple(extensions)):
+                yield os.path.join(root, file)
+
+# Define the list to store files
+file_list = list(find_files(source_directory, ['.py', '.java', '.xml', '.php', '.cpp'], excluded_files, green_refined_directory))
+
+print(file_list)
 
 # Check if the download directory exists, if not, create it
 ensure_directory_structure(green_refined_directory)
@@ -140,14 +156,7 @@ def process_file_with_prompt(file_id, prompt, refined_file_path):
         print("No code found or annotations list is empty.")
         return False
 
-# List of files to exclude from processing
-excluded_files = {
-    'GreenCodeRefiner.py',
-    'compare_emissions.py',
-    'server_emissions.py',
-    'track_emissions.py'
-}
-
+# Upload and refine files
 # Upload and refine files
 while file_list:
     file_path = file_list.pop(0)
@@ -175,7 +184,7 @@ while file_list:
     refined_success = False
     for prompt in prompts:
         refined_success = process_file_with_prompt(uploaded_file.id, prompt, refined_temp_file_path)
-        if not refined_success:
+        if refined_success:
             break
 
     if refined_success:
@@ -192,8 +201,9 @@ while file_list:
     else:
         print(f"Failed to refine the file: {file_path}")
 
-if not file_list:
-    print("All files have been processed.")
+    # Check if file_list is empty after processing
+    if not file_list:
+        print("All files have been processed.")
 
 # Ensure temp directory is empty
 if not os.listdir(temp_directory):
