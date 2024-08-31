@@ -40,7 +40,7 @@ def process_folder(BASE_DIR, EMISSIONS_DATA_CSV, RESULT_DIR, suffix):
     # Recursively find files with specific extensions
     for root, dirs, files in os.walk(BASE_DIR):
         for script in files:
-            if script.endswith(('.py', '.java', '.cpp', '.cs')) and script != 'track_emissions.py' and script != 'product_detailsTest.java' and script != 'server_emissions.py' and script != 'update_google_sheets.py':
+            if script.endswith(('.py', '.java', '.cpp', '.cs')) and script != 'track_emissions.py' and script != 'compare_emissions.py' and script != 'server_emissions.py' and script != 'GreenCodeRefiner.py':
                 script_path = os.path.join(root, script)
                 tracker = EmissionsTracker()
                 duration = None
