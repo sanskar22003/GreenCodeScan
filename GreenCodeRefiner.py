@@ -243,13 +243,23 @@ while file_list:
             file=file,
             purpose='assistants'
         )
+    
     refined_temp_file_path = os.path.join(temp_directory, file_name)
     ensure_directory_structure(os.path.dirname(refined_temp_file_path))
+    
     refined_success = False
+    
+    # Apply all prompts sequentially
     for prompt in prompts:
         refined_success = process_file_with_prompt(uploaded_file.id, prompt, refined_temp_file_path)
+        
+        # If the file is refined successfully with the current prompt, continue with the next prompt
         if refined_success:
-            break
+            print(f"Successfully applied prompt: '{prompt}' to {file_name}")
+        else:
+            print(f"Failed to apply prompt: '{prompt}' to {file_name}")
+    
+    # Move the refined file after all prompts have been applied
     if refined_success:
         final_file_path = os.path.join(green_code_directory, relative_path)
         ensure_directory_structure(os.path.dirname(final_file_path))
