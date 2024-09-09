@@ -15,7 +15,7 @@ load_dotenv(dotenv_path=env_path, verbose=True, override=True)
 source_directory = os.path.dirname(env_path)
 green_code_directory = os.path.join(source_directory, 'GreenCode')
 temp_directory = os.path.join(green_code_directory, 'temp')
-test_file_directory = os.path.join(source_directory, 'test_file')
+test_file_directory = os.path.join(source_directory, 'test_cases') #rename
 
 # Store file extensions in a variable
 file_extensions = ['.py', '.java', '.xml', '.php', '.cpp','.html','.css','.ts','.rb']
@@ -72,7 +72,7 @@ excluded_files = {
 }
 
 # Function to find files in the source directory
-def find_files(directory, extensions, excluded_files):
+def Identify_SourceFiles(directory, extensions, excluded_files): #RenameFunctionName - Identify Source Files
     for root, dirs, files in os.walk(directory):
         for file in files:
             if file in excluded_files:
@@ -152,7 +152,7 @@ def create_unit_test_files(file_list):
             print(f"Failed to create unit test for file: {file_path}")
 
 # Function to process a file with the given prompt
-def process_file_with_prompt(file_id, prompt, refined_file_path):
+def Apply_GreenPrompts(file_id, prompt, refined_file_path): #RenameFunctionName - apply green prompts on files
     print(f"Applying prompt: {prompt}")
     # Create a thread with the prompt
     thread = client.beta.threads.create(
@@ -200,24 +200,21 @@ def process_file_with_prompt(file_id, prompt, refined_file_path):
         return False
 
 # Define the list to store files
-file_list = list(find_files(source_directory, file_extensions, excluded_files))
+file_list = list(Identify_SourceFiles(source_directory, file_extensions, excluded_files)) #rename
 
 # Step 1: Create unit test files for all source files without test files
 create_unit_test_files(file_list)
 
 # Re-scan the source directory to include newly created test files
-file_list = list(find_files(source_directory, file_extensions, excluded_files))
+file_list = list(Identify_SourceFiles(source_directory, file_extensions, excluded_files))
 
 # Define the prompts for refining the code
 prompts = [
     "Make the code more energy efficient",
-    "Eliminate any redundant or dead code",
+    "Eliminate any redundant or dead code", 
     "Simplify complex algorithms to reduce computational load",
-    "Enhance the readability of the code",
     "Optimize memory usage in the code",
     "Reduce the number of dependencies",
-    "Ensure the code adheres to the latest coding standards",
-    "Improve the maintainability of the code",
     "Refactor the code to reduce complexity",
     "Test the code for edge cases"
 ]
@@ -251,7 +248,7 @@ while file_list:
     
     # Apply all prompts sequentially
     for prompt in prompts:
-        refined_success = process_file_with_prompt(uploaded_file.id, prompt, refined_temp_file_path)
+        refined_success = Apply_GreenPrompts(uploaded_file.id, prompt, refined_temp_file_path)
         
         # If the file is refined successfully with the current prompt, continue with the next prompt
         if refined_success:
