@@ -18,7 +18,7 @@ temp_directory = os.path.join(green_code_directory, 'temp')
 test_file_directory = os.path.join(source_directory, 'test_file')
 
 # Store file extensions in a variable
-file_extensions = ['.py', '.java', '.xml', '.php', '.cpp']
+file_extensions = ['.py', '.java', '.xml', '.php', '.cpp','.html','.css','.ts','.rb']
 
 # Initialize AzureOpenAI client using environment variables
 client = AzureOpenAI(
