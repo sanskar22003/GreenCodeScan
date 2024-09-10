@@ -8,9 +8,9 @@ Windows:
 <br>MinGW:  MinGW - Minimalist GNU for Windows download | SourceForge.net
 <br>(Select G++ while installing)
 <br>
-	1. Run the below commands in CMD:
-		a. git clone https://github.com/google/googletest.git
-		b. Cd googletest
-		c. Cmake . 
-		d. nmake
+	**<br>1. Run the below commands in CMD:
+	<br>	a. git clone https://github.com/google/googletest.git
+	<br>	b. Cd googletest
+	<br>	c. Cmake . 
+	<br>	d. nmake**
 
