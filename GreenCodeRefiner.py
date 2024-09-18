@@ -83,7 +83,7 @@ def identify_source_files(directory, extensions, excluded_files):
 
 # Function to create unit test files for source files without a test file
 def create_unit_test_files(file_list):
-    Prompt_TestCases = "Create a unit test case for the following {file_extension} file: {file_name}"
+    Prompt_TestCases = testcase_prompts
     for file_path in file_list:
         file_name = os.path.basename(file_path)
         base_name, ext = os.path.splitext(file_name)
@@ -160,16 +160,22 @@ def apply_green_prompts(file_id, prompt, refined_file_path):
 # Function to load prompts from the .env file
 def load_prompts_from_env():
     prompts = []
+    testcase_prompts = []
     for key in os.environ:
-        if key.startswith("PROMPT_"):
+        if key.startswith("PROMPT_") and not key.startswith("PROMPT_GENERATE_TESTCASES"):
             # Split the prompt and its flag
             prompt_data = os.getenv(key).split(", ")
             if len(prompt_data) == 2 and prompt_data[1].lower() == "y":
                 prompts.append(prompt_data[0])
-    return prompts
+        elif key == "PROMPT_GENERATE_TESTCASES":
+            # Split the prompt and its flag
+            prompt_data = os.getenv(key).split(", ")
+            if len(prompt_data) == 2 and prompt_data[1].lower() == "y":
+                testcase_prompts.append(prompt_data[0])
+    return prompts, testcase_prompts
 
 # Load prompts with "Yes" authentication
-prompts = load_prompts_from_env()
+prompts, testcase_prompts = load_prompts_from_env()
 
 # Define the list to store files
 file_list = list(identify_source_files(source_directory, file_extensions, excluded_files))
