@@ -60,7 +60,7 @@ assistant = client.beta.assistants.create(
         "4. If the code runs successfully, share the code as a file that can be downloaded. "
         "5. If the code is unsuccessful, display the error message and try to revise the code and rerun."
     ),
-    model="GPT4o",
+    model="gpt-4o-mini",
     tools=[{"type": "code_interpreter"}]
 )
 
