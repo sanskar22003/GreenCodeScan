@@ -83,19 +83,32 @@ def identify_source_files(directory, extensions, excluded_files):
 
 # Function to create unit test files for source files without a test file
 def create_unit_test_files(file_list):
-    Prompt_TestCases = testcase_prompts
+
+    # Read the unit test prompt and its toggle from the .env file
+    prompt_testcase = os.getenv('PROMPT_GENERATE_TESTCASES')
+    if prompt_testcase:
+        prompt, toggle = prompt_testcase.rsplit(',', 1)
+        toggle = toggle.strip().lower()
+    else:
+        print("Unit test case prompt not found in .env.")
+        return
+
+    if toggle != 'y':
+        print("Skipping unit test generation as per .env configuration set as NO.")
+        return
+
     for file_path in file_list:
         file_name = os.path.basename(file_path)
         base_name, ext = os.path.splitext(file_name)
         if 'test' in base_name.lower():
             print(f"Skipping test file: {file_path}")
             continue
-        test_file_name = ext
+        test_file_name = f"{base_name}Test{ext}"
         test_file_path = os.path.join(test_file_directory, test_file_name)
         if os.path.exists(test_file_path):
             print(f"Test file already exists: {test_file_path}")
             continue
-        prompt = Prompt_TestCases.format(file_extension=ext, file_name=file_name)
+        prompt = prompt_testcase.format(file_extension=ext, file_name=file_name)
         with open(file_path, "rb") as file:
             uploaded_file = client.files.create(file=file, purpose='assistants')
         print(f"Creating unit test file for: {file_name}")
@@ -124,6 +137,49 @@ def create_unit_test_files(file_list):
             print(f"Unit test file created: {test_file_path}")
         else:
             print(f"Failed to create unit test for file: {file_path}")
+
+# def create_unit_test_files(file_list):
+#     Prompt_TestCases = testcase_prompts
+#     for file_path in file_list:
+#         file_name = os.path.basename(file_path)
+#         base_name, ext = os.path.splitext(file_name)
+#         if 'test' in base_name.lower():
+#             print(f"Skipping test file: {file_path}")
+#             continue
+#         test_file_name = f"{base_name}Test{ext}"
+#         test_file_path = os.path.join(test_file_directory, test_file_name)
+#         if os.path.exists(test_file_path):
+#             print(f"Test file already exists: {test_file_path}")
+#             continue
+#         prompt = Prompt_TestCases.format(file_extension=ext, file_name=file_name)
+#         with open(file_path, "rb") as file:
+#             uploaded_file = client.files.create(file=file, purpose='assistants')
+#         print(f"Creating unit test file for: {file_name}")
+#         thread = client.beta.threads.create(
+#             messages=[{"role": "user", "content": prompt, "file_ids": [uploaded_file.id]}]
+#         )
+#         run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant.id)
+#         start_time = time.time()
+#         while True:
+#             run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id).status
+#             if run_status == 'completed':
+#                 break
+#             elif time.time() - start_time > 1200:
+#                 print("Unit test creation timed out.")
+#                 return
+#             else:
+#                 time.sleep(5)
+#         messages = client.beta.threads.messages.list(thread_id=thread.id)
+#         data = json.loads(messages.model_dump_json(indent=2))
+#         code = None
+#         if data['data'] and data['data'][0]['content'] and data['data'][0]['content'][0]['text']['annotations']:
+#             code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
+#         if code:
+#             content = client.files.content(code)
+#             content.write_to_file(test_file_path)
+#             print(f"Unit test file created: {test_file_path}")
+#         else:
+#             print(f"Failed to create unit test for file: {file_path}")
 
 # Function to process a file with the given prompt
 def apply_green_prompts(file_id, prompt, refined_file_path):
@@ -160,22 +216,16 @@ def apply_green_prompts(file_id, prompt, refined_file_path):
 # Function to load prompts from the .env file
 def load_prompts_from_env():
     prompts = []
-    testcase_prompts = []
     for key in os.environ:
-        if key.startswith("PROMPT_") and not key.startswith("PROMPT_GENERATE_TESTCASES"):
+        if key.startswith("PROMPT_"):
             # Split the prompt and its flag
             prompt_data = os.getenv(key).split(", ")
             if len(prompt_data) == 2 and prompt_data[1].lower() == "y":
                 prompts.append(prompt_data[0])
-        elif key == "PROMPT_GENERATE_TESTCASES":
-            # Split the prompt and its flag
-            prompt_data = os.getenv(key).split(", ")
-            if len(prompt_data) == 2 and prompt_data[1].lower() == "y":
-                testcase_prompts.append(prompt_data[0])
-    return prompts, testcase_prompts
+    return prompts
 
 # Load prompts with "Yes" authentication
-prompts, testcase_prompts = load_prompts_from_env()
+prompts = load_prompts_from_env()
 
 # Define the list to store files
 file_list = list(identify_source_files(source_directory, file_extensions, excluded_files))
