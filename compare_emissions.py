@@ -8,9 +8,9 @@ load_dotenv(dotenv_path=env_path, verbose=True, override=True)
 
 # Remove the '.env' part to get the SOURCE_DIRECTORY
 SOURCE_DIRECTORY = os.path.dirname(env_path)
-result_source_dir = os.path.join(SOURCE_DIRECTORY, 'Green_Refined_Files', 'Result', 'main_before_emissions_data.csv')
-result_green_refined_directory = os.path.join(SOURCE_DIRECTORY, 'Green_Refined_Files', 'Result', 'main_after_emissions_data.csv')
-result_folder_path = os.path.join(SOURCE_DIRECTORY, 'Green_Refined_Files', 'Result')
+result_source_dir = os.path.join(SOURCE_DIRECTORY, 'Result', 'main_before_emissions_data.csv')
+result_green_refined_directory = os.path.join(SOURCE_DIRECTORY, 'Result', 'main_after_emissions_data.csv')
+result_folder_path = os.path.join(SOURCE_DIRECTORY, 'Result')
 
 # Read CSV files
 emissions_df = pd.read_csv(result_source_dir)
