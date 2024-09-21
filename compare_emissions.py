@@ -17,7 +17,7 @@ emissions_df = pd.read_csv(result_source_dir)
 emissions_after_df = pd.read_csv(result_green_refined_directory)
 
 # Merge dataframes on common columns
-merged_df = emissions_df.merge(emissions_after_df, on=["Customer Name", "Application name", "File Type"], suffixes=('_before', '_after'))
+merged_df = emissions_df.merge(emissions_after_df, on=["Application name", "File Type"], suffixes=('_before', '_after'))
 
 # Calculate the difference in emissions and determine the result
 merged_df['final emission'] = merged_df['Emissions (gCO2eq)_before'] - merged_df['Emissions (gCO2eq)_after']
