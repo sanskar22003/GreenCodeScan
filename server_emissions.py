@@ -15,7 +15,7 @@ GLOBAL_GRID_CO2_FACTOR = 0.54
 US_GRID_CO2_FACTOR = 0.46
 GLOBAL_RENEWABLE_CO2_FACTOR = 0.01
 DEFAULT_SLEEP_TIME = 20
-RUN_TIME_IN_MINUTES = 2
+RUN_TIME_IN_MINUTES = 1
 RESULT_DIR = os.path.join(os.path.dirname(env_path), 'Result')
 EXCEL_FILE = os.path.join(RESULT_DIR, 'server_data.xlsx')
 def ensure_result_directory_exists():
