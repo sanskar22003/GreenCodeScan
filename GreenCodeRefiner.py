@@ -263,45 +263,6 @@ def apply_green_prompts(file_id, prompt, refined_file_path):
         logging.error(f"Exception occurred while applying prompt '{prompt}' to file {file_id}: {e}")
         return False
 
-# # Applying green prompts
-# def apply_green_prompts(file_id, prompt, refined_file_path):
-#     logging.info(f"Applying prompt: {prompt} to file {file_id}")
-#     thread = client.beta.threads.create(
-#         messages=[{"role": "user", "content": prompt, "file_ids": [file_id]}]
-#     )
-#     run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant.id)
-
-#     start_time = time.time()
-#     while True:
-#         run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id).status
-#         logging.info(f"Processing status for file {file_id}: {run_status}")
-#         if run_status == 'completed':
-#             break
-#         elif time.time() - start_time > 1200:
-#             logging.warning(f"Processing timed out for file: {file_id}")
-#             return False
-#         else:
-#             time.sleep(5)
-
-#     messages = client.beta.threads.messages.list(thread_id=thread.id)
-#     data = json.loads(messages.model_dump_json(indent=2))
-#     code = None
-#     if data['data'] and data['data'][0]['content'] and data['data'][0]['content'][0]['text']['annotations']:
-#         code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
-    
-#     if code:
-#         try:
-#             content = client.files.content(code)
-#             content.write_to_file(refined_file_path)
-#             logging.info(f"File refined successfully with prompt: {prompt}")
-#             return True
-#         except Exception as e:
-#             logging.error(f"Error writing refined file for prompt {prompt}: {e}")
-#             return False
-#     else:
-#         logging.warning(f"No code found or annotations list is empty for prompt: {prompt}")
-#         return False
-    
 # Function to load prompts from the .env file
 def load_prompts_from_env():
     prompts = []
@@ -356,11 +317,24 @@ while file_list:
         else:
             print(f"Failed to apply prompt: '{prompt}' to {file_name}")
 
-    # Move the refined file after all prompts have been applied
-    if refined_success:
-        final_file_path = os.path.join(green_code_directory, relative_path)
-        ensure_directory_structure(os.path.dirname(final_file_path))
+    # # Move the refined file after all prompts have been applied
+    # if refined_success:
+    #     final_file_path = os.path.join(green_code_directory, relative_path)
+    #     ensure_directory_structure(os.path.dirname(final_file_path))
+    #     os.rename(refined_temp_file_path, final_file_path)
+    #     print(f"File refined and moved: {final_file_path}")
+    # else:
+    #     print(f"Failed to refine file: {file_path}")
+
+    # Move the file after all prompts have been applied, regardless of success
+    final_file_path = os.path.join(green_code_directory, relative_path)
+    ensure_directory_structure(os.path.dirname(final_file_path))
+
+    try:
         os.rename(refined_temp_file_path, final_file_path)
-        print(f"File refined and moved: {final_file_path}")
-    else:
-        print(f"Failed to refine file: {file_path}")
+        if refined_success:
+            logging.info(f"File refined and moved successfully: {final_file_path}")
+        else:
+            logging.warning(f"File failed to refine but moved to final path: {final_file_path}")
+    except Exception as e:
+        logging.error(f"Failed to move file {refined_temp_file_path} to final path: {e}")
