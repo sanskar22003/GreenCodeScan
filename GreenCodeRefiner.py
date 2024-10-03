@@ -85,7 +85,9 @@ excluded_files = {
     'GreenCodeRefiner.py',
     'RefinerFunction.py',
     'server_emissions.py',
-    'track_emissions.py'
+    'track_emissions.py',
+    'report_template.html',
+    'details_template.html'
 }
 # Load prompts with "Yes" authentication
 prompts = load_prompts_from_env()
