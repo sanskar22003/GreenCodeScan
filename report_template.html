@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Green Code Emissions Report</title>
+    <!-- Font Awesome CDN for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        .header a {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 1.2em;
+        }
+        .section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px 50px;
+        }
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            width: 30%;
+        }
+        .small-box {
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.1);
+            background-color: #ffffff;
+            text-align: left;
+        }
+        .small-box h2 {
+            margin: 0;
+            font-size: 1.2em;
+            display: flex;
+            align-items: left;
+            justify-content: left;
+        }
+        .small-box h2 i {
+            margin-right: 10px;
+            color: #4CAF50;
+        }
+        .small-box p {
+            margin: 10px 0 0 0;
+            font-size: 1.0em;
+            color: #333333;
+        }
+        .timestamp {
+            margin-top: 10px;
+            font-size: 0.5em;
+            color: #777777;
+        }
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            width: 65%;
+        }
+        .graph {
+            margin-bottom: 30px;
+        }
+        .navigation {
+            padding: 10px 50px;
+            text-align: right;
+        }
+        .navigation a {
+            text-decoration: none;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .additional-graphs-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 20px 50px;
+        }
+        .additional-graph {
+            width: 45%;
+            background-color: #ffffff;
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.1);
+        }
+        .additional-graph h2 {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        .total-emissions-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px 50px;
+        }
+        .total-box {
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            padding: 15px;
+            width: 30%;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.1);
+            background-color: #ffffff;
+            text-align: center;
+        }
+        .total-box h2 {
+            margin: 0;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .total-box h2 i {
+            margin-right: 10px;
+            color: #4CAF50;
+        }
+        .total-box p {
+            margin: 10px 0 0 0;
+            font-size: 1.5em;
+            color: #333333;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .table th, .table td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        .table th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        @media (max-width: 1200px) {
+            .section, .total-emissions-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .left-column, .right-column, .total-box {
+                width: 90%;
+            }
+            .additional-graphs-container {
+                flex-direction: column;
+            }
+            .additional-graph {
+                width: 90%;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Green Code Emissions Report</h1>
+    </div>
+    <div class="navigation">
+        <a href="details_report.html"><i class="fas fa-chart-bar"></i> View Detailed Report</a>
+    </div>   
+    
+    <!-- Part A: Total Energy Before & After Refinement and Emissions by Solution Dir (Wh) -->
+    <div class="section">
+        <div class="left-column">
+            <h1>Energy Consumption</h1>
+            <div class="small-box">
+                <h2><i class="fas fa-bolt"></i>Before Refinement (Wh)</h2>
+                <p>{{ total_before }}</p>
+                <p class="timestamp">Last Run: {{ last_run_timestamp }}</p>
+            </div>
+            <div class="small-box">
+                <h2><i class="fas fa-bolt"></i>After Refinement (Wh)</h2>
+                <p>{{ total_after }}</p>
+                <p class="timestamp">Last Run: {{ last_run_timestamp }}</p>
+            </div>
+            <!-- Add the Energy Consumed Table here -->
+            <div class="small-box">
+                <h2>Most Energy Consumption (Wh)</h2>
+                {{ energy_table_html | safe }}
+            </div>
+        </div>
+        <div class="right-column">
+            <div class="graph">
+                {{ div_bar_graph_before | safe }}
+            </div>
+            <div class="graph">
+                {{ div_bar_graph_after | safe }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Part B: Total Emissions Before & After Refinement and Emissions by Solution Dir (gCO2eq) -->
+    <div class="section">
+        <div class="left-column">
+            <h1>Emissions</h1>
+            <div class="small-box">
+                <h2><i class="fas fa-smog"></i>Before Refinement (gCO2eq)</h2>
+                <p>{{ total_emissions_before }}</p>
+                <p class="timestamp">Last Run: {{ last_run_timestamp }}</p>
+            </div>
+            <div class="small-box">
+                <h2><i class="fas fa-smog"></i>After Refinement (gCO2eq)</h2>
+                <p>{{ total_emissions_after }}</p>
+                <p class="timestamp">Last Run: {{ last_run_timestamp }}</p>
+            </div>
+            <!-- Add the Emissions Table here -->
+            <div class="small-box">
+                <h2>Most Emissions (gCO2eq)</h2>
+                {{ emissions_table_html | safe }}
+            </div>
+        </div>
+        <div class="right-column">
+            <div class="graph">
+                {{ div_bar_graph_before_gco2eq | safe }}
+            </div>
+            <div class="graph">
+                {{ div_bar_graph_after_gco2eq | safe }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Part C: Emissions for Embedded and Non-Embedded Code -->
+    <div class="additional-graphs-container">
+        <div class="additional-graph">
+            {{ div_bar_graph_embedded | safe }}
+        </div>
+        <div class="additional-graph">
+            {{ div_bar_graph_non_embedded | safe }}
+        </div>
+    </div>
+</body>
+</html>
