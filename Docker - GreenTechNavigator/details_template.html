@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Detailed Emissions Report</title>
+    <!-- Font Awesome CDN for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .navigation {
+            padding: 10px 50px;
+            text-align: right;
+        }
+        .navigation a {
+            text-decoration: none;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .content {
+            padding: 20px 50px;
+        }
+        .dropdown-container {
+            margin-bottom: 20px;
+        }
+        .dropdown-container label {
+            font-size: 1.2em;
+            margin-right: 10px;
+        }
+        .tables-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .table-box {
+            width: 48%;
+            background-color: #ffffff;
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .table-box h2 {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed; /* Ensures columns have fixed widths */
+        }
+        table tbody tr:nth-child(odd) {
+            background-color: #f9f9f9;
+        }
+
+        table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        table th, table td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+            word-wrap: break-word; /* Allows long words to be broken and wrapped */
+            overflow-wrap: break-word; /* Fallback for older browsers */
+        }
+        table th {
+            background-color: #4CAF50;
+            color: white;
+        }
+            /* Optional: Set a maximum height for table boxes and enable scrolling */
+        .table-box {
+            width: 48%;
+            background-color: #ffffff;
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: auto; /* Adds scroll if content overflows vertically */
+            max-height: 600px; /* Adjust as needed */
+        }
+
+        /* Ensure the tables are displayed side by side without stacking */
+        .tables-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: nowrap; /* Prevents wrapping to next line */
+            gap: 20px;
+        }
+        .no-data-message {
+            text-align: center;
+            font-size: 1em;
+            color: #777777;
+        }
+        @media (max-width: 800px) {
+            .tables-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .table-box {
+                width: 90%;
+            }
+        }
+    </style>
+    <!-- Include jQuery for simplicity -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>Solution Based Detailed Emissions Report</h1>
+    </div>
+    
+    <div class="navigation">
+        <a href="emissions_report.html"><i class="fas fa-home"></i> Back to Main Report</a>
+    </div>
+    
+    <div class="content">
+        <div class="dropdown-container">
+            <label for="solutionDirSelect"><i class="fas fa-filter"></i> Select Solution Directory:</label>
+            <select id="solutionDirSelect">
+                <option value="" disabled selected>-- Select Directory --</option>
+                {% for dir in solution_dirs %}
+                    <option value="{{ dir }}">{{ dir }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="tables-container">
+            <div class="table-box" id="beforeTableBox" style="display: none;">
+                <h2><i class="fas fa-arrow-circle-up"></i> Before Refinement</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Application Name</th>
+                            <th>File Type</th>
+                            <th>Duration (s)</th>
+                            <th>Emissions (gCO2eq)</th>
+                            <th>Energy Consumed (Wh)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in before_details %}
+                            <tr>
+                                <td>{{ row['Application name'] }}</td>
+                                <td>{{ row['File Type'] }}</td>
+                                <td>{{ row['Duration'] }}</td>
+                                <td>{{ row['Emissions (gCO2eq)'] }}</td>
+                                <td>{{ row['Energy Consumed (Wh)'] }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="table-box" id="afterTableBox" style="display: none;">
+                <h2><i class="fas fa-arrow-circle-down"></i> After Refinement</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Application Name</th>
+                            <th>File Type</th>
+                            <th>Duration (s)</th>
+                            <th>Emissions (gCO2eq)</th>
+                            <th>Energy Consumed (Wh)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in after_details %}
+                            <tr>
+                                <td>{{ row['Application name'] }}</td>
+                                <td>{{ row['File Type'] }}</td>
+                                <td>{{ row['Duration'] }}</td>
+                                <td>{{ row['Emissions (gCO2eq)'] }}</td>
+                                <td>{{ row['Energy Consumed (Wh)'] }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="no-data-message" id="noDataMessage" style="display: none;">
+            <p>No data available for the selected Solution Directory.</p>
+        </div>
+    </div>
+    
+    <script type="text/template" id="beforeData">
+        {{ before_details | tojson }}
+    </script>
+    <script type="text/template" id="afterData">
+        {{ after_details | tojson }}
+    </script>
+    <script>
+        $(document).ready(function(){
+            $('#solutionDirSelect').on('change', function(){
+                var selectedDir = $(this).val();
+                
+                // Hide all table boxes
+                $('#beforeTableBox').hide();
+                $('#afterTableBox').hide();
+                $('#noDataMessage').hide();
+                
+                if(selectedDir){
+                    var beforeData = JSON.parse(document.getElementById('beforeData').textContent);
+                    var afterData = JSON.parse(document.getElementById('afterData').textContent);
+                    // Filter data using JavaScript
+                    // Alternatively, pre-render all possible tables and show/hide accordingly
+                                        
+                    // Filter data based on selectedDir
+                    var filteredBefore = beforeData.filter(function(item){
+                        return item['solution dir'] === selectedDir;
+                    });
+                    
+                    var filteredAfter = afterData.filter(function(item){
+                        return item['solution dir'] === selectedDir;
+                    });
+                    
+                    if(filteredBefore.length > 0 || filteredAfter.length > 0){
+                        if(filteredBefore.length > 0){
+                            // Populate Before Table
+                            var beforeTableBody = '';
+                            filteredBefore.forEach(function(row){
+                                beforeTableBody += '<tr>';
+                                beforeTableBody += '<td>' + row['Application name'] + '</td>';
+                                beforeTableBody += '<td>' + row['File Type'] + '</td>';
+                                beforeTableBody += '<td>' + row['Duration'] + '</td>';
+                                beforeTableBody += '<td>' + row['Emissions (gCO2eq)'] + '</td>';
+                                beforeTableBody += '<td>' + row['Energy Consumed (Wh)'] + '</td>';
+                                beforeTableBody += '</tr>';
+                            });
+                            $('#beforeTableBox tbody').html(beforeTableBody);
+                            $('#beforeTableBox').show();
+                        } else {
+                            $('#beforeTableBox').hide();
+                        }
+                        
+                        if(filteredAfter.length > 0){
+                            // Populate After Table
+                            var afterTableBody = '';
+                            filteredAfter.forEach(function(row){
+                                afterTableBody += '<tr>';
+                                afterTableBody += '<td>' + row['Application name'] + '</td>';
+                                afterTableBody += '<td>' + row['File Type'] + '</td>';
+                                afterTableBody += '<td>' + row['Duration'] + '</td>';
+                                afterTableBody += '<td>' + row['Emissions (gCO2eq)'] + '</td>';
+                                afterTableBody += '<td>' + row['Energy Consumed (Wh)'] + '</td>';
+                                afterTableBody += '</tr>';
+                            });
+                            $('#afterTableBox tbody').html(afterTableBody);
+                            $('#afterTableBox').show();
+                        } else {
+                            $('#afterTableBox').hide();
+                        }
+                    } else {
+                        $('#noDataMessage').show();
+                    }
+                }
+            });
+            // Function to escape HTML to prevent XSS
+            function escapeHtml(text) { //The escapeHtml function prevents potential Cross-Site Scripting (XSS) by escaping HTML characters in the data.
+                var map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return text.toString().replace(/[&<>"']/g, function(m) { return map[m]; });
+            }
+        });
+    </script>
+</body>
+</html>
