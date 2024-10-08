@@ -21,7 +21,18 @@ SOURCE_DIRECTORY = os.path.dirname(env_path)
 GREEN_REFINED_DIRECTORY = os.path.join(SOURCE_DIRECTORY, 'GreenCode')
 RESULT_DIR = os.path.join(SOURCE_DIRECTORY, 'Result')
 REPORT_DIR = os.path.join(SOURCE_DIRECTORY, 'Report')
-ExcludedFiles = ['server_emissions.py', 'GreenCodeRefiner.py', 'track_emissions.py', 'RefinerFunction.py', 'GreenCode']
+
+# List of files and directories to exclude from processing
+EXCLUDED_FILES = {
+    'server_emissions.py',
+    'GreenCodeRefiner.py',
+    'track_emissions.py',
+    'RefinerFunction.py',
+    'report_template.html',
+    'details_template.html'
+}
+EXCLUDED_DIRECTORIES = {'GreenCode'}
+
 # Function to process emissions for a single file
 def process_emissions_for_file(tracker, script_path, emissions_csv, file_type, result_dir, test_command):
     emissions_data = None
@@ -92,10 +103,21 @@ def process_emissions_for_file(tracker, script_path, emissions_csv, file_type, r
             print(f"No emissions data found for {script_path}")
     else:
         print(f"Emissions data collection failed for {script_name}")
+
+# # Function to process test execution for different file types
+# def process_files_by_type(base_dir, emissions_data_csv, result_dir, file_extension, excluded_files, tracker, test_command_generator):
+#     files = []
+#     for root, dirs, file_list in os.walk(base_dir):
+#         for script in file_list:
+#             if script.endswith(file_extension) and script not in excluded_files:
+#                 files.append(os.path.join(root, script))
+
 # Function to process test execution for different file types
-def process_files_by_type(base_dir, emissions_data_csv, result_dir, file_extension, excluded_files, tracker, test_command_generator):
+def process_files_by_type(base_dir, emissions_data_csv, result_dir, file_extension, excluded_files, excluded_dirs, tracker, test_command_generator):
     files = []
     for root, dirs, file_list in os.walk(base_dir):
+        # Exclude specified directories
+        dirs[:] = [d for d in dirs if d not in excluded_dirs]
         for script in file_list:
             if script.endswith(file_extension) and script not in excluded_files:
                 files.append(os.path.join(root, script))
@@ -125,16 +147,35 @@ def get_cpp_test_command(script_path):
     return None
 def get_cs_test_command(script_path):
     return [os.getenv('NUNIT_PATH'), 'test', os.path.splitext(os.path.basename(script_path))[0] + '.dll'] if 'test' in script_path.lower() else None
+# # Refactored process_folder function
+# def process_folder(base_dir, emissions_data_csv, result_dir, suffix):
+#     excluded_files = ['server_emissions.py', 'GreenCodeRefiner.py', 'track_emissions.py', 'compare_emissions.py', 'GreenCode']
+#     # Ensure the 'result' directory exists
+#     if not os.path.exists(result_dir):
+#         os.makedirs(result_dir)
+
 # Refactored process_folder function
-def process_folder(base_dir, emissions_data_csv, result_dir, suffix):
-    excluded_files = ['server_emissions.py', 'GreenCodeRefiner.py', 'track_emissions.py', 'compare_emissions.py', 'GreenCode']
+def process_folder(base_dir, emissions_data_csv, result_dir, suffix, excluded_dirs):
     # Ensure the 'result' directory exists
     if not os.path.exists(result_dir):
         os.makedirs(result_dir)
+        print(f"Directory '{result_dir}' created successfully!")
+    else:
+        print(f"Directory '{result_dir}' already exists.")
     
-    # Adjust the path for emissions.csv to be within the 'result' directory with suffix
-    emissions_csv = os.path.join(result_dir, f'emissions_{suffix}.csv')
-    # Check if the CSV file exists, if not, create it and write the header
+    # # Adjust the path for emissions.csv to be within the 'result' directory with suffix
+    # emissions_csv = os.path.join(result_dir, f'emissions_{suffix}.csv')
+    # # Check if the CSV file exists, if not, create it and write the header
+    # if not os.path.exists(emissions_data_csv):
+    #     with open(emissions_data_csv, 'w', newline='') as file:
+    #         writer = csv.writer(file)
+    #         writer.writerow([
+    #             "Application name", "File Type", "Timestamp", "Emissions (gCO2eq)",
+    #             "Duration", "emissions_rate", "CPU Power (KWh)", "GPU Power (KWh)", "RAM Power (KWh)",
+    #             "CPU Energy (Wh)", "GPU Energy (KWh)", "RAM Energy (Wh)", "Energy Consumed (Wh)", "Test Results", "solution dir"
+    #         ])
+    # tracker = EmissionsTracker()
+        # Check if the CSV file exists, if not, create it and write the header
     if not os.path.exists(emissions_data_csv):
         with open(emissions_data_csv, 'w', newline='') as file:
             writer = csv.writer(file)
@@ -143,46 +184,142 @@ def process_folder(base_dir, emissions_data_csv, result_dir, suffix):
                 "Duration", "emissions_rate", "CPU Power (KWh)", "GPU Power (KWh)", "RAM Power (KWh)",
                 "CPU Energy (Wh)", "GPU Energy (KWh)", "RAM Energy (Wh)", "Energy Consumed (Wh)", "Test Results", "solution dir"
             ])
+        print(f"CSV file '{emissions_data_csv}' created with headers.")
     tracker = EmissionsTracker()
+
     # Process files for each language
-    process_files_by_type(base_dir, emissions_data_csv, result_dir, '.py', excluded_files, tracker, get_python_test_command)
-    process_files_by_type(base_dir, emissions_data_csv, result_dir, '.java', excluded_files, tracker, get_java_test_command)
-    process_files_by_type(base_dir, emissions_data_csv, result_dir, '.cpp', excluded_files, tracker, get_cpp_test_command)
-    process_files_by_type(base_dir, emissions_data_csv, result_dir, '.cs', excluded_files, tracker, get_cs_test_command)
+    process_files_by_type(
+        base_dir=base_dir,
+        emissions_data_csv=emissions_data_csv,
+        result_dir=result_dir,
+        file_extension='.py',
+        excluded_files=EXCLUDED_FILES,
+        excluded_dirs=EXCLUDED_DIRECTORIES,
+        tracker=tracker,
+        test_command_generator=get_python_test_command
+    )
+    process_files_by_type(
+        base_dir=base_dir,
+        emissions_data_csv=emissions_data_csv,
+        result_dir=result_dir,
+        file_extension='.java',
+        excluded_files=EXCLUDED_FILES,
+        excluded_dirs=EXCLUDED_DIRECTORIES,
+        tracker=tracker,
+        test_command_generator=get_java_test_command
+    )
+    process_files_by_type(
+        base_dir=base_dir,
+        emissions_data_csv=emissions_data_csv,
+        result_dir=result_dir,
+        file_extension='.cpp',
+        excluded_files=EXCLUDED_FILES,
+        excluded_dirs=EXCLUDED_DIRECTORIES,
+        tracker=tracker,
+        test_command_generator=get_cpp_test_command
+    )
+    process_files_by_type(
+        base_dir=base_dir,
+        emissions_data_csv=emissions_data_csv,
+        result_dir=result_dir,
+        file_extension='.cs',
+        excluded_files=EXCLUDED_FILES,
+        excluded_dirs=EXCLUDED_DIRECTORIES,
+        tracker=tracker,
+        test_command_generator=get_cs_test_command
+    )
+
     print(f"Emissions data and test results written to {emissions_data_csv}")
 
 # Call process_folder for 'before' and 'after' emissions data
-process_folder(SOURCE_DIRECTORY, os.path.join(RESULT_DIR, 'main_before_emissions_data.csv'), RESULT_DIR, 'before-in-detail')
-print("Emissions data processed successfully for before emissions data.")
-process_folder(GREEN_REFINED_DIRECTORY, os.path.join(RESULT_DIR, 'main_after_emissions_data.csv'), RESULT_DIR, 'after-in-detail')
-print("Emissions data processed successfully for after emissions data.")
+process_folder(
+    base_dir=SOURCE_DIRECTORY,
+    emissions_data_csv=os.path.join(RESULT_DIR, 'main_before_emissions_data.csv'),
+    result_dir=RESULT_DIR,
+    suffix='before-in-detail',
+    excluded_dirs=EXCLUDED_DIRECTORIES
+)
+process_folder(
+    base_dir=GREEN_REFINED_DIRECTORY,
+    emissions_data_csv=os.path.join(RESULT_DIR, 'main_after_emissions_data.csv'),
+    result_dir=RESULT_DIR,
+    suffix='after-in-detail',
+    excluded_dirs=EXCLUDED_DIRECTORIES
+)
+print("Emissions data processed successfully.")
 
 
 # Compare emissions logic
 def compare_emissions():
     # Load environment variables again (if needed)
     load_dotenv(dotenv_path=env_path, verbose=True, override=True)
-    # Remove the '.env' part to get the SOURCE_DIRECTORY
+
+    # Define paths to the before and after CSV files
     result_source_dir = os.path.join(SOURCE_DIRECTORY, 'Result', 'main_before_emissions_data.csv')
-    result_green_refined_directory = os.path.join(SOURCE_DIRECTORY, 'Result', 'main_after_emissions_data.csv')
+    result_green_refined_dir = os.path.join(SOURCE_DIRECTORY, 'Result', 'main_after_emissions_data.csv')
+
+    # Check if both CSV files exist
+    if not os.path.isfile(result_source_dir):
+        print(f"Source emissions data file not found: {result_source_dir}")
+        return
+    if not os.path.isfile(result_green_refined_dir):
+        print(f"Refined emissions data file not found: {result_green_refined_dir}")
+        return
+
     # Read CSV files
     emissions_df = pd.read_csv(result_source_dir)
-    emissions_after_df = pd.read_csv(result_green_refined_directory)
+    emissions_after_df = pd.read_csv(result_green_refined_dir)
+
     # Merge dataframes on common columns
-    merged_df = emissions_df.merge(emissions_after_df, on=["Application name", "File Type"], suffixes=('_before', '_after'))
+    try:
+        merged_df = emissions_df.merge(
+            emissions_after_df,
+            on=["Application name", "File Type"],
+            suffixes=('_before', '_after')
+        )
+    except KeyError as e:
+        print(f"Merge failed due to missing columns: {e}")
+        return
+
     # Calculate the difference in emissions and determine the result
     merged_df['final emission'] = merged_df['Emissions (gCO2eq)_before'] - merged_df['Emissions (gCO2eq)_after']
     merged_df['Result'] = merged_df['final emission'].apply(lambda x: 'Improved' if x > 0 else 'Need improvement')
+
     # Select and rename columns
-    result_df = merged_df[["Application name", "File Type", "Timestamp_before", "Timestamp_after", "Emissions (gCO2eq)_before", "Emissions (gCO2eq)_after", "final emission", "Result"]]
-    result_df.columns = ["Application name", "File Type", "Timestamp (Before)", "Timestamp (After)", "Before", "After", "Final Emission", "Result"]
+    result_df = merged_df[[
+        "Application name",
+        "File Type",
+        "Timestamp_before",
+        "Timestamp_after",
+        "Emissions (gCO2eq)_before",
+        "Emissions (gCO2eq)_after",
+        "final emission",
+        "Result"
+    ]]
+    result_df.columns = [
+        "Application name",
+        "File Type",
+        "Timestamp (Before)",
+        "Timestamp (After)",
+        "Before",
+        "After",
+        "Final Emission",
+        "Result"
+    ]
+
     # Create 'Result' folder if it doesn't exist
     if not os.path.exists(RESULT_DIR):
         os.makedirs(RESULT_DIR)
+        print(f"Directory '{RESULT_DIR}' created successfully!")
+    else:
+        print(f"Directory '{RESULT_DIR}' already exists.")
+
     # Write to new CSV file
     result_file_path = os.path.join(RESULT_DIR, "comparison_results.csv")
     result_df.to_csv(result_file_path, index=False)
+
     print(f"Comparison results saved to {result_file_path}")
+
 # Call the compare_emissions function
 compare_emissions()
 
