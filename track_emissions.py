@@ -104,14 +104,6 @@ def process_emissions_for_file(tracker, script_path, emissions_csv, file_type, r
     else:
         print(f"Emissions data collection failed for {script_name}")
 
-# # Function to process test execution for different file types
-# def process_files_by_type(base_dir, emissions_data_csv, result_dir, file_extension, excluded_files, tracker, test_command_generator):
-#     files = []
-#     for root, dirs, file_list in os.walk(base_dir):
-#         for script in file_list:
-#             if script.endswith(file_extension) and script not in excluded_files:
-#                 files.append(os.path.join(root, script))
-
 # Function to process test execution for different file types
 def process_files_by_type(base_dir, emissions_data_csv, result_dir, file_extension, excluded_files, excluded_dirs, tracker, test_command_generator):
     files = []
@@ -147,12 +139,6 @@ def get_cpp_test_command(script_path):
     return None
 def get_cs_test_command(script_path):
     return [os.getenv('NUNIT_PATH'), 'test', os.path.splitext(os.path.basename(script_path))[0] + '.dll'] if 'test' in script_path.lower() else None
-# # Refactored process_folder function
-# def process_folder(base_dir, emissions_data_csv, result_dir, suffix):
-#     excluded_files = ['server_emissions.py', 'GreenCodeRefiner.py', 'track_emissions.py', 'compare_emissions.py', 'GreenCode']
-#     # Ensure the 'result' directory exists
-#     if not os.path.exists(result_dir):
-#         os.makedirs(result_dir)
 
 # Refactored process_folder function
 def process_folder(base_dir, emissions_data_csv, result_dir, suffix, excluded_dirs):
@@ -162,20 +148,8 @@ def process_folder(base_dir, emissions_data_csv, result_dir, suffix, excluded_di
         print(f"Directory '{result_dir}' created successfully!")
     else:
         print(f"Directory '{result_dir}' already exists.")
-    
-    # # Adjust the path for emissions.csv to be within the 'result' directory with suffix
-    # emissions_csv = os.path.join(result_dir, f'emissions_{suffix}.csv')
-    # # Check if the CSV file exists, if not, create it and write the header
-    # if not os.path.exists(emissions_data_csv):
-    #     with open(emissions_data_csv, 'w', newline='') as file:
-    #         writer = csv.writer(file)
-    #         writer.writerow([
-    #             "Application name", "File Type", "Timestamp", "Emissions (gCO2eq)",
-    #             "Duration", "emissions_rate", "CPU Power (KWh)", "GPU Power (KWh)", "RAM Power (KWh)",
-    #             "CPU Energy (Wh)", "GPU Energy (KWh)", "RAM Energy (Wh)", "Energy Consumed (Wh)", "Test Results", "solution dir"
-    #         ])
-    # tracker = EmissionsTracker()
-        # Check if the CSV file exists, if not, create it and write the header
+
+    # Check if the CSV file exists, if not, create it and write the header
     if not os.path.exists(emissions_data_csv):
         with open(emissions_data_csv, 'w', newline='') as file:
             writer = csv.writer(file)
