@@ -6,7 +6,7 @@ pool:
 
 variables:
   CLIENT_NAME: 'ZF'  # Assuming you need to set this since it was commented out in Jenkins
-  REPO_PATH: 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline'
+  REPO_PATH: 'C:\\agent\\_work\\1\\s'
   PYTHON_PATH: 'C:\\Users\\sansk\\AppData\\Local\\Programs\\Python\\Python312\\python.exe'
   MAVEN_PATH: 'C:\\Users\\sansk\\Downloads\\apache-maven-3.9.6\\bin'
   PATH: '$(MAVEN_PATH);$(PATH)'
