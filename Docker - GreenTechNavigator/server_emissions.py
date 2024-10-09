@@ -13,12 +13,28 @@ from dotenv import load_dotenv
 # Define Base Directory
 BASE_DIR = '/app/project'
 
+# Ensure base directory exists
+if not os.path.exists(BASE_DIR):
+    os.makedirs(BASE_DIR)
+    print(f"Base directory '{BASE_DIR}' created.")
+else:
+    print(f"Base directory '{BASE_DIR}' already exists.")
+
 # Load environment variables
 env_path = '/app/.env'
 load_dotenv(dotenv_path=env_path, verbose=True, override=True)
 
+
 # Setup Logging
 LOG_FILE = os.path.join(BASE_DIR, 'server_emissions.log')
+
+# Ensure logging directory exists
+if not os.path.exists(BASE_DIR):
+    os.makedirs(BASE_DIR)
+    print(f"Log directory '{BASE_DIR}' created.")
+else:
+    print(f"Log directory '{BASE_DIR}' already exists.")
+
 logging.basicConfig(
     filename=LOG_FILE,
     level=logging.INFO,
@@ -35,6 +51,7 @@ RUN_TIME_IN_MINUTES = int(os.getenv('RUN_TIME_IN_MINUTES', 1))
 # RESULT_DIR = os.path.join(BASE_DIR, 'GreenCode')
 RESULT_DIR = os.path.join(BASE_DIR, 'Result')
 CSV_FILE = os.path.join(RESULT_DIR, 'server_data.csv')
+
 
 # Load CO2 emission factors from .env with defaults
 GLOBAL_GRID_CO2_FACTOR = float(os.getenv('GLOBAL_GRID_CO2_FACTOR', 0.54))
@@ -237,7 +254,7 @@ def main():
         end_time = start_time + (RUN_TIME_IN_MINUTES * 60)
 
         while time.time() < end_time:
-            system_info, previous_network = get_system_info(previous_network)
+            system_info, previous_netwrk = get_system_info(previous_network)
             update_csv(system_info)
             logger.info(f"Collected and logged data: {system_info}")
             time.sleep(DEFAULT_SLEEP_TIME)
