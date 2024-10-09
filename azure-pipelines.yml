@@ -2,7 +2,7 @@ trigger:
   - main  # Trigger the pipeline on changes to the main branch
 
 pool:
-  vmImage: 'windows-latest'  # Use a Windows agent to match the Windows paths in your Jenkins script
+  vmImage: 'Default'  # Use a Windows agent to match the Windows paths in your Jenkins script
 
 variables:
   CLIENT_NAME: 'ZF'  # Assuming you need to set this since it was commented out in Jenkins
