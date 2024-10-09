@@ -16,20 +16,29 @@ variables:
   # SHAREPOINT_PS_SCRIPT_PATH: 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\upload_to_sharepoint.ps1'
 
 stages:
+  # - stage: CloneRepository
+  #   displayName: 'Stage 1: Clone Repository'
+  #   jobs:
+  #     - job: Clone
+  #       displayName: 'Clone Repository Job'
+  #       steps:
+  #         - script: |
+  #             git clone --branch main https://github.com/sanskar22003/GreenCodeScan.git "$(REPO_PATH)"
+  #           displayName: 'Clone Git Repository'
+  #           # If the repository is private, handle authentication as shown below
+  #           # Example using a personal access token (PAT) stored as a secret variable:
+  #           # git clone --branch main https://$(GITHUB_PAT)@github.com/sanskar22003/GreenCodeScan.git "$(REPO_PATH)"
+  #           # Ensure GITHUB_PAT is defined in the pipeline variables as a secret
   - stage: CloneRepository
     displayName: 'Stage 1: Clone Repository'
     jobs:
-      - job: Clone
-        displayName: 'Clone Repository Job'
+      - job: CloneRepository
         steps:
+          - checkout: self
           - script: |
-              git clone --branch main https://github.com/sanskar22003/GreenCodeScan.git "$(REPO_PATH)"
-            displayName: 'Clone Git Repository'
-            # If the repository is private, handle authentication as shown below
-            # Example using a personal access token (PAT) stored as a secret variable:
-            # git clone --branch main https://$(GITHUB_PAT)@github.com/sanskar22003/GreenCodeScan.git "$(REPO_PATH)"
-            # Ensure GITHUB_PAT is defined in the pipeline variables as a secret
-
+              echo "Client Name: $(CLIENT_NAME)"
+              echo "Repository is cloned to: $(Pipeline.Workspace)/s"
+              
   - stage: TrackServerEmissions
     displayName: 'Stage 2: Track Server Emissions'
     jobs:
