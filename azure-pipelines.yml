@@ -6,13 +6,14 @@ pool:
 
 variables:
   CLIENT_NAME: 'ZF'  # Assuming you need to set this since it was commented out in Jenkins
-  REPO_PATH: 'C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline'
-  PYTHON_PATH: 'C:\Users\sansk\AppData\Local\Programs\Python\Python312\python.exe'
-  PATH: 'C:\Users\sansk\Downloads\apache-maven-3.9.6\bin;$(PATH)'
+  REPO_PATH: 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline'
+  PYTHON_PATH: 'C:\\Users\\sansk\\AppData\\Local\\Programs\\Python\\Python312\\python.exe'
+  MAVEN_PATH: 'C:\\Users\\sansk\\Downloads\\apache-maven-3.9.6\\bin'
+  PATH: '$(MAVEN_PATH);$(PATH)'
   # Uncomment and set if needed
-  # CAST_HIGHLIGHT_PATH: 'C:\Users\sansk\Downloads\Highlight-Automation-Command'
-  # PYTEST_PATH: 'C:\Users\sansk\AppData\Local\Programs\Python\Python312\Scripts\pytest.exe'
-  # SHAREPOINT_PS_SCRIPT_PATH: 'C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline\upload_to_sharepoint.ps1'
+  # CAST_HIGHLIGHT_PATH: 'C:\\Users\\sansk\\Downloads\\Highlight-Automation-Command'
+  # PYTEST_PATH: 'C:\\Users\\sansk\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\pytest.exe'
+  # SHAREPOINT_PS_SCRIPT_PATH: 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\upload_to_sharepoint.ps1'
 
 stages:
   - stage: CloneRepository
@@ -21,9 +22,6 @@ stages:
       - job: Clone
         displayName: 'Clone Repository Job'
         steps:
-          - script: echo "Client Name: $(CLIENT_NAME)"
-            displayName: 'Echo Client Name'
-
           - script: |
               git clone --branch main https://github.com/sanskar22003/GreenCodeScan.git "$(REPO_PATH)"
             displayName: 'Clone Git Repository'
@@ -66,4 +64,4 @@ stages:
               "$(PYTHON_PATH)" track_emissions.py
             displayName: 'Run track_emissions.py'
             env:
-              PYTEST: 'C:\Users\sansk\AppData\Local\Programs\Python\Python312\Scripts\pytest.exe'
+              PYTEST: 'C:\\Users\\sansk\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\pytest.exe'
