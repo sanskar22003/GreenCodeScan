@@ -46,20 +46,51 @@ try:
 except EnvironmentError as e:
     logging.critical(f"Failed to initialize AzureOpenAI client: {e}")
     raise
+
+def remove_directory(directory):
+    if os.path.exists(directory):
+        shutil.rmtree(directory)
+        logging.info(f"Directory '{directory}' removed successfully!")
+    else:
+        logging.info(f"Directory '{directory}' does not exist, no need to remove.")
+
+def ensure_directory_structure(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        logging.info(f"Directory '{directory}' created successfully!")
+    else:
+        logging.info(f"Directory '{directory}' already exists.")
+
 # Define directories
 source_directory = os.path.dirname(env_path)
 green_code_directory = os.path.join(source_directory, 'GreenCode')
 temp_directory = os.path.join(green_code_directory, 'temp')
 test_file_directory = os.path.join(source_directory, 'TestCases')
+
 # Store file extensions in a variable
 file_extensions = ['.py', '.java', '.xml', '.php', '.cpp', '.html', '.css', '.ts', '.rb']
-# Directory creation logic: Delete existing 'GreenCode' directory if it exists, then create a fresh one
+
+# Directory creation logic: Check if 'GreenCode' directory exists, then delete and create else only create
 remove_directory(green_code_directory)
-os.makedirs(green_code_directory)
-logging.info(f"Directory '{green_code_directory}' created successfully!")
+ensure_directory_structure(green_code_directory)
+
 # Ensure temp and test_file directories exist
 ensure_directory_structure(temp_directory)
 ensure_directory_structure(test_file_directory)
+# # Define directories
+# source_directory = os.path.dirname(env_path)
+# green_code_directory = os.path.join(source_directory, 'GreenCode')
+# temp_directory = os.path.join(green_code_directory, 'temp')
+# test_file_directory = os.path.join(source_directory, 'TestCases')
+# # Store file extensions in a variable
+# file_extensions = ['.py', '.java', '.xml', '.php', '.cpp', '.html', '.css', '.ts', '.rb']
+# # Directory creation logic: Delete existing 'GreenCode' directory if it exists, then create a fresh one
+# remove_directory(green_code_directory)
+# os.makedirs(green_code_directory)
+# logging.info(f"Directory '{green_code_directory}' created successfully!")
+# # Ensure temp and test_file directories exist
+# ensure_directory_structure(temp_directory)
+# ensure_directory_structure(test_file_directory)
 unique_name = f"GreenCodeRefiner {uuid.uuid4()}"
 # Create an assistant
 try:
