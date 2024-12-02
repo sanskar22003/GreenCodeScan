@@ -8,11 +8,14 @@ import logging
 import requests 
 from dotenv import load_dotenv
 from openai import AzureOpenAI
+import ast
+
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 # Load environment variables
 env_path = os.path.abspath(".env")
 load_dotenv(dotenv_path=env_path, verbose=True, override=True)
+
 # Import functions from refiner_functions.py
 from RefinerFunction import (
     get_env_variable,
@@ -24,6 +27,7 @@ from RefinerFunction import (
     create_unit_test_files,
     apply_green_prompts
 )
+
 # Initialize AzureOpenAI client using environment variables
 try:
     api_key = get_env_variable('AZURE_API_KEY')
@@ -34,8 +38,12 @@ try:
     if not check_azure_subscription(api_key, azure_endpoint, api_version):
         raise EnvironmentError("Azure subscription is unavailable. Please verify your subscription status.")
     
-    # Get the model from .env
-    model_name = os.getenv('AZURE_MODEL')
+    # Get the relevent information from .env
+    MODEL_NAME = os.getenv('AZURE_MODEL')
+    # Parse EXCLUDED_FILES as a list, stripping any surrounding whitespace
+    EXCLUDED_FILES = [file.strip() for file in os.getenv('EXCLUDED_FILES', '').split(',') if file.strip()]
+    FILE_EXTENSIONS_ENV = os.getenv('FILE_EXTENSIONS')
+    FILE_EXTENSIONS = ast.literal_eval(FILE_EXTENSIONS_ENV)
     
     client = AzureOpenAI(
         api_key=api_key,
@@ -47,50 +55,21 @@ except EnvironmentError as e:
     logging.critical(f"Failed to initialize AzureOpenAI client: {e}")
     raise
 
-def remove_directory(directory):
-    if os.path.exists(directory):
-        shutil.rmtree(directory)
-        logging.info(f"Directory '{directory}' removed successfully!")
-    else:
-        logging.info(f"Directory '{directory}' does not exist, no need to remove.")
-
-def ensure_directory_structure(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-        logging.info(f"Directory '{directory}' created successfully!")
-    else:
-        logging.info(f"Directory '{directory}' already exists.")
-
-# Define directories
+# Define directories based on BASE_DIR
 source_directory = os.path.dirname(env_path)
 green_code_directory = os.path.join(source_directory, 'GreenCode')
 temp_directory = os.path.join(green_code_directory, 'temp')
 test_file_directory = os.path.join(source_directory, 'TestCases')
 
-# Store file extensions in a variable
-file_extensions = ['.py', '.java', '.xml', '.php', '.cpp', '.html', '.css', '.ts', '.rb']
-
-# Directory creation logic: Check if 'GreenCode' directory exists, then delete and create else only create
+# Directory creation logic: Delete existing 'GreenCode' directory if it exists, then create a fresh one
 remove_directory(green_code_directory)
-ensure_directory_structure(green_code_directory)
+os.makedirs(green_code_directory)
+logging.info(f"Directory '{green_code_directory}' created successfully!")
 
 # Ensure temp and test_file directories exist
 ensure_directory_structure(temp_directory)
 ensure_directory_structure(test_file_directory)
-# # Define directories
-# source_directory = os.path.dirname(env_path)
-# green_code_directory = os.path.join(source_directory, 'GreenCode')
-# temp_directory = os.path.join(green_code_directory, 'temp')
-# test_file_directory = os.path.join(source_directory, 'TestCases')
-# # Store file extensions in a variable
-# file_extensions = ['.py', '.java', '.xml', '.php', '.cpp', '.html', '.css', '.ts', '.rb']
-# # Directory creation logic: Delete existing 'GreenCode' directory if it exists, then create a fresh one
-# remove_directory(green_code_directory)
-# os.makedirs(green_code_directory)
-# logging.info(f"Directory '{green_code_directory}' created successfully!")
-# # Ensure temp and test_file directories exist
-# ensure_directory_structure(temp_directory)
-# ensure_directory_structure(test_file_directory)
+
 unique_name = f"GreenCodeRefiner {uuid.uuid4()}"
 # Create an assistant
 try:
@@ -104,37 +83,33 @@ try:
             "4. If the code runs successfully, share the code as a file that can be downloaded. "
             "5. If the code is unsuccessful, display the error message and try to revise the code and rerun."
         ),
-        model=model_name,
+        model=MODEL_NAME,
         tools=[{"type": "code_interpreter"}]
     )
     logging.info(f"Assistant '{unique_name}' created successfully.")
 except Exception as e:
     logging.critical(f"Failed to create Azure OpenAI assistant: {e}")
     raise
-# List of files to exclude from processing
-excluded_files = {
-    'GreenCodeRefiner.py',
-    'RefinerFunction.py',
-    'server_emissions.py',
-    'track_emissions.py',
-    'report_template.html',
-    'details_template.html'
-}
+
 # Load prompts with "Yes" authentication
 prompts = load_prompts_from_env()
+
 # Define the list to store files
-file_list = list(identify_source_files(source_directory, file_extensions, excluded_files))
+file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
+
 # Step 1: Create unit test files for all source files without test files
 create_unit_test_files(client, assistant, file_list, test_file_directory)
+
 # Re-scan the source directory to include newly created test files
-file_list = list(identify_source_files(source_directory, file_extensions, excluded_files))
+file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
+
 # Upload and refine files
 while file_list:
     file_path = file_list.pop(0)
     relative_path = os.path.relpath(file_path, source_directory)
     file_name = os.path.basename(file_path)
     # Skip excluded files and the green_code_directory and its subdirectories
-    if file_name in excluded_files or relative_path.startswith(os.path.relpath(green_code_directory, source_directory)):
+    if file_name in EXCLUDED_FILES or relative_path.startswith(os.path.relpath(green_code_directory, source_directory)):
         print(f"Skipping excluded file or directory: {relative_path}")
         continue
     # Check if the file is empty
