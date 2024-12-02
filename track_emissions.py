@@ -669,6 +669,14 @@ def generate_html_report(result_dir):
     latest_before_gco2eq_sorted = latest_before_gco2eq.sort_values('emissions_gco2eq', ascending=False)
     latest_after_gco2eq_sorted = latest_after_gco2eq.sort_values('emissions_gco2eq', ascending=False)
 
+    unique_solution_dirs_gco2eq = sorted(set(before_gco2eq_sorted['solution_dir']).union(after_gco2eq_sorted['solution_dir']))
+
+    # Create a separate color mapping for gCO2eq graphs
+    color_palette_gco2eq = px.colors.qualitative.Plotly  # Or choose another palette if preferred
+    color_mapping_gco2eq = {}
+    for i, solution_dir in enumerate(unique_solution_dirs_gco2eq):
+        color_mapping_gco2eq[solution_dir] = color_palette_gco2eq[i % len(color_palette_gco2eq)]
+
     # Create Plotly Horizontal Bar Graph for Before Emissions (gCO2eq)
     bar_graph_before_gco2eq = go.Figure()
     for _, row in before_gco2eq_sorted.iterrows():
@@ -677,7 +685,7 @@ def generate_html_report(result_dir):
             y=[row['solution_dir']],
             orientation='h',
             name=row['solution_dir'],
-            marker=dict(color=color_mapping.get(row['solution_dir'], 'blue'))
+            marker=dict(color=color_mapping_gco2eq.get(row['solution_dir'], 'blue'))
         ))
 
     bar_graph_before_gco2eq.update_layout(
@@ -701,7 +709,7 @@ def generate_html_report(result_dir):
             y=[row['solution_dir']],
             orientation='h',
             name=row['solution_dir'],
-            marker=dict(color=color_mapping.get(row['solution_dir'], 'blue'))
+            marker=dict(color=color_mapping_gco2eq.get(row['solution_dir'], 'blue'))
         ))
 
     bar_graph_after_gco2eq.update_layout(
@@ -727,7 +735,7 @@ def generate_html_report(result_dir):
             y=[row['solution_dir']],
             orientation='h',
             name=row['solution_dir'],
-            marker=dict(color=color_mapping.get(row['solution_dir'], 'blue'))
+            marker=dict(color=color_mapping_gco2eq.get(row['solution_dir'], 'blue'))
         ))
 
     latest_bar_graph_before_gco2eq.update_layout(
@@ -751,7 +759,7 @@ def generate_html_report(result_dir):
             y=[row['solution_dir']],
             orientation='h',
             name=row['solution_dir'],
-            marker=dict(color=color_mapping.get(row['solution_dir'], 'blue'))
+            marker=dict(color=color_mapping_gco2eq.get(row['solution_dir'], 'blue'))
         ))
 
     latest_bar_graph_after_gco2eq.update_layout(
