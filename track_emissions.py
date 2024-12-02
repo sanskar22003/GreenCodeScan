@@ -197,11 +197,42 @@ def get_java_test_command(script_path):
     return [os.getenv('MAVEN_PATH'), '-Dtest=' + os.path.splitext(os.path.basename(script_path))[0] + 'Test', 'test'] if 'test' in script_path.lower() else None
 def get_cpp_test_command(script_path):
     if 'test' in script_path.lower():
+        # Assuming a standard project structure
         test_file_name = os.path.basename(script_path).replace('.cpp', '_test.cpp')
-        test_file_path = os.path.join('test', test_file_name)
-        compile_command = ['g++', '-o', 'test_output', test_file_path, '-lgtest', '-lgtest_main', '-pthread']
-        run_command = ['./test_output']
-        return compile_command + run_command
+        test_dir = os.path.join(os.path.dirname(script_path), 'test')
+        test_file_path = os.path.join(test_dir, test_file_name)
+
+        # Verify test file exists
+        if not os.path.exists(test_file_path):
+            print(f"Warning: Test file {test_file_path} does not exist")
+            return None
+        
+        # Create a temporary build directory
+        build_dir = os.path.join(test_dir, 'build')
+        os.makedirs(build_dir, exist_ok=True)
+        
+        # CMake command to configure the project
+        cmake_config_command = [
+            os.getenv('GTEST_CMAKE_PATH', 'cmake'), 
+            f'-S{test_dir}', 
+            f'-B{build_dir}', 
+            '-DCMAKE_PREFIX_PATH=/usr/local',  # Ensure GTest can be found
+            '-G', 'Unix Makefiles'
+        ]
+        
+        # CMake build command
+        cmake_build_command = [
+            os.getenv('GTEST_CMAKE_PATH', 'cmake'), 
+            '--build', 
+            build_dir
+        ]
+        
+        # Test run command
+        test_executable = os.path.join(build_dir, f'{os.path.splitext(test_file_name)[0]}')
+        run_test_command = [test_executable]
+        
+        return cmake_config_command + cmake_build_command + run_test_command
+    
     return None
 def get_cs_test_command(script_path):
     return [os.getenv('NUNIT_PATH'), 'test', os.path.splitext(os.path.basename(script_path))[0] + '.dll'] if 'test' in script_path.lower() else None
