@@ -9,6 +9,7 @@ import psutil
 import socket
 from datetime import datetime
 from dotenv import load_dotenv
+import sqlite3
 
 # Load environment variables
 env_path = os.path.abspath(".env")
@@ -29,8 +30,11 @@ BYTES_TO_GB = 1024 ** 3
 MILLI_WATTS_TO_KILOWATTS = 1000
 DEFAULT_SLEEP_TIME = int(os.getenv('DEFAULT_SLEEP_TIME', 20))
 RUN_TIME_IN_MINUTES = int(os.getenv('RUN_TIME_IN_MINUTES', 1))
+
 RESULT_DIR = os.path.join(os.path.dirname(env_path), 'Result')
-CSV_FILE = os.path.join(RESULT_DIR, 'server_data.csv')
+# SQLite Database Path
+DB_FILE = os.path.join(RESULT_DIR, 'server_data.db')
+
 
 # Load CO2 emission factors from .env with defaults
 GLOBAL_GRID_CO2_FACTOR = float(os.getenv('GLOBAL_GRID_CO2_FACTOR', 0.54))
@@ -198,32 +202,78 @@ def calculate_co2_emission(energy_consumption):
         logger.error(f"Error calculating CO2 emission: {e}")
         raise
 
-def update_csv(system_info):
+def initialize_database():
     """
-    Append system information to the CSV file.
+    Initialize the SQLite database and create the server_data table if it doesn't exist.
+    """
+    try:
+        ensure_result_directory_exists()
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+
+        # Create table if it doesn't exist
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS server_data (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT NOT NULL,
+                time TEXT NOT NULL,
+                hostname TEXT NOT NULL,
+                ip_address TEXT NOT NULL,
+                cpu_usage REAL NOT NULL,
+                ram_usage REAL NOT NULL,
+                disk_usage REAL NOT NULL,
+                network_usage INTEGER NOT NULL,
+                energy_consumption REAL NOT NULL,
+                co2_emission REAL NOT NULL
+            )
+        """)
+        conn.commit()
+        conn.close()
+        logger.info(f"Database initialized at '{DB_FILE}'.")
+    except Exception as e:
+        logger.error(f"Error initializing database: {e}")
+        raise
+
+def update_database(system_info):
+    """
+    Insert system information into the SQLite database.
 
     Args:
         system_info (dict): Dictionary containing system metrics.
     """
     try:
-        ensure_result_directory_exists()
-        # If CSV doesn't exist, create it with headers
-        if not os.path.exists(CSV_FILE):
-            df = pd.DataFrame(columns=system_info.keys())
-            df.to_csv(CSV_FILE, index=False)
-            logger.info(f"CSV file '{CSV_FILE}' created with headers.")
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
 
-        # Append the new data
-        df_new = pd.DataFrame([system_info])
-        df_new.to_csv(CSV_FILE, mode='a', header=False, index=False)
-        logger.info(f"Appended new data to '{CSV_FILE}'.")
+        # Insert data into the server_data table
+        cursor.execute("""
+            INSERT INTO server_data (
+                date, time, hostname, ip_address, cpu_usage, ram_usage,
+                disk_usage, network_usage, energy_consumption, co2_emission
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            system_info['Date'],
+            system_info['Time'],
+            system_info['Host-name'],
+            system_info['IP address'],
+            system_info['CPU usage (%)'],
+            system_info['RAM usage (%)'],
+            system_info['Disk usage (%)'],
+            system_info['Network usage (bytes)'],
+            system_info['Energy consumption (KWH)'],
+            system_info['CO2 emission (kt)']
+        ))
+        conn.commit()
+        conn.close()
+        logger.info(f"Inserted new data into database: {system_info}")
     except Exception as e:
-        logger.error(f"Error updating CSV file '{CSV_FILE}': {e}")
+        logger.error(f"Error updating database: {e}")
         raise
 
 def main():
     """Main function to collect and log system emissions data."""
     try:
+        initialize_database()
         previous_network = (0, 0)
         # Initialize previous_network with current network stats
         current_network = psutil.net_io_counters()
@@ -233,8 +283,10 @@ def main():
         end_time = start_time + (RUN_TIME_IN_MINUTES * 60)
 
         while time.time() < end_time:
+            # remaining_time = int(end_time - time.time())
+            # print(f"\rTime remaining: {remaining_time} seconds", end="")  # Print dynamic countdown
             system_info, previous_network = get_system_info(previous_network)
-            update_csv(system_info)
+            update_database(system_info)
             logger.info(f"Collected and logged data: {system_info}")
             time.sleep(DEFAULT_SLEEP_TIME)
 
