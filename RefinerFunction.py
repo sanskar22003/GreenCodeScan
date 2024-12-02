@@ -38,15 +38,62 @@ def check_azure_subscription(api_key, azure_endpoint, api_version):
         logging.error(f"An error occurred while checking Azure subscription: {e}")
         return False
 
+def handle_remove_error(func, path, exc_info):
+    """Custom error handler for shutil.rmtree."""
+    logging.error(f"Error removing {path}: {exc_info[1]}")
+
 def remove_directory(directory):
+    """Remove a directory and handle errors."""
     if os.path.exists(directory):
-        shutil.rmtree(directory)
-        logging.info(f"Directory '{directory}' deleted successfully!")
+        try:
+            shutil.rmtree(directory, onerror=handle_remove_error)
+            logging.info(f"Directory '{directory}' deleted successfully!")
+        except Exception as e:
+            logging.error(f"An unexpected error occurred while removing directory '{directory}': {e}")
+    else:
+        logging.warning(f"Directory '{directory}' does not exist, skipping deletion.")
+
+def _handle_remove_error(func, path, exc_info):
+    """
+    Custom error handler for shutil.rmtree.
+    Logs the error and continues with the removal process.
+    """
+    if func in (os.unlink, os.remove):
+        logging.warning(f"Failed to remove file '{path}': {exc_info[1]}")
+    elif func in (os.rmdir, os.removedirs):
+        logging.warning(f"Failed to remove directory '{path}': {exc_info[1]}")
+    else:
+        logging.error(f"Unexpected error while removing '{path}': {exc_info[1]}")
+
+# def remove_directory(directory):
+#     if os.path.exists(directory):
+#         shutil.rmtree(directory)
+#         logging.info(f"Directory '{directory}' deleted successfully!")
+
+# def ensure_directory_structure(path):
+#     if not os.path.exists(path):
+#         os.makedirs(path)
+#         logging.info(f"Folder '{path}' created.")
 
 def ensure_directory_structure(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
-        logging.info(f"Folder '{path}' created.")
+    """Ensure that the directory structure exists."""
+    try:
+        if os.path.exists(path):
+            if os.path.isdir(path):
+                logging.info(f"Directory '{path}' already exists. Skipping creation.")
+            else:
+                logging.warning(f"'{path}' exists but is not a directory. Attempting to remove and recreate.")
+                os.remove(path)
+                os.makedirs(path)
+                logging.info(f"Directory '{path}' created successfully after removing the conflicting file.")
+        else:
+            os.makedirs(path)
+            logging.info(f"Directory '{path}' created successfully.")
+    except FileExistsError:
+        logging.warning(f"Directory '{path}' already exists. This error was safely handled.")
+    except Exception as e:
+        logging.error(f"An unexpected error occurred while ensuring directory '{path}': {e}")
+
 
 def identify_source_files(directory, extensions, excluded_files):
     for root, dirs, files in os.walk(directory):
@@ -112,7 +159,7 @@ def create_unit_test_files(client, assistant, file_list, test_file_directory):
         start_time = time.time()
         while True:
             run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id).status
-            logging.info(f"Unit test creation status for {file_name}: {run_status}")
+            # logging.info(f"Unit test creation status for {file_name}: {run_status}")
             if run_status == 'completed':
                 break
             elif time.time() - start_time > 1200:
@@ -150,7 +197,7 @@ def apply_green_prompts(client, assistant, file_id, prompt, refined_file_path):
         start_time = time.time()
         while True:
             run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id).status
-            logging.info(f"Processing status for file {file_id}: {run_status}")
+            # logging.info(f"Processing status for file {file_id}: {run_status}")
             if run_status == 'completed':
                 break
             elif time.time() - start_time > 1200:
@@ -163,7 +210,7 @@ def apply_green_prompts(client, assistant, file_id, prompt, refined_file_path):
         data = json.loads(messages.model_dump_json(indent=2))
 
         # Log the entire API response for debugging
-        logging.info(f"API response for file {file_id}: {json.dumps(data, indent=2)}")
+        # logging.info(f"API response for file {file_id}: {json.dumps(data, indent=2)}")
 
         code = None
         if data['data'] and data['data'][0]['content'] and data['data'][0]['content'][0]['text']['annotations']:
