@@ -31,7 +31,7 @@ MILLI_WATTS_TO_KILOWATTS = 1000
 DEFAULT_SLEEP_TIME = int(os.getenv('DEFAULT_SLEEP_TIME', 20))
 RUN_TIME_IN_MINUTES = int(os.getenv('RUN_TIME_IN_MINUTES', 1))
 # RESULT_DIR = os.path.join(BASE_DIR, 'GreenCode')
-RESULT_DIR = os.path.join(BASE_DIR, 'Result')
+RESULT_DIR = os.path.join(os.path.dirname(env_path), 'Result')
 CSV_FILE = os.path.join(RESULT_DIR, 'server_data.csv')
 
 
