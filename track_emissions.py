@@ -469,9 +469,10 @@ def generate_html_report(result_dir):
     else:
         latest_after_df = pd.DataFrame()  # Create an empty DataFrame
 
+
     # Prepare lists for before and after details to pass to the template
-    latest_before_details = latest_before_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict(orient='records')
-    latest_after_details = latest_after_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict(orient='records')
+    latest_before_details = [latest_before_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict()]
+    latest_after_details = [latest_after_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict()]
 
     # Sum 'Energy Consumed (Wh)' for before and after
     total_before = before_df['Energy Consumed (Wh)'].astype(float).sum()
