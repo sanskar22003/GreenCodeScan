@@ -458,25 +458,29 @@ def generate_html_report(result_dir):
     after_df = pd.read_csv(after_csv)
     comparison_df = pd.read_csv(comparison_csv)
     
-    if not before_df.empty:
-        latest_before_df = before_df.loc[[before_df['Timestamp'].idxmax()]]
-        latest_before_details = [latest_before_df[
-            ['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']
-        ].to_dict()]
-    else:
-        latest_before_details = []
+if not before_df.empty:
+    latest_before_df = before_df.loc[[before_df['Timestamp'].idxmax()]]
+    latest_before_df = latest_before_df.reindex(columns=[
+        'Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir'
+    ])
+    latest_before_details = [latest_before_df.to_dict()]
+else:
+    latest_before_df = pd.DataFrame(columns=[
+        'Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir'
+    ])
+    latest_before_details = []
 
-    if not after_df.empty:
-        latest_after_df = after_df.loc[[after_df['Timestamp'].idxmax()]]
-        latest_after_details = [latest_after_df[
-            ['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']
-        ].to_dict()]
-    else:
-        latest_after_details = []
-
-    # Prepare lists for before and after details to pass to the template
-    latest_before_details = [latest_before_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict()]
-    latest_after_details = [latest_after_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict()]
+if not after_df.empty:
+    latest_after_df = after_df.loc[[after_df['Timestamp'].idxmax()]]
+    latest_after_df = latest_after_df.reindex(columns=[
+        'Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir'
+    ])
+    latest_after_details = [latest_after_df.to_dict()]
+else:
+    latest_after_df = pd.DataFrame(columns=[
+        'Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir'
+    ])
+    latest_after_details = []
 
     # Sum 'Energy Consumed (Wh)' for before and after
     total_before = before_df['Energy Consumed (Wh)'].astype(float).sum()
