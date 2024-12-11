@@ -766,24 +766,24 @@ def generate_html_report(result_dir):
 
     # === Feature 2: Top Five Tables ===
     # Top Five Files Generating Most Energy (Before Refinement)
-    top_five_energy_before = before_df.sort_values('Energy Consumed (Wh)', ascending=False).head(5)[['Application name', 'Energy Consumed (Wh)']]
-    top_five_energy_before.rename(columns={'Application name': 'File Name', 'Energy Consumed (Wh)': 'Energy Consumed (Wh)'}, inplace=True)
+    top_five_energy_before = before_df.sort_values('Energy Consumed (Wh)', ascending=False).head(5)[['Application name', 'Timestamp', 'Energy Consumed (Wh)']]
+    top_five_energy_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp', 'Energy Consumed (Wh)': 'Energy Consumed (Wh)'}, inplace=True)
     energy_table_html = top_five_energy_before.to_html(index=False, classes='table', border=0, float_format=lambda x: f"{x:.6f}")
 
     # Top Five Files Generating Most Emissions (Before Refinement)
-    top_five_emissions_before = before_df.sort_values('Emissions (gCO2eq)', ascending=False).head(5)[['Application name', 'Emissions (gCO2eq)']]
-    top_five_emissions_before.rename(columns={'Application name': 'File Name', 'Emissions (gCO2eq)': 'Emissions (gCO2eq)'}, inplace=True)
+    top_five_emissions_before = before_df.sort_values('Emissions (gCO2eq)', ascending=False).head(5)[['Application name', 'Timestamp', 'Emissions (gCO2eq)']]
+    top_five_emissions_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp', 'Emissions (gCO2eq)': 'Emissions (gCO2eq)'}, inplace=True)
     emissions_table_html = top_five_emissions_before.to_html(index=False, classes='table', border=0, float_format=lambda x: f"{x:.6f}")
 
 # --------------------------------------------------------------------------------------------
 
-    latest_top_five_energy_before = latest_before_df.sort_values('Energy Consumed (Wh)', ascending=False).head(5)[['Application name', 'Energy Consumed (Wh)']]
-    latest_top_five_energy_before.rename(columns={'Application name': 'File Name', 'Energy Consumed (Wh)': 'Energy Consumed (Wh)'}, inplace=True)
+    latest_top_five_energy_before = latest_before_df.sort_values('Energy Consumed (Wh)', ascending=False).head(5)[['Application name', 'Timestamp', 'Energy Consumed (Wh)']]
+    latest_top_five_energy_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp', 'Energy Consumed (Wh)': 'Energy Consumed (Wh)'}, inplace=True)
     latest_energy_table_html = latest_top_five_energy_before.to_html(index=False, classes='table', border=0, float_format=lambda x: f"{x:.6f}")
 
     # Top Five Files Generating Most Emissions (Before Refinement)
-    latest_top_five_emissions_before = latest_before_df.sort_values('Emissions (gCO2eq)', ascending=False).head(5)[['Application name', 'Emissions (gCO2eq)']]
-    latest_top_five_emissions_before.rename(columns={'Application name': 'File Name', 'Emissions (gCO2eq)': 'Emissions (gCO2eq)'}, inplace=True)
+    latest_top_five_emissions_before = latest_before_df.sort_values('Emissions (gCO2eq)', ascending=False).head(5)[['Application name', 'Timestamp', 'Emissions (gCO2eq)']]
+    latest_top_five_emissions_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp', 'Emissions (gCO2eq)': 'Emissions (gCO2eq)'}, inplace=True)
     latest_emissions_table_html = latest_top_five_emissions_before.to_html(index=False, classes='table', border=0, float_format=lambda x: f"{x:.6f}")
 
     # === Feature 3: Emissions for Embedded and Non-Embedded Code ===
