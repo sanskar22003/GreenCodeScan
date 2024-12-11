@@ -282,39 +282,130 @@
                 font-size: 2rem;
             }
         }
-        .table-wrapper {
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            padding: 20px;
+        .tables-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: nowrap; /* Prevents wrapping to next line */
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .table-box {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            opacity: 0;
+            transform: translateY(20px);
+            overflow: auto; /* Adds scroll if content overflows vertically */
         }
 
-        .table-container {
-            overflow-x: auto;
+        .table-box.show {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.5s ease, transform 0.5s ease;
         }
 
-        .energy-table {
+        .table-box h2 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .table-box h2 i {
+            color: var(--primary);
+        }
+
+        table {
             width: 100%;
             border-collapse: collapse;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
+            table-layout: fixed;
         }
 
-        .energy-table th,
-        .energy-table td {
-            padding: 12px 16px;
+        table th {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--text);
+            font-weight: 600;
             text-align: left;
-            border-bottom: 1px solid #e0e0e0;
+            padding: 1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
 
-        .energy-table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
+        table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
 
-        .energy-table tr:hover {
-            background-color: #f5f5f5;
+        table tr:last-child td {
+            border-bottom: none;
         }
+
+        table tbody tr {
+            transition: var(--transition);
+        }
+
+        table tbody tr:hover {
+            background: rgba(46, 204, 113, 0.05);
+        }
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Responsive table for smaller screens */
+        @media (max-width: 768px) {
+            .tables-container {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 600px; /* Adjust based on your content */
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 0 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .table-box {
+                padding: 1rem;
+            }
+
+            table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }   
+
     </style>
 </head>
 <body>
@@ -375,10 +466,10 @@
             {{ div_bar_graph_after | safe }}
         </div>
 
-        <div class="table-wrapper">
+        <div class="tables-container">
             <h3>Most Energy Consumption (Wh)</h3>
-            <div class="table-container">
-                <table class="energy-table">
+            <div class="table-box">
+                <table>
                     <thead>
                         <tr>
                             <th>File Name</th>
@@ -386,7 +477,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{ energy_table_html | safe }}
+                        {% for row in energy_table_html %}
+                            <tr>
+                                <td>{{ row['Application name'] }}</td>
+                                <td>{{ row['Energy Consumed (Wh)'] }}</td>
+                            </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
