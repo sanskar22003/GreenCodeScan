@@ -462,7 +462,7 @@ def generate_html_report(result_dir):
     server_df = pd.read_csv(server_csv)
 
     # Convert the 'Date' column to datetime
-    server_df['Date'] = pd.to_datetime(server_df['Date'], format='%Y-%m-%d')
+    server_df['Date'] = pd.to_datetime(server_df['Date'], format='%d-%m-%Y')
 
     def create_line_chart(time_range):
         fig = go.Figure()
