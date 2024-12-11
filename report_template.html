@@ -378,22 +378,7 @@
         <div class="table-wrapper">
             <h3>Most Energy Consumption (Wh)</h3>
             <div class="table-container">
-                <table class="energy-table">
-                    <thead>
-                        <tr>
-                            <th>File Name</th>
-                            <th>Energy Consumed (Wh)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in energy_table_html %}
-                            <tr>
-                                <td>{{ row['Application name'] }}</td>
-                                <td>{{ row['Energy Consumed (Wh)'] }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                {{ energy_table_html | safe }}
             </div>
         </div>
     </section>
