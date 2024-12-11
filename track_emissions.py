@@ -16,6 +16,7 @@ import plotly.express as px
 import plotly.graph_objs as go
 import logging
 import sqlite3
+from datetime import datetime, timedelta
 
 # Load environment variables
 env_path = os.path.abspath(".env")
@@ -460,27 +461,54 @@ def generate_html_report(result_dir):
     comparison_df = pd.read_csv(comparison_csv)
     server_df = pd.read_csv(server_csv)
 
-    # Prepare the data for the line chart
-    fig = go.Figure()
+    # Convert the 'Date' column to datetime
+    server_df['Date'] = pd.to_datetime(server_df['Date'])
 
-    # Add the energy consumption line
-    fig.add_trace(go.Scatter(x=server_df['Date'], y=server_df['Energy consumption (KWH)'], mode='lines', name='Energy Consumption (KWH)'))
-
-    # Add the CO2 emission line
-    fig.add_trace(go.Scatter(x=server_df['Date'], y=server_df['CO2 emission (kt)'], mode='lines', name='CO2 Emission (kt)'))
-
-    # Update the layout
-    fig.update_layout(
-        title='Server Emissions and Energy Consumption',
-        xaxis_title='Date',
-        yaxis_title='Value',
-        xaxis_type='category',
-        width=800,
-        height=400
-    )
-
-    # Save the chart as a Plotly HTML div
-    div_line_chart = fig.to_html(full_html=False, include_plotlyjs='cdn')
+    def create_line_chart(time_range):
+        fig = go.Figure()
+    
+        if time_range == '1D':
+            start_date = server_df['Date'].max() - timedelta(days=1)
+            end_date = server_df['Date'].max()
+            x_axis_title = 'Time'
+        elif time_range == '1W':
+            start_date = server_df['Date'].max() - timedelta(days=7)
+            end_date = server_df['Date'].max()
+            x_axis_title = 'Date'
+        elif time_range == '1M':
+            start_date = server_df['Date'].max() - timedelta(days=30)
+            end_date = server_df['Date'].max()
+            x_axis_title = 'Date'
+        else:
+            start_date = server_df['Date'].min()
+            end_date = server_df['Date'].max()
+            x_axis_title = 'Date'
+    
+        filtered_df = server_df[(server_df['Date'] >= start_date) & (server_df['Date'] <= end_date)]
+    
+        # Add the energy consumption line
+        fig.add_trace(go.Scatter(x=filtered_df['Date'], y=filtered_df['Energy consumption (KWH)'], mode='lines', name='Energy Consumption (KWH)'))
+    
+        # Add the CO2 emission line
+        fig.add_trace(go.Scatter(x=filtered_df['Date'], y=filtered_df['CO2 emission (kt)'], mode='lines', name='CO2 Emission (kt)'))
+    
+        # Update the layout
+        fig.update_layout(
+            title='Server Emissions and Energy Consumption',
+            xaxis_title=x_axis_title,
+            yaxis_title='Value',
+            xaxis_type='category',
+            width=800,
+            height=400
+        )
+    
+        return fig.to_html(full_html=False, include_plotlyjs='cdn')
+    
+    # Example usage
+    div_line_chart_1d = create_line_chart('1D')
+    div_line_chart_1w = create_line_chart('1W')
+    div_line_chart_1m = create_line_chart('1M')
+    div_line_chart_all = create_line_chart('all')
     
     # Get the latest record as a DataFrame
     latest_before_df = before_df.loc[[before_df['Timestamp'].idxmax()]]
