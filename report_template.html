@@ -19,6 +19,23 @@
             --shadow: 0 8px 30px rgba(0,0,0,0.12);
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        .main-container {
+            display: flex;
+            gap: 2rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .section {
+            animation: fadeIn 0.5s ease-out;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            margin-bottom: 1.5rem;
+        }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -55,13 +72,20 @@
         }
         .navigation a {
             text-decoration: none;
-            color: #000000;
+            color: var(--primary);
             font-weight: bold;
             animation: fadeUp 0.5s forwards;
             transform: translateY(20px);
             font-size: 1.1rem;
-            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            transition: var(--transition);
         }
+        .navigation a:hover {
+            color: var(--primary-dark);
+        }  
         .navigation i {
             color: var(--primary);
             font-size: 1.3rem;
@@ -341,127 +365,131 @@
         <a href="details_report.html">View Detailed Report</a>
     </div> 
 
-    <section class="section">
-        <h2 class="section-title">
-            <i class="fas fa-bolt"></i>
-            Energy Consumption
-        </h2>
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-icon">
-                        <i class="fas fa-bolt"></i>
+    <div class="main-container">
+        <div class="column">
+            <section class="section">
+                <div class="card">
+                    <h2><i class="fas fa-bolt"></i>Energy Consumption</h2>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <div class="metric-icon">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
+                                <h3 class="metric-title">Before Refinement</h3>
+                            </div>
+                            <div class="metric-value">{{ total_before }} Wh</div>
+                            <div class="metric-change">
+                                <i class="fas fa-clock"></i>
+                                Last Run: {{ last_run_timestamp }}
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <div class="metric-icon">
+                                    <i class="fas fa-leaf"></i>
+                                </div>
+                                <h3 class="metric-title">After Refinement</h3>
+                            </div>
+                            <div class="metric-value">{{ total_after }} Wh</div>
+                            <div class="metric-change">
+                                <i class="fas fa-clock"></i>
+                                Last Run: {{ last_run_timestamp }}
+                            </div>
+                        </div>
                     </div>
-                    <h3 class="metric-title">Before Refinement</h3>
-                </div>
-                <div class="metric-value">{{ total_before }} Wh</div>
-                <div class="metric-change">
-                    <i class="fas fa-clock"></i>
-                    Last Run: {{ last_run_timestamp }}
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-icon">
-                        <i class="fas fa-leaf"></i>
+                    <div class="improvement-card">
+                        <div class="improvement-label">Energy Efficiency Improvement</div>
+                        {% set energy_improvement = ((total_before|float - total_after|float) / total_before|float * 100) | round(2) %}
+                        <div class="improvement-value {{ 'positive' if energy_improvement > 0 else 'negative' }}">
+                            {{ energy_improvement }}%
+                            <i class="fas {{ 'fa-arrow-up' if energy_improvement > 0 else 'fa-arrow-down' }}"></i>
+                        </div>
                     </div>
-                    <h3 class="metric-title">After Refinement</h3>
-                </div>
-                <div class="metric-value">{{ total_after }} Wh</div>
-                <div class="metric-change">
-                    <i class="fas fa-clock"></i>
-                    Last Run: {{ last_run_timestamp }}
-                </div>
-            </div>
-        </div>
-        <div class="improvement-card">
-            <div class="improvement-label">Energy Efficiency Improvement</div>
-            {% set energy_improvement = ((total_before|float - total_after|float) / total_before|float * 100) | round(2) %}
-            <div class="improvement-value {{ 'positive' if energy_improvement > 0 else 'negative' }}">
-                {{ energy_improvement }}%
-                <i class="fas {{ 'fa-arrow-up' if energy_improvement > 0 else 'fa-arrow-down' }}"></i>
-            </div>
-        </div>
 
-        <div class="graph-container">
-            {{ div_bar_graph_before | safe }}
-        </div>
-        <div class="graph-container">
-            {{ div_bar_graph_after | safe }}
-        </div>
-
-        <div class="table-wrapper">
-            <h3>Most Energy Consumption (Wh)</h3>
-            <div class="table-container">
-                {{ energy_table_html | safe }}
-            </div>
-        </div>
-    </section>
-
-    <section class="section">
-        <h2 class="section-title">
-            <i class="fas fa-cloud"></i>
-            Emissions Analysis
-        </h2>
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-icon">
-                        <i class="fas fa-smog"></i>
+                    <div class="graph-container">
+                        {{ div_bar_graph_before | safe }}
                     </div>
-                    <h3 class="metric-title">Before Refinement</h3>
-                </div>
-                <div class="metric-value">{{ total_emissions_before }} gCO2eq</div>
-                <div class="metric-change">
-                    <i class="fas fa-clock"></i>
-                    Last Run: {{ last_run_timestamp }}
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-icon">
-                        <i class="fas fa-seedling"></i>
+                    <div class="graph-container">
+                        {{ div_bar_graph_after | safe }}
                     </div>
-                    <h3 class="metric-title">After Refinement</h3>
-                </div>
-                <div class="metric-value">{{ total_emissions_after }} gCO2eq</div>
-                <div class="metric-change">
-                    <i class="fas fa-clock"></i>
-                    Last Run: {{ last_run_timestamp }}
-                </div>
-            </div>
-        </div>
-        <div class="improvement-card">
-            <div class="improvement-label">Emissions Reduction</div>
-            {% set emissions_improvement = 0 %}
-            {% if total_emissions_before|float > 0 %}
-                {% set emissions_improvement = ((total_emissions_before|float - total_emissions_after|float) / total_emissions_before|float * 100) | round(2) %}
-            {% endif %}
-            <div class="improvement-value {{ 'positive' if emissions_improvement > 0 else 'negative' if emissions_improvement < 0 else 'neutral' }}">
-                {{ emissions_improvement }}%
-                {% if emissions_improvement > 0 %}
-                    <i class="fas fa-arrow-up"></i>
-                {% elif emissions_improvement < 0 %}
-                    <i class="fas fa-arrow-down"></i>
-                {% else %}
-                    <i class="fas fa-minus"></i>
-                {% endif %}
-            </div>
-        </div>
-        <div class="graph-container">
-            {{ div_bar_graph_before_gco2eq | safe }}
-        </div>
-        <div class="graph-container">
-            {{ div_bar_graph_after_gco2eq | safe }}
-        </div>
 
-        <div class="table-wrapper">
-            <h3>Most Emissions (gCO2eq)</h3>
-            <table class="energy-table">
-                {{ emissions_table_html | safe }}
-            </table>
+                    <div class="table-wrapper">
+                        <h3>Most Energy Consumption (Wh)</h3>
+                        <div class="table-container">
+                            {{ energy_table_html | safe }}
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
-    </section>
+    
+        <div class="column">
+            <section class="section">
+                <div class="card">
+                    <h2><i class="fas fa-cloud"></i>Emissions Analysis</h2>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <div class="metric-icon">
+                                    <i class="fas fa-smog"></i>
+                                </div>
+                                <h3 class="metric-title">Before Refinement</h3>
+                            </div>
+                            <div class="metric-value">{{ total_emissions_before }} gCO2eq</div>
+                            <div class="metric-change">
+                                <i class="fas fa-clock"></i>
+                                Last Run: {{ last_run_timestamp }}
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <div class="metric-icon">
+                                    <i class="fas fa-seedling"></i>
+                                </div>
+                                <h3 class="metric-title">After Refinement</h3>
+                            </div>
+                            <div class="metric-value">{{ total_emissions_after }} gCO2eq</div>
+                            <div class="metric-change">
+                                <i class="fas fa-clock"></i>
+                                Last Run: {{ last_run_timestamp }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="improvement-card">
+                        <div class="improvement-label">Emissions Reduction</div>
+                        {% set emissions_improvement = 0 %}
+                        {% if total_emissions_before|float > 0 %}
+                            {% set emissions_improvement = ((total_emissions_before|float - total_emissions_after|float) / total_emissions_before|float * 100) | round(2) %}
+                        {% endif %}
+                        <div class="improvement-value {{ 'positive' if emissions_improvement > 0 else 'negative' if emissions_improvement < 0 else 'neutral' }}">
+                            {{ emissions_improvement }}%
+                            {% if emissions_improvement > 0 %}
+                                <i class="fas fa-arrow-up"></i>
+                            {% elif emissions_improvement < 0 %}
+                                <i class="fas fa-arrow-down"></i>
+                            {% else %}
+                                <i class="fas fa-minus"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="graph-container">
+                        {{ div_bar_graph_before_gco2eq | safe }}
+                    </div>
+                    <div class="graph-container">
+                        {{ div_bar_graph_after_gco2eq | safe }}
+                    </div>
+
+                    <div class="table-wrapper">
+                        <h3>Most Emissions (gCO2eq)</h3>
+                        <table class="energy-table">
+                            {{ emissions_table_html | safe }}
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
 
     <!-- Server Analysis Section -->
     <section class="section">
