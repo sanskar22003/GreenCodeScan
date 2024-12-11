@@ -649,7 +649,7 @@ def generate_html_report(result_dir):
     latest_unique_solution_dirs_gco2eq = sorted(set(latest_before_gco2eq_sorted['solution dir']).union(latest_after_gco2eq_sorted['solution dir']))
 
     # Create a separate color mapping for gCO2eq graphs
-    color_palette_gco2eq = px.colors.qualitative.Plotly  # Or choose another palette if preferred
+    color_palette_gco2eq = px.colors.qualitative.D3  # Or choose another palette if preferred
     color_mapping_gco2eq = {}
     for i, solution_dir in enumerate(unique_solution_dirs_gco2eq):
         color_mapping_gco2eq[solution_dir] = color_palette_gco2eq[i % len(color_palette_gco2eq)]
@@ -704,7 +704,7 @@ def generate_html_report(result_dir):
 
     # --------------------------------------------------------------------------------------------
     # Create a separate color mapping for gCO2eq graphs
-    color_palette_gco2eq = px.colors.qualitative.Plotly  # Or choose another palette if preferred
+    color_palette_gco2eq = px.colors.qualitative.D3  # Or choose another palette if preferred
     color_mapping_gco2eq = {}
     for i, solution_dir in enumerate(latest_unique_solution_dirs_gco2eq):
         color_mapping_gco2eq[solution_dir] = color_palette_gco2eq[i % len(color_palette_gco2eq)]
