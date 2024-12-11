@@ -1033,6 +1033,17 @@ def generate_html_report(result_dir):
         latest_div_bar_graph_non_embedded = pio.to_html(latest_bar_graph_non_embedded, include_plotlyjs=False, full_html=False)
 # --------------------------------------------------------------------------------------------
 
+    div_line_chart = f"""
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="showChart('1D')">1 Day</button>
+            <button class="btn btn-primary" onclick="showChart('1W')">1 Week</button>
+            <button class="btn btn-primary" onclick="showChart('1M')">1 Month</button>
+            <button class="btn btn-primary" onclick="showChart('all')">All</button>
+        </div>
+        <div id="line-chart-container">
+            {div_line_chart_all}
+        </div>
+    """
 
     # Render the template with dynamic data
     html_content = template.render(
