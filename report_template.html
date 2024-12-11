@@ -317,16 +317,7 @@
         
         .chart-container {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .btn-group {
-            margin-bottom: 16px;
-        }
-        
-        .btn {
-            margin-right: 8px;
+            justify-content: center;
         }
     </style>
 </head>
@@ -465,15 +456,7 @@
         <div class="chart-wrapper">
             <h3>Server Emissions and Energy Consumption</h3>
             <div class="chart-container">
-                <div class="btn-group">
-                    <button class="btn btn-primary" onclick="showChart('1D')">1 Day</button>
-                    <button class="btn btn-primary" onclick="showChart('1W')">1 Week</button>
-                    <button class="btn btn-primary" onclick="showChart('1M')">1 Month</button>
-                    <button class="btn btn-primary" onclick="showChart('all')">All</button>
-                </div>
-                <div id="line-chart-container">
-                    {{ div_line_chart_all | safe }}
-                </div>
+                {{ div_line_chart | safe }}
             </div>
         </div>
     </section>
@@ -492,19 +475,5 @@
             </div>
         </div>
     </section>
-
-<script>
-    function showChart(timeRange) {
-        var chartContainers = {
-            '1D': '{{ div_line_chart_1d | safe }}',
-            '1W': '{{ div_line_chart_1w | safe }}',
-            '1M': '{{ div_line_chart_1m | safe }}',
-            'all': '{{ div_line_chart_all | safe }}'
-        };
-
-        var chartContainer = document.getElementById('line-chart-container');
-        chartContainer.innerHTML = chartContainers[timeRange];
-    }
-</script>
 </body>
 </html>
