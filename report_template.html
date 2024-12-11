@@ -282,36 +282,38 @@
                 font-size: 2rem;
             }
         }
+        .table-wrapper {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
         .energy-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 1rem;
             font-family: Arial, sans-serif;
+            font-size: 14px;
         }
 
-        .energy-table th, .energy-table td {
-            border: 1px solid #ddd;
-            padding: 10px;
+        .energy-table th,
+        .energy-table td {
+            padding: 12px 16px;
             text-align: left;
+            border-bottom: 1px solid #e0e0e0;
         }
 
         .energy-table th {
-            background-color: #004d40;
-            color: white;
+            background-color: #f2f2f2;
             font-weight: bold;
         }
 
-        .energy-table tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-
         .energy-table tr:hover {
-            background-color: #e0f7fa;
-        }
-
-        .table-wrapper {
-            overflow-x: auto; /* Ensures the table is scrollable on small screens */
+            background-color: #f5f5f5;
         }
     </style>
 </head>
@@ -375,9 +377,19 @@
 
         <div class="table-wrapper">
             <h3>Most Energy Consumption (Wh)</h3>
-            <table class="energy-table">
-                {{ energy_table_html | safe }}
-            </table>
+            <div class="table-container">
+                <table class="energy-table">
+                    <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Energy Consumed (Wh)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{ energy_table_html | safe }}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </section>
 
