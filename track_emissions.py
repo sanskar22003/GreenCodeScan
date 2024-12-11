@@ -649,7 +649,7 @@ def generate_html_report(result_dir):
     latest_unique_solution_dirs_gco2eq = sorted(set(latest_before_gco2eq_sorted['solution dir']).union(latest_after_gco2eq_sorted['solution dir']))
 
     # Create a separate color mapping for gCO2eq graphs
-    color_palette_gco2eq = px.colors.qualitative.D3  # Or choose another palette if preferred
+    color_palette_gco2eq = px.colors.qualitative.Plotly  # Or choose another palette if preferred
     color_mapping_gco2eq = {}
     for i, solution_dir in enumerate(unique_solution_dirs_gco2eq):
         color_mapping_gco2eq[solution_dir] = color_palette_gco2eq[i % len(color_palette_gco2eq)]
@@ -662,7 +662,7 @@ def generate_html_report(result_dir):
             y=[row['solution dir']],
             orientation='h',
             name=row['solution dir'],
-            marker=dict(color=color_mapping.get(row['solution dir'], 'blue'))
+            marker=dict(color=color_mapping_gco2eq.get(row['solution dir'], 'blue'))  # Use color_mapping_gco2eq
         ))
 
     bar_graph_before_gco2eq.update_layout(
@@ -686,7 +686,7 @@ def generate_html_report(result_dir):
             y=[row['solution dir']],
             orientation='h',
             name=row['solution dir'],
-            marker=dict(color=color_mapping.get(row['solution dir'], 'blue'))
+            marker=dict(color=color_mapping_gco2eq.get(row['solution dir'], 'blue'))
         ))
 
     bar_graph_after_gco2eq.update_layout(
@@ -704,7 +704,7 @@ def generate_html_report(result_dir):
 
     # --------------------------------------------------------------------------------------------
     # Create a separate color mapping for gCO2eq graphs
-    color_palette_gco2eq = px.colors.qualitative.D3  # Or choose another palette if preferred
+    color_palette_gco2eq = px.colors.qualitative.Plotly  # Or choose another palette if preferred
     color_mapping_gco2eq = {}
     for i, solution_dir in enumerate(latest_unique_solution_dirs_gco2eq):
         color_mapping_gco2eq[solution_dir] = color_palette_gco2eq[i % len(color_palette_gco2eq)]
@@ -756,7 +756,6 @@ def generate_html_report(result_dir):
         margin=dict(l=150, r=50, t=50, b=50),
         showlegend=False
     )
-
     # Convert figures to HTML div
     div_bar_graph_before_gco2eq = pio.to_html(bar_graph_before_gco2eq, include_plotlyjs=False, full_html=False)
     div_bar_graph_after_gco2eq = pio.to_html(bar_graph_after_gco2eq, include_plotlyjs=False, full_html=False)
