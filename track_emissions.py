@@ -441,6 +441,7 @@ def generate_html_report(result_dir):
     before_csv = os.path.join(result_dir, 'main_before_emissions_data.csv')
     after_csv = os.path.join(result_dir, 'main_after_emissions_data.csv')
     comparison_csv = os.path.join(result_dir, 'comparison_results.csv')
+    server_csv = os.path.join(result_dir, 'server_data.csv')
 
     # Check if CSV files exist
     if not os.path.exists(before_csv):
@@ -457,6 +458,29 @@ def generate_html_report(result_dir):
     before_df = pd.read_csv(before_csv)
     after_df = pd.read_csv(after_csv)
     comparison_df = pd.read_csv(comparison_csv)
+    server_df = pd.read_csv(server_csv)
+
+    # Prepare the data for the line chart
+    fig = go.Figure()
+
+    # Add the energy consumption line
+    fig.add_trace(go.Scatter(x=server_df['Date'], y=server_df['Energy consumption (KWH)'], mode='lines', name='Energy Consumption (KWH)'))
+
+    # Add the CO2 emission line
+    fig.add_trace(go.Scatter(x=server_df['Date'], y=server_df['CO2 emission (kt)'], mode='lines', name='CO2 Emission (kt)'))
+
+    # Update the layout
+    fig.update_layout(
+        title='Server Emissions and Energy Consumption',
+        xaxis_title='Date',
+        yaxis_title='Value',
+        xaxis_type='category',
+        width=800,
+        height=400
+    )
+
+    # Save the chart as a Plotly HTML div
+    div_line_chart = fig.to_html(full_html=False, include_plotlyjs='cdn')
     
     # Get the latest record as a DataFrame
     latest_before_df = before_df.loc[[before_df['Timestamp'].idxmax()]]
@@ -997,6 +1021,7 @@ def generate_html_report(result_dir):
         div_bar_graph_embedded=div_bar_graph_embedded,
         div_bar_graph_non_embedded=div_bar_graph_non_embedded,
         last_run_timestamp=last_run_timestamp,  # Pass the timestamp
+        div_line_chart=div_line_chart
     )
 
     # Render the details template with detailed data
