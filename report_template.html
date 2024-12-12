@@ -151,25 +151,70 @@
           }
           
           /* Table Styles */
-          .table-wrapper {
-            margin-top: 1.5rem;
-            background: var(--background);
-            border-radius: 0.5rem;
-            padding: 1rem;
-          }
-          
-          .table-wrapper h3 {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin: 0 0 1rem 0;
-            font-size: 1.1rem;
-          }
-          
-          .table-wrapper h3 i {
-            color: var(--primary);
-          }
-          
+           .table-container {
+                overflow-x: auto;
+                margin: 1rem 0;
+                border-radius: 12px;
+                background: white;
+                box-shadow: var(--shadow);
+            }
+            
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-family: Arial, sans-serif;
+                font-size: 14px;
+                background: white;
+            }
+            
+            th, td {
+                padding: 12px 16px;
+                text-align: left;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            
+            th {
+                background-color: #f2f2f2;
+                font-weight: bold;
+                text-transform: uppercase;
+                font-size: 0.85rem;
+                letter-spacing: 0.5px;
+            }
+            
+            tr:hover {
+                background-color: #f5f5f5;
+                transition: background-color 0.2s ease;
+            }
+            
+            .table-wrapper {
+                background: var(--card-bg);
+                border-radius: 16px;
+                padding: 2rem;
+                box-shadow: var(--shadow);
+                overflow-x: auto;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                margin: 1.5rem 0;
+            }
+            
+            .table-wrapper h3 {
+                color: var(--text);
+                margin-bottom: 1rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 1.1rem;
+            }
+            
+            .table-wrapper h3 i {
+                color: var(--primary);
+            }
+            
+            @media (max-width: 768px) {
+                .table-wrapper {
+                    padding: 1rem;
+                }
+            }
+
           .data-table {
             width: 100%;
             border-collapse: collapse;
@@ -290,14 +335,7 @@
             }
           }
         
-          /* Table Container Styles */
-        .table-container {
-          overflow-x: auto;
-          margin-top: 1rem;
-          border-radius: 0.5rem;
-          background: white;
-        }
-        
+          /* Table Container Styles */       
         .energy-table {
           width: 100%;
           border-collapse: collapse;
@@ -375,6 +413,96 @@
         .improvement-value i {
           font-size: 1.5rem;
         }
+        /* Metrics Cards */
+        .metrics-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+        
+        .metric-card h3 {
+            color: var(--text);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .metric-card h3 i {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0.5rem 0;
+        }
+        
+        .metric-timestamp {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin: 1.5rem 0;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .chart-container h3 {
+            margin-bottom: 1rem;
+            color: var(--text);
+            font-size: 1.1rem;
+        }
+        
+        /* Columns Layout */
+        .columns {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        @media (max-width: 1200px) {
+            .columns {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -389,23 +517,24 @@
         </a>
     </div>
 
-    <!-- Main Content with Side-by-Side Layout -->
-    <div class="main-container">
-        <!-- Left Column: Energy Consumption -->
-        <div class="column">
-            <section class="section">
-                <div class="card">
+    <div class="container">
+        <div class="columns">
+            <!-- Energy Consumption Column -->
+            <div class="column">
+                <section class="section">
                     <h2><i class="fas fa-bolt"></i> Energy Consumption</h2>
-                    <div class="metrics">
-                        <div class="metric-item">
-                            <h3>Before Refinement (Wh)</h3>
-                            <p class="value">{{ total_before }}</p>
-                            <p class="timestamp">Last Run: {{ last_run_timestamp }}</p>
+                    
+                    <div class="metrics-container">
+                        <div class="metric-card">
+                            <h3><i class="fas fa-clock-rotate-left"></i> Before Refinement</h3>
+                            <div class="metric-value">{{ total_before }} Wh</div>
+                            <div class="metric-timestamp">Last Run: {{ last_run_timestamp }}</div>
                         </div>
-                        <div class="metric-item">
-                            <h3>After Refinement (Wh)</h3>
-                            <p class="value">{{ total_after }}</p>
-                            <p class="timestamp">Last Run: {{ last_run_timestamp }}</p>
+                        
+                        <div class="metric-card">
+                            <h3><i class="fas fa-clock"></i> After Refinement</h3>
+                            <div class="metric-value">{{ total_after }} Wh</div>
+                            <div class="metric-timestamp">Last Run: {{ last_run_timestamp }}</div>
                         </div>
                     </div>
 
@@ -419,8 +548,11 @@
                         </div>
                     </div>
 
-                    <div class="chart-wrapper">
+                    <div class="chart-container">
                         {{ div_bar_graph_before | safe }}
+                    </div>
+                    
+                    <div class="chart-container">
                         {{ div_bar_graph_after | safe }}
                     </div>
 
@@ -430,92 +562,76 @@
                             {{ energy_table_html | safe }}
                         </div>
                     </div>
-                </div>
-            </section>
-        </div>
+                </section>
+            </div>
 
-        <!-- Right Column: Emissions -->
-        <div class="column">
-            <section class="section">
-                <div class="card">
+            <!-- Emissions Column -->
+            <div class="column">
+                <section class="section">
                     <h2><i class="fas fa-smog"></i> Emissions Analysis</h2>
-                    <div class="metrics">
-                        <div class="metric-item">
-                            <h3>Before Refinement (gCO2eq)</h3>
-                            <p class="value">{{ total_emissions_before }}</p>
-                            <p class="timestamp">Last Run: {{ last_run_timestamp }}</p>
+                    
+                    <div class="metrics-container">
+                        <div class="metric-card">
+                            <h3><i class="fas fa-clock-rotate-left"></i> Before Refinement</h3>
+                            <div class="metric-value">{{ total_emissions_before }} gCO2eq</div>
+                            <div class="metric-timestamp">Last Run: {{ last_run_timestamp }}</div>
                         </div>
-                        <div class="metric-item">
-                            <h3>After Refinement (gCO2eq)</h3>
-                            <p class="value">{{ total_emissions_after }}</p>
-                            <p class="timestamp">Last Run: {{ last_run_timestamp }}</p>
+                        
+                        <div class="metric-card">
+                            <h3><i class="fas fa-clock"></i> After Refinement</h3>
+                            <div class="metric-value">{{ total_emissions_after }} gCO2eq</div>
+                            <div class="metric-timestamp">Last Run: {{ last_run_timestamp }}</div>
                         </div>
                     </div>
 
                     <!-- Emissions Improvement Card -->
                     <div class="improvement-card">
                         <div class="improvement-label">Emissions Reduction</div>
-                        {% set emissions_improvement = 0 %}
-                        {% if total_emissions_before|float > 0 %}
-                            {% set emissions_improvement = ((total_emissions_before|float - total_emissions_after|float) / total_emissions_before|float * 100) | round(2) %}
-                        {% endif %}
+                        {% set emissions_improvement = ((total_emissions_before|float - total_emissions_after|float) / total_emissions_before|float * 100) | round(2) if total_emissions_before|float > 0 else 0 %}
                         <div class="improvement-value {{ 'positive' if emissions_improvement > 0 else 'negative' if emissions_improvement < 0 else 'neutral' }}">
                             {{ emissions_improvement }}%
-                            {% if emissions_improvement > 0 %}
-                                <i class="fas fa-arrow-up"></i>
-                            {% elif emissions_improvement < 0 %}
-                                <i class="fas fa-arrow-down"></i>
-                            {% else %}
-                                <i class="fas fa-minus"></i>
-                            {% endif %}
+                            <i class="fas {{ 'fa-arrow-up' if emissions_improvement > 0 else 'fa-arrow-down' if emissions_improvement < 0 else 'fa-minus' }}"></i>
                         </div>
                     </div>
 
-                    <div class="chart-wrapper">
+                    <div class="chart-container">
                         {{ div_bar_graph_before_gco2eq | safe }}
+                    </div>
+                    
+                    <div class="chart-container">
                         {{ div_bar_graph_after_gco2eq | safe }}
                     </div>
 
                     <div class="table-wrapper">
                         <h3><i class="fas fa-list"></i> Most Emissions (gCO2eq)</h3>
-                        <table class="energy-table">
+                        <div class="table-container">
                             {{ emissions_table_html | safe }}
-                        </table>
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            </div>
         </div>
-    </div>
 
-    <!-- Additional Sections -->
-    <div class="additional-sections">
         <!-- Server Analysis Section -->
         <section class="section">
-            <div class="chart-wrapper">
+            <div class="chart-container">
                 <h3><i class="fas fa-server"></i> Server Emissions and Energy Consumption</h3>
-                <div class="chart-container">
-                    {{ div_line_chart | safe }}
-                </div>
+                {{ div_line_chart | safe }}
             </div>
         </section>
 
-        <!-- Additional Graphs Section -->
-        <section class="section">
-            <div class="main-container">
-                <div class="column">
-                    <div class="chart-wrapper">
-                        <h3><i class="fas fa-microchip"></i> Embedded Code Analysis</h3>
-                        {{ div_bar_graph_embedded | safe }}
-                    </div>
-                </div>
-                <div class="column">
-                    <div class="chart-wrapper">
-                        <h3><i class="fas fa-code"></i> Non-Embedded Code Analysis</h3>
-                        {{ div_bar_graph_non_embedded | safe }}
-                    </div>
-                </div>
+         <!-- Additional Graphs Section -->
+        <div class="columns">
+            <div class="chart-container">
+                <h3><i class="fas fa-microchip"></i> Embedded Code Analysis</h3>
+                {{ div_bar_graph_embedded | safe }}
             </div>
-        </section>
+            
+            <div class="chart-container">
+                <h3><i class="fas fa-code"></i> Non-Embedded Code Analysis</h3>
+                {{ div_bar_graph_non_embedded | safe }}
+            </div>
+        </div>
     </div>
 </body>
 </html>
