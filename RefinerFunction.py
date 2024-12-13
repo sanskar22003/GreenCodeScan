@@ -115,7 +115,7 @@ def load_prompts_from_env():
                 logging.warning(f"Skipping prompt '{key}' as per .env configuration.")
     return prompts
 
-def create_unit_test_files(client, assistant, file_list, test_file_directory):
+def create_unit_test_files(client, assistant, file_list, test_file_directory, green_test_file_directory=None):
     prompt_testcase = get_env_variable('PROMPT_GENERATE_TESTCASES', is_required=False)
     if prompt_testcase:
         if ", " in prompt_testcase:
@@ -147,14 +147,19 @@ def create_unit_test_files(client, assistant, file_list, test_file_directory):
         # Construct the test file name and path to maintain the same folder structure
         test_file_name = f"{base_name}Test{ext}"
         test_file_relative_path = os.path.join(os.path.dirname(relative_path), test_file_name)
-        test_file_path = os.path.join(test_file_directory, test_file_relative_path)
         
-        # Ensure the directory for the test file exists
-        os.makedirs(os.path.dirname(test_file_path), exist_ok=True)
+        # Create test paths for both source and green code directories
+        source_test_file_path = os.path.join(test_file_directory, test_file_relative_path)
+        green_test_file_path = os.path.join(green_test_file_directory, test_file_relative_path) if green_test_file_directory else None
         
-        # Check if test file already exists
-        if os.path.exists(test_file_path):
-            logging.info(f"Test file already exists: {test_file_path}")
+        # Ensure the directory for the test files exists
+        os.makedirs(os.path.dirname(source_test_file_path), exist_ok=True)
+        if green_test_file_path:
+            os.makedirs(os.path.dirname(green_test_file_path), exist_ok=True)
+        
+        # Check if test file already exists in source directory
+        if os.path.exists(source_test_file_path):
+            logging.info(f"Test file already exists: {source_test_file_path}")
             continue
         
         prompt_formatted = prompt.format(file_extension=ext, file_name=file_name)
@@ -191,11 +196,17 @@ def create_unit_test_files(client, assistant, file_list, test_file_directory):
         
         if code:
             try:
+                # Write to source test directory
                 content = client.files.content(code)
-                content.write_to_file(test_file_path)
-                logging.info(f"Unit test file created: {test_file_path}")
+                content.write_to_file(source_test_file_path)
+                logging.info(f"Unit test file created: {source_test_file_path}")
+                
+                # If green test directory is provided, copy the test file
+                if green_test_file_path:
+                    shutil.copy2(source_test_file_path, green_test_file_path)
+                    logging.info(f"Unit test file copied to: {green_test_file_path}")
             except Exception as e:
-                logging.error(f"Failed to write unit test file {test_file_path}: {e}")
+                logging.error(f"Failed to write unit test file {source_test_file_path}: {e}")
         else:
             logging.error(f"Failed to create unit test for file: {file_path}")
 
