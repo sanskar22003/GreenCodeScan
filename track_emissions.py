@@ -491,13 +491,17 @@ def generate_html_report(result_dir):
     latest_before_details = [latest_before_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict()]
     latest_after_details = [latest_after_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict()]
 
-    # Sum 'Energy Consumed (Wh)' for before and after
-    total_before = before_df['Energy Consumed (Wh)'].astype(float).sum()
-    total_after = after_df['Energy Consumed (Wh)'].astype(float).sum()
+    # Function to filter for test applications
+    def is_test_application(app_name):
+        return 'test' in str(app_name).lower()
 
-    # Sum 'Energy Consumed (Wh)' for before and after
-    latest_total_before = latest_before_df['Energy Consumed (Wh)'].astype(float).sum()
-    latest_total_after = latest_after_df['Energy Consumed (Wh)'].astype(float).sum()
+    # Sum 'Energy Consumed (Wh)' for before and after, including ONLY test applications
+    total_before = before_df[before_df['Application Name'].apply(is_test_application)]['Energy Consumed (Wh)'].astype(float).sum()
+    total_after = after_df[after_df['Application Name'].apply(is_test_application)]['Energy Consumed (Wh)'].astype(float).sum()
+
+    # Sum 'Energy Consumed (Wh)' for latest records, including ONLY test applications
+    latest_total_before = latest_before_df[latest_before_df['Application Name'].apply(is_test_application)]['Energy Consumed (Wh)'].astype(float).sum()
+    latest_total_after = latest_after_df[latest_after_df['Application Name'].apply(is_test_application)]['Energy Consumed (Wh)'].astype(float).sum()
 
     # Prepare lists for before and after details to pass to the template
     before_details = before_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict(orient='records')
@@ -506,13 +510,13 @@ def generate_html_report(result_dir):
     # Capture the current timestamp for the report
     last_run_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    # Read comparison_results.csv to get total 'Before' and 'After'
-    total_emissions_before = comparison_df['Before'].astype(float).sum()
-    total_emissions_after = comparison_df['After'].astype(float).sum()
+    # Read comparison_results.csv to get total 'Before' and 'After', only for test applications
+    total_emissions_before = comparison_df[comparison_df['Application Name'].apply(is_test_application)]['Before'].astype(float).sum()
+    total_emissions_after = comparison_df[comparison_df['Application Name'].apply(is_test_application)]['After'].astype(float).sum()
 
-    # Read comparison_results.csv to get total 'Before' and 'After'
-    latest_total_emissions_before = latest_before_df['Emissions (gCO2eq)'].astype(float).sum()
-    latest_total_emissions_after = latest_after_df['Emissions (gCO2eq)'].astype(float).sum()
+    # Read comparison_results.csv to get total 'Before' and 'After' for latest records, only for test applications
+    latest_total_emissions_before = latest_before_df[latest_before_df['Application Name'].apply(is_test_application)]['Emissions (gCO2eq)'].astype(float).sum()
+    latest_total_emissions_after = latest_after_df[latest_after_df['Application Name'].apply(is_test_application)]['Emissions (gCO2eq)'].astype(float).sum()
 
     # Read CSVs and group by 'solution dir'
     before_file_type = before_df.groupby('solution dir')['Energy Consumed (Wh)'].sum().reset_index()
