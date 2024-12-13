@@ -59,7 +59,8 @@ except EnvironmentError as e:
 source_directory = os.path.dirname(env_path)
 green_code_directory = os.path.join(source_directory, 'GreenCode')
 temp_directory = os.path.join(green_code_directory, 'temp')
-test_file_directory = os.path.join(source_directory, 'TestCases')
+test_file_directory = os.path.join(source_directory, 'SRC-TestSuite')
+green_test_file_directory = os.path.join(green_code_directory, 'GreenCode-TestSuite')
 
 # Directory creation logic: Delete existing 'GreenCode' directory if it exists, then create a fresh one
 remove_directory(green_code_directory)
@@ -69,6 +70,7 @@ logging.info(f"Directory '{green_code_directory}' created successfully!")
 # Ensure temp and test_file directories exist
 ensure_directory_structure(temp_directory)
 ensure_directory_structure(test_file_directory)
+ensure_directory_structure(green_test_file_directory)
 
 unique_name = f"GreenCodeRefiner {uuid.uuid4()}"
 # Create an assistant
