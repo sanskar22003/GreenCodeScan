@@ -96,10 +96,28 @@ except Exception as e:
 # Load prompts with "Yes" authentication
 prompts = load_prompts_from_env()
 
+# Colorful logging and step identification
+def print_step_header(step_message):
+    """
+    Print a visually appealing header for each major step
+    """
+    separator = "=" * 55
+    print("\n" + separator)
+    print(f"🚀 {step_message} 🚀".center(55))
+    print(separator + "\n")
+    logging.info(f"Starting step: {step_message}")
+
+# At the beginning of the script, after initializing logging
+print("\n🌿 Green Code Refiner Workflow 🌿")
+print("=" * 40)
+
+
+print_step_header("Generating Test Files for Source Directory")
 # Step 1: Create unit test files for all source files without test files in the original source directory
 original_file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
 create_unit_test_files(client, assistant, original_file_list, test_file_directory, source_directory)
 
+print_step_header("Refining Source Files and Moving to GreenCode Directory")
 # Step 2: Refine files and move to GreenCode directory
 file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
 while file_list:
@@ -145,6 +163,11 @@ while file_list:
     except Exception as e:
         logging.error(f"Failed to move file {refined_temp_file_path} to final path: {e}")
 
+print_step_header("Generating Test Files for Refined Green Code")
 # Step 3: Create unit test files for the refined files in the GreenCode directory
 green_file_list = list(identify_source_files(green_code_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
 create_unit_test_files(client, assistant, green_file_list, green_test_file_directory, green_code_directory)
+
+# Final completion message
+print("\n✨ Green Code Refinement Complete ✨")
+print("=" * 40)
