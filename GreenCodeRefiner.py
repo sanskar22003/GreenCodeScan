@@ -147,4 +147,4 @@ while file_list:
 
 # Step 3: Create unit test files for the refined files in the GreenCode directory
 green_file_list = list(identify_source_files(green_code_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
-create_unit_test_files(client, assistant, green_file_list, test_file_directory)
+create_unit_test_files(client, assistant, green_file_list, green_test_file_directory, green_code_directory)
