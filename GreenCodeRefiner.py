@@ -129,9 +129,9 @@ while file_list:
         refined_success = apply_green_prompts(client, assistant, uploaded_file.id, prompt, refined_temp_file_path)
         # If the file is refined successfully with the current prompt, continue with the next prompt
         if refined_success:
-            print(f"✅ Successfully applied prompt: '{prompt}' to {file_name}")
+            print(f"Successfully applied prompt: '{prompt}' to {file_name}")
         else:
-            print(f"❌ Failed to apply prompt: '{prompt}' to {file_name}")
+            print(f"Failed to apply prompt: '{prompt}' to {file_name}")
 
     # Move the file after all prompts have been applied, regardless of success
     final_file_path = os.path.join(green_code_directory, relative_path)
