@@ -10,6 +10,9 @@ from dotenv import load_dotenv
 from openai import AzureOpenAI
 import ast
 
+# Ensure UTF-8 encoding for Unicode support
+os.environ['PYTHONIOENCODING'] = 'utf-8'
+
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 # Load environment variables
@@ -110,7 +113,6 @@ def print_step_header(step_message):
 # At the beginning of the script, after initializing logging
 print("\n🌿 Green Code Refiner Workflow 🌿")
 print("=" * 40)
-
 
 print_step_header("Generating Test Files for Source Directory")
 # Step 1: Create unit test files for all source files without test files in the original source directory
