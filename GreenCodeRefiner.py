@@ -96,19 +96,25 @@ except Exception as e:
 # Load prompts with "Yes" authentication
 prompts = load_prompts_from_env()
 
-# Step 1: Create unit test files for all source files without test files in the original source directory
-original_file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
-create_unit_test_files(client, assistant, original_file_list, test_file_directory, test_file_directory)
-
-# Step 2: Refine files and move to GreenCode directory
+# Define the list to store files
 file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
+
+# Step 1: Create unit test files for all source files without test files in SRC-TestSuite
+create_unit_test_files(client, assistant, file_list, test_file_directory)
+
+# Re-scan the source directory to include newly created test files
+file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
+
+# Step 2: Upload and refine files
 while file_list:
     file_path = file_list.pop(0)
     relative_path = os.path.relpath(file_path, source_directory)
     file_name = os.path.basename(file_path)
     
     # Skip excluded files and the green_code_directory and its subdirectories
-    if file_name in EXCLUDED_FILES or relative_path.startswith(os.path.relpath(green_code_directory, source_directory)):
+    if (file_name in EXCLUDED_FILES or 
+        relative_path.startswith(os.path.relpath(green_code_directory, source_directory)) or
+        relative_path.startswith(os.path.relpath(test_file_directory, source_directory))):
         print(f"Skipping excluded file or directory: {relative_path}")
         continue
     
@@ -145,6 +151,9 @@ while file_list:
     except Exception as e:
         logging.error(f"Failed to move file {refined_temp_file_path} to final path: {e}")
 
-# Step 3: Create unit test files for the refined files in the GreenCode directory
+# Step 3: Create test cases for refined files in GreenCode-TestSuite
+# First, get the list of refined files in the GreenCode directory
 green_file_list = list(identify_source_files(green_code_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
-create_unit_test_files(client, assistant, green_file_list, test_file_directory, green_test_file_directory)
+
+# Create test cases for refined files, storing them in GreenCode-TestSuite
+create_unit_test_files(client, assistant, green_file_list, green_test_file_directory)
