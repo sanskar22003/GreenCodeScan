@@ -115,7 +115,7 @@ print("=" * 40)
 print_step_header("Generating Test Files for Source Directory")
 # Step 1: Create unit test files for all source files without test files in the original source directory
 original_file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
-create_unit_test_files(client, assistant, original_file_list, test_file_directory, source_directory)
+create_unit_test_files(client, assistant, original_file_list, test_file_directory, test_file_directory)
 
 print_step_header("Refining Source Files and Moving to GreenCode Directory")
 # Step 2: Refine files and move to GreenCode directory
@@ -166,7 +166,7 @@ while file_list:
 print_step_header("Generating Test Files for Refined Green Code")
 # Step 3: Create unit test files for the refined files in the GreenCode directory
 green_file_list = list(identify_source_files(green_code_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
-create_unit_test_files(client, assistant, green_file_list, green_test_file_directory, green_code_directory)
+create_unit_test_files(client, assistant, green_file_list, test_file_directory, green_test_file_directory)
 
 # Final completion message
 print("\n✨ Green Code Refinement Complete ✨")
