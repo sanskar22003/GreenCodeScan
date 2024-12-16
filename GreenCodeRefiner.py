@@ -98,7 +98,7 @@ prompts = load_prompts_from_env()
 
 # Step 1: Create unit test files for all source files without test files in the original source directory
 original_file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
-create_unit_test_files(client, assistant, original_file_list, test_file_directory)
+create_unit_test_files(client, assistant, original_file_list, test_file_directory, source_directory)
 
 # Step 2: Refine files and move to GreenCode directory
 file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
