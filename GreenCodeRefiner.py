@@ -99,6 +99,20 @@ except Exception as e:
 # Load prompts with "Yes" authentication
 prompts = load_prompts_from_env()
 
+# Identifier banner
+def print_identifier_banner():
+    """
+    Print a colorful identifier banner to mark the start of the script.
+    """
+    banner_lines = [
+        "=" * 60,
+        "🌟✨ Welcome to the Green Code Refiner Workflow ✨🌟",
+        "=" * 60,
+        "Optimizing your code for sustainability, step by step. 🚀🌿",
+        "=" * 60,
+    ]
+    print("\n" + "\n".join(banner_lines) + "\n")
+    logging.info("Green Code Refiner Workflow Initialized.")
 # Colorful logging and step identification
 def print_step_header(step_message):
     """
@@ -106,13 +120,11 @@ def print_step_header(step_message):
     """
     separator = "=" * 55
     print("\n" + separator)
-    print(f"🚀 {step_message} 🚀".center(55))
+    print(f"🔧 {step_message} 🔧".center(55))
     print(separator + "\n")
     logging.info(f"Starting step: {step_message}")
 
-# At the beginning of the script, after initializing logging
-print("\n🌿 Green Code Refiner Workflow 🌿")
-print("=" * 40)
+print_identifier_banner()
 
 print_step_header("Generating Test Files for Source Directory")
 # Step 1: Create unit test files for all source files without test files in the original source directory
@@ -149,9 +161,9 @@ while file_list:
         refined_success = apply_green_prompts(client, assistant, uploaded_file.id, prompt, refined_temp_file_path)
         # If the file is refined successfully with the current prompt, continue with the next prompt
         if refined_success:
-            print(f"Successfully applied prompt: '{prompt}' to {file_name}")
+            print(f"✅ Successfully applied prompt: '{prompt}' to {file_name}")
         else:
-            print(f"Failed to apply prompt: '{prompt}' to {file_name}")
+            print(f"❌ Failed to apply prompt: '{prompt}' to {file_name}")
 
     # Move the file after all prompts have been applied, regardless of success
     final_file_path = os.path.join(green_code_directory, relative_path)
@@ -171,5 +183,13 @@ green_file_list = list(identify_source_files(green_code_directory, FILE_EXTENSIO
 create_unit_test_files(client, assistant, green_file_list, test_file_directory, green_test_file_directory)
 
 # Final completion message
-print("\n✨ Green Code Refinement Complete ✨")
-print("=" * 40)
+def print_completion_message():
+    """
+    Print a celebratory completion message.
+    """
+    print("\n" + "=" * 60)
+    print("🎉✨ Green Code Refinement Complete ✨🎉".center(60))
+    print("=" * 60 + "\n")
+    logging.info("Green Code Refinement Workflow Completed.")
+
+print_completion_message()
