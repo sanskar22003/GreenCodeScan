@@ -96,32 +96,33 @@ except Exception as e:
 # Load prompts with "Yes" authentication
 prompts = load_prompts_from_env()
 
-# Define the list to store files
+# Step 1: Create unit test files for all source files without test files in the original source directory
+original_file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
+create_unit_test_files(client, assistant, original_file_list, test_file_directory)
+
+# Step 2: Refine files and move to GreenCode directory
 file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
-
-# Step 1: Create unit test files for all source files without test files
-create_unit_test_files(client, assistant, file_list, test_file_directory)
-
-# Re-scan the source directory to include newly created test files
-file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
-
-# Upload and refine files
 while file_list:
     file_path = file_list.pop(0)
     relative_path = os.path.relpath(file_path, source_directory)
     file_name = os.path.basename(file_path)
+    
     # Skip excluded files and the green_code_directory and its subdirectories
     if file_name in EXCLUDED_FILES or relative_path.startswith(os.path.relpath(green_code_directory, source_directory)):
         print(f"Skipping excluded file or directory: {relative_path}")
         continue
+    
     # Check if the file is empty
     if os.path.getsize(file_path) == 0:
         print(f"Skipping empty file: {file_path}")
         continue
+    
     with open(file_path, "rb") as file:
         uploaded_file = client.files.create(file=file, purpose='assistants')
+    
     refined_temp_file_path = os.path.join(temp_directory, file_name)
     ensure_directory_structure(os.path.dirname(refined_temp_file_path))
+    
     refined_success = False
     # Apply only the prompts marked as "Yes"
     for prompt in prompts:
@@ -143,3 +144,7 @@ while file_list:
             logging.warning(f"File failed to refine but moved to final path: {final_file_path}")
     except Exception as e:
         logging.error(f"Failed to move file {refined_temp_file_path} to final path: {e}")
+
+# Step 3: Create unit test files for the refined files in the GreenCode directory
+green_file_list = list(identify_source_files(green_code_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
+create_unit_test_files(client, assistant, green_file_list, test_file_directory)
