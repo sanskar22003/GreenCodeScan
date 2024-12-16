@@ -10,9 +10,6 @@ from dotenv import load_dotenv
 from openai import AzureOpenAI
 import ast
 
-# Ensure UTF-8 encoding for Unicode support
-os.environ['PYTHONIOENCODING'] = 'utf-8'
-
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 # Load environment variables
@@ -99,39 +96,10 @@ except Exception as e:
 # Load prompts with "Yes" authentication
 prompts = load_prompts_from_env()
 
-# Identifier banner
-def print_identifier_banner():
-    """
-    Print a colorful identifier banner to mark the start of the script.
-    """
-    banner_lines = [
-        "=" * 60,
-        "🌟✨ Welcome to the Green Code Refiner Workflow ✨🌟",
-        "=" * 60,
-        "Optimizing your code for sustainability, step by step. 🚀🌿",
-        "=" * 60,
-    ]
-    print("\n" + "\n".join(banner_lines) + "\n")
-    logging.info("Green Code Refiner Workflow Initialized.")
-# Colorful logging and step identification
-def print_step_header(step_message):
-    """
-    Print a visually appealing header for each major step
-    """
-    separator = "=" * 55
-    print("\n" + separator)
-    print(f"🔧 {step_message} 🔧".center(55))
-    print(separator + "\n")
-    logging.info(f"Starting step: {step_message}")
-
-print_identifier_banner()
-
-print_step_header("Generating Test Files for Source Directory")
 # Step 1: Create unit test files for all source files without test files in the original source directory
 original_file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
 create_unit_test_files(client, assistant, original_file_list, test_file_directory, test_file_directory)
 
-print_step_header("Refining Source Files and Moving to GreenCode Directory")
 # Step 2: Refine files and move to GreenCode directory
 file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
 while file_list:
@@ -177,19 +145,6 @@ while file_list:
     except Exception as e:
         logging.error(f"Failed to move file {refined_temp_file_path} to final path: {e}")
 
-print_step_header("Generating Test Files for Refined Green Code")
 # Step 3: Create unit test files for the refined files in the GreenCode directory
 green_file_list = list(identify_source_files(green_code_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
 create_unit_test_files(client, assistant, green_file_list, test_file_directory, green_test_file_directory)
-
-# Final completion message
-def print_completion_message():
-    """
-    Print a celebratory completion message.
-    """
-    print("\n" + "=" * 60)
-    print("🎉✨ Green Code Refinement Complete ✨🎉".center(60))
-    print("=" * 60 + "\n")
-    logging.info("Green Code Refinement Workflow Completed.")
-
-print_completion_message()
