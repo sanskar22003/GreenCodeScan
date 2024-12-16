@@ -115,8 +115,7 @@ def load_prompts_from_env():
                 logging.warning(f"Skipping prompt '{key}' as per .env configuration.")
     return prompts
 
-# Modify the create_unit_test_files function
-def create_unit_test_files(client, assistant, file_list, src_test_directory, green_test_directory):
+def create_unit_test_files(client, assistant, file_list, test_file_directory, green_test_file_directory=None):
     prompt_testcase = get_env_variable('PROMPT_GENERATE_TESTCASES', is_required=False)
     if prompt_testcase:
         if ", " in prompt_testcase:
@@ -134,23 +133,25 @@ def create_unit_test_files(client, assistant, file_list, src_test_directory, gre
         return
     
     for file_path in file_list:
-        # Get the relative path from the source directory
-        source_directory = os.path.dirname(os.path.abspath(".env"))
-        relative_path = os.path.relpath(file_path, source_directory)
+        # Determine the base directory for path calculation
+        base_directory = os.path.dirname(os.path.dirname(file_path)) if green_test_file_directory else os.path.dirname(os.path.abspath(".env"))
         
-        # Skip if the file is already a test file or is in the SRC-TestSuite directory
+        # Get the relative path from the base directory
+        relative_path = os.path.relpath(file_path, base_directory)
+        
+        # Skip if the file is already a test file
         file_name = os.path.basename(file_path)
         base_name, ext = os.path.splitext(file_name)
-        if 'test' in base_name.lower() or relative_path.startswith('SRC-TestSuite'):
-            logging.info(f"Skipping test file or SRC-TestSuite file: {file_path}")
+        if 'test' in base_name.lower():
+            logging.info(f"Skipping test file: {file_path}")
             continue
         
         # Construct the test file name and path to maintain the same folder structure
         test_file_name = f"{base_name}Test{ext}"
         test_file_relative_path = os.path.join(os.path.dirname(relative_path), test_file_name)
         
-        # Save test files in GreenCode-TestSuite with the same relative path
-        test_file_path = os.path.join(green_test_directory, test_file_relative_path)
+        # Create test path
+        test_file_path = os.path.join(test_file_directory, test_file_relative_path)
         
         # Ensure the directory for the test file exists
         os.makedirs(os.path.dirname(test_file_path), exist_ok=True)
