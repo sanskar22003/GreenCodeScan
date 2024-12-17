@@ -47,7 +47,7 @@ def compare_emissions():
         )
     except KeyError as e:
         logging.info(f"Merge failed due to missing columns: {e}")
-            return
+        return
 
     # Calculate the difference in emissions and determine the result
     merged_df['final emission'] = merged_df['Emissions (gCO2eq)_before'] - merged_df['Emissions (gCO2eq)_after']
