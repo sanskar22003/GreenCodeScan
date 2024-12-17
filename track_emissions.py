@@ -17,13 +17,6 @@ import plotly.graph_objs as go
 import logging
 import sqlite3
 from datetime import datetime, timedelta
-from TrackerFunction import (
-    prepare_detailed_data,
-    create_energy_graphs,
-    create_emissions_graphs,
-    create_embedded_code_graphs,
-    create_top_five_tables
-)
 
 # Load environment variables
 env_path = os.path.abspath(".env")
@@ -353,142 +346,768 @@ def compare_emissions():
 # Call the compare_emissions function
 compare_emissions()
 
-def generate_html_report(result_dir):
-    """Generate HTML reports for emissions data."""
-    # Initialize Jinja2 environment
-    env = Environment(loader=FileSystemLoader(SOURCE_DIRECTORY))
-    
-    # Load templates
-    templates = load_templates(env)
-    if not templates:
-        return
+def prepare_detailed_data(result_dir):
+    comparison_csv = os.path.join(result_dir, "comparison_results.csv")
+    before_csv = os.path.join(result_dir, 'main_before_emissions_data.csv')
+    after_csv = os.path.join(result_dir, 'main_after_emissions_data.csv')
     
     # Read CSV files
-    csv_data = read_csv_files(result_dir)
-    if not csv_data:
+    comparison_df = pd.read_csv(comparison_csv)
+    before_df = pd.read_csv(before_csv)
+    after_df = pd.read_csv(after_csv)
+    
+    # Merge before and after data
+    merged_before = before_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']]
+    merged_after = after_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']]
+    
+    # Group by 'solution dir'
+    solution_dirs = sorted(comparison_df['Application name'].unique())  # Adjust as needed
+    
+    # Get unique solution directories
+    solution_dirs = sorted(set(before_df['solution dir']).union(after_df['solution dir']))
+    
+    # Prepare data for each solution dir
+    detailed_data = {}
+    for dir in solution_dirs:
+        before_details = merged_before[merged_before['solution dir'] == dir].to_dict(orient='records')
+        after_details = merged_after[merged_after['solution dir'] == dir].to_dict(orient='records')
+        detailed_data[dir] = {
+            'before': before_details,
+            'after': after_details
+        }
+    
+    return solution_dirs, detailed_data
+
+def generate_html_report(result_dir):
+    # Initialize Jinja2 environment
+    env = Environment(loader=FileSystemLoader(SOURCE_DIRECTORY))
+    template_path = 'report_template.html'
+    last_run_template_path = 'last_run_report_template.html'
+    details_template_path = 'details_template.html'
+    last_run_details_template_path = 'last_run_details_template.html'
+
+    # Prepare detailed data
+    solution_dirs, detailed_data = prepare_detailed_data(result_dir)
+    
+    # Check if the templates exist
+    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, details_template_path)):
+        logging.error(f"Detailed HTML template file not found: {details_template_path}")
+        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, details_template_path)}")
+        return 
+    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, template_path)):
+        logging.error(f"HTML template file not found: {template_path}")
+        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, template_path)}")
         return
     
-    before_df, after_df, comparison_df, server_df = csv_data
+    # Check if the last run templates exist
+    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, last_run_details_template_path)):
+        logging.error(f"Detailed HTML template file not found: {last_run_details_template_path}")
+        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, last_run_details_template_path)}")
+        return 
+    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, last_run_template_path)):
+        logging.error(f"HTML template file not found: {last_run_template_path}")
+        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, last_run_template_path)}")
+        return
+
+    # Load the templates
+    try:
+        template = env.get_template(template_path)
+        logging.info(f"Loaded template: {template_path}")
+    except Exception as e:
+        logging.error(f"Failed to load template {template_path}: {e}")
+        return
     
-    # Generate report content
-    report_content = generate_report_content(
-        before_df, after_df, comparison_df, server_df,
-        templates, result_dir
+    try:
+        details_template = env.get_template(details_template_path)
+        logging.info(f"Loaded template: {details_template_path}")
+    except Exception as e:
+        logging.error(f"Failed to load template {details_template_path}: {e}")
+        return
+    
+    # Load the last run templates
+    try:
+        lastrun_template = env.get_template(last_run_template_path)
+        logging.info(f"Loaded template: {last_run_template_path}")
+    except Exception as e:
+        logging.error(f"Failed to load template {last_run_template_path}: {e}")
+        return
+    
+    try:
+        lastrun_details_template = env.get_template(last_run_details_template_path)
+        logging.info(f"Loaded template: {last_run_details_template_path}")
+    except Exception as e:
+        logging.error(f"Failed to load template {last_run_details_template_path}: {e}")
+        return
+
+    before_csv = os.path.join(result_dir, 'main_before_emissions_data.csv')
+    after_csv = os.path.join(result_dir, 'main_after_emissions_data.csv')
+    comparison_csv = os.path.join(result_dir, 'comparison_results.csv')
+    server_csv = os.path.join(result_dir, 'server_data.csv')
+
+    # Check if CSV files exist
+    if not os.path.exists(before_csv):
+        logging.error(f"Before emissions data file not found: {before_csv}")
+        return
+    if not os.path.exists(after_csv):
+        logging.error(f"After emissions data file not found: {after_csv}")
+        return
+    if not os.path.exists(comparison_csv):
+        logging.error(f"Comparison results file not found: {comparison_csv}")
+        return
+
+    # Read CSVs
+    before_df = pd.read_csv(before_csv)
+    after_df = pd.read_csv(after_csv)
+    comparison_df = pd.read_csv(comparison_csv)
+    server_df = pd.read_csv(server_csv)
+
+    # Prepare the data for the line chart
+    fig = go.Figure()
+    
+    # Add the energy consumption line
+    fig.add_trace(go.Scatter(x=server_df['Date'], y=server_df['Energy consumption (KWH)'], mode='lines', name='Energy Consumption (KWH)'))
+    
+    # Add the CO2 emission line
+    fig.add_trace(go.Scatter(x=server_df['Date'], y=server_df['CO2 emission (kt)'], mode='lines', name='CO2 Emission (kt)'))
+    
+    # Update the layout
+    fig.update_layout(
+        title='Server Emissions and Energy Consumption',
+        xaxis_title='Date',
+        yaxis_title='Value',
+        xaxis_type='category',
+        width=800,
+        height=400
     )
     
-    # Save reports
-    save_reports(report_content)
+    # Save the chart as a Plotly HTML div
+    div_line_chart = fig.to_html(full_html=False, include_plotlyjs='cdn')
+    
+    # Get the latest record as a DataFrame
+    latest_before_df = before_df.loc[[before_df['Timestamp'].idxmax()]]
+    latest_after_df = after_df.loc[[after_df['Timestamp'].idxmax()]]
 
-def load_templates(env):
-    """Load all required Jinja2 templates."""
-    template_files = {
-        'main': 'report_template.html',
-        'details': 'details_template.html',
-        'last_run': 'last_run_report_template.html',
-        'last_run_details': 'last_run_details_template.html'
-    }
-    
-    templates = {}
-    for key, filename in template_files.items():
-        try:
-            templates[key] = env.get_template(filename)
-            logging.info(f"Loaded template: {filename}")
-        except Exception as e:
-            logging.error(f"Failed to load template {filename}: {e}")
-            return None
-    
-    return templates
+    # Prepare lists for before and after details to pass to the template
+    latest_before_details = [latest_before_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict()]
+    latest_after_details = [latest_after_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict()]
 
-def read_csv_files(result_dir):
-    """Read all required CSV files."""
-    csv_files = {
-        'before': 'main_before_emissions_data.csv',
-        'after': 'main_after_emissions_data.csv',
-        'comparison': 'comparison_results.csv',
-        'server': 'server_data.csv'
-    }
-    
-    dataframes = {}
-    for key, filename in csv_files.items():
-        file_path = os.path.join(result_dir, filename)
-        try:
-            dataframes[key] = pd.read_csv(file_path)
-        except Exception as e:
-            logging.error(f"Failed to read {filename}: {e}")
-            return None
-    
-    return (
-        dataframes['before'],
-        dataframes['after'],
-        dataframes['comparison'],
-        dataframes['server']
-    )
+    # Function to filter for test applications
+    def is_test_application(app_name):
+        return 'test' in str(app_name).lower()
 
-def generate_report_content(before_df, after_df, comparison_df, server_df, templates, result_dir):
-    """Generate all report content using the tracker functions."""
-    # Get current timestamp
+    # Sum 'Energy Consumed (Wh)' for before and after, including ONLY test applications
+    total_before = before_df[before_df['Application name'].apply(is_test_application)]['Energy Consumed (Wh)'].astype(float).sum()
+    total_after = after_df[after_df['Application name'].apply(is_test_application)]['Energy Consumed (Wh)'].astype(float).sum()
+
+    # Sum 'Energy Consumed (Wh)' for latest records, including ONLY test applications
+    latest_total_before = latest_before_df[latest_before_df['Application name'].apply(is_test_application)]['Energy Consumed (Wh)'].astype(float).sum()
+    latest_total_after = latest_after_df[latest_after_df['Application name'].apply(is_test_application)]['Energy Consumed (Wh)'].astype(float).sum()
+
+    # Prepare lists for before and after details to pass to the template
+    before_details = before_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict(orient='records')
+    after_details = after_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict(orient='records')
+    
+    # Capture the current timestamp for the report
     last_run_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    
-    # Prepare data
-    solution_dirs, detailed_data = prepare_detailed_data(before_df, after_df, comparison_df)
-    
-    # Create graphs
-    energy_graphs = create_energy_graphs(before_df, after_df)
-    emissions_graphs = create_emissions_graphs(before_df, after_df)
-    embedded_graphs = create_embedded_code_graphs(before_df, after_df)
-    
-    # Create tables
-    energy_table, emissions_table = create_top_five_tables(before_df)
-    
-    # Calculate totals
-    total_before = before_df['Energy Consumed (Wh)'].astype(float).sum()
-    total_after = after_df['Energy Consumed (Wh)'].astype(float).sum()
-    total_emissions_before = before_df['Emissions (gCO2eq)'].astype(float).sum()
-    total_emissions_after = after_df['Emissions (gCO2eq)'].astype(float).sum()
-    
-    return {
-        'timestamp': last_run_timestamp,
-        'solution_dirs': solution_dirs,
-        'detailed_data': detailed_data,
-        'energy_graphs': energy_graphs,
-        'emissions_graphs': emissions_graphs,
-        'embedded_graphs': embedded_graphs,
-        'energy_table': energy_table,
-        'emissions_table': emissions_table,
-        'totals': {
-            'before': total_before,
-            'after': total_after,
-            'emissions_before': total_emissions_before,
-            'emissions_after': total_emissions_after
-        }
-    }
 
-def save_reports(content):
-    """Save all generated reports to their respective locations."""
-    # Create report directories
+    # Read comparison_results.csv to get total 'Before' and 'After', only for test applications
+    total_emissions_before = comparison_df[comparison_df['Application name'].apply(is_test_application)]['Before'].astype(float).sum()
+    total_emissions_after = comparison_df[comparison_df['Application name'].apply(is_test_application)]['After'].astype(float).sum()
+
+    # Read comparison_results.csv to get total 'Before' and 'After' for latest records, only for test applications
+    latest_total_emissions_before = latest_before_df[latest_before_df['Application name'].apply(is_test_application)]['Emissions (gCO2eq)'].astype(float).sum()
+    latest_total_emissions_after = latest_after_df[latest_after_df['Application name'].apply(is_test_application)]['Emissions (gCO2eq)'].astype(float).sum()
+
+    # Read CSVs and group by 'solution dir'
+    before_file_type = before_df.groupby('solution dir')['Energy Consumed (Wh)'].sum().reset_index()
+    after_file_type = after_df.groupby('solution dir')['Energy Consumed (Wh)'].sum().reset_index()
+    
+    # Group by 'solution dir' and calculate sum of 'Energy Consumed (Wh)'
+    latest_before_file_type = latest_before_df.groupby('solution dir')['Energy Consumed (Wh)'].sum().reset_index()
+    latest_after_file_type = latest_after_df.groupby('solution dir')['Energy Consumed (Wh)'].sum().reset_index()
+
+    # Sort the data by energy consumed (descending for top 5)
+    before_file_type_sorted = before_file_type.sort_values('Energy Consumed (Wh)', ascending=False)
+    after_file_type_sorted = after_file_type.sort_values('Energy Consumed (Wh)', ascending=False)
+
+    # Sort the data by energy consumed (descending for top 5)
+    latest_before_file_type_sorted = latest_before_file_type.sort_values('Energy Consumed (Wh)', ascending=False)
+    latest_after_file_type_sorted = latest_after_file_type.sort_values('Energy Consumed (Wh)', ascending=False)
+
+    # Determine unique solution dirs
+    unique_solution_dirs = sorted(set(before_file_type_sorted['solution dir']).union(after_file_type_sorted['solution dir']))
+
+    # Determine unique solution dirs
+    latest_unique_solution_dirs = sorted(set(latest_before_file_type_sorted['solution dir']).union(latest_after_file_type_sorted['solution dir']))
+
+    # Assign colors to solution dirs
+    color_palette = px.colors.qualitative.Plotly  # Choose a qualitative color palette
+    color_mapping = {}
+    for i, solution_dir in enumerate(unique_solution_dirs):
+        color_mapping[solution_dir] = color_palette[i % len(color_palette)]  # Cycle through palette if needed
+
+    # Create Plotly Horizontal Bar Graph for Before Emissions with consistent colors
+    bar_graph_before = go.Figure()
+    for _, row in before_file_type_sorted.iterrows():
+        bar_graph_before.add_trace(go.Bar(
+            x=[row['Energy Consumed (Wh)']],
+            y=[row['solution dir']],
+            orientation='h',
+            name=row['solution dir'],
+            marker=dict(color=color_mapping.get(row['solution dir'], 'blue'))
+        ))
+
+    bar_graph_before.update_layout(
+        barmode='stack',
+        title='Solution Based(Wh) Before',
+        xaxis_title='Energy Consumed (Wh)',
+        yaxis_title='Solution Dir',
+        xaxis=dict(
+            range=[0, before_file_type_sorted['Energy Consumed (Wh)'].max() * 1.1],
+            tickformat=".6f"  # Fixed decimal format
+        ),
+        margin=dict(l=150, r=50, t=50, b=50),
+        showlegend=False
+    )
+
+    # Create Plotly Horizontal Bar Graph for After Emissions with consistent colors
+    bar_graph_after = go.Figure()
+    for _, row in after_file_type_sorted.iterrows():
+        bar_graph_after.add_trace(go.Bar(
+            x=[row['Energy Consumed (Wh)']],
+            y=[row['solution dir']],
+            orientation='h',
+            name=row['solution dir'],
+            marker=dict(color=color_mapping.get(row['solution dir'], 'blue'))
+        ))
+
+    bar_graph_after.update_layout(
+        barmode='stack',
+        title='Solution Based (Wh) After',
+        xaxis_title='Energy Consumed (Wh)',
+        yaxis_title='Solution Dir',
+        xaxis=dict(
+            range=[0, after_file_type_sorted['Energy Consumed (Wh)'].max() * 1.1],
+            tickformat=".6f"  # Fixed decimal format
+        ),
+        margin=dict(l=150, r=50, t=50, b=50),
+        showlegend=False
+    )
+
+    # --------------------------------------------------------------------------------------------
+
+    # Assign colors to solution dirs
+    color_palette = px.colors.qualitative.Plotly  # Choose a qualitative color palette
+    color_mapping = {}
+    for i, solution_dir in enumerate(latest_unique_solution_dirs):
+        color_mapping[solution_dir] = color_palette[i % len(color_palette)]  # Cycle through palette if needed
+
+    # Create Plotly Horizontal Bar Graph for Before Emissions with consistent colors
+    latest_bar_graph_before = go.Figure()
+    for _, row in latest_before_file_type_sorted.iterrows():
+        latest_bar_graph_before.add_trace(go.Bar(
+            x=[row['Energy Consumed (Wh)']],
+            y=[row['solution dir']],
+            orientation='h',
+            name=row['solution dir'],
+            marker=dict(color=color_mapping.get(row['solution dir'], 'blue'))
+        ))
+
+    latest_bar_graph_before.update_layout(
+        barmode='stack',
+        title='Solution Based(Wh) Before',
+        xaxis_title='Energy Consumed (Wh)',
+        yaxis_title='solution dir',
+        xaxis=dict(
+            range=[0, latest_before_file_type_sorted['Energy Consumed (Wh)'].max() * 1.1],
+            tickformat=".6f"  # Fixed decimal format
+        ),
+        margin=dict(l=150, r=50, t=50, b=50),
+        showlegend=False
+    )
+
+    # Create Plotly Horizontal Bar Graph for After Emissions with consistent colors
+    latest_bar_graph_after = go.Figure()
+    for _, row in latest_after_file_type_sorted.iterrows():
+        latest_bar_graph_after.add_trace(go.Bar(
+            x=[row['Energy Consumed (Wh)']],
+            y=[row['solution dir']],
+            orientation='h',
+            name=row['solution dir'],
+            marker=dict(color=color_mapping.get(row['solution dir'], 'blue'))
+        ))
+
+    latest_bar_graph_after.update_layout(
+        barmode='stack',
+        title='Solution Based (Wh) After',
+        xaxis_title='Energy Consumed (Wh)',
+        yaxis_title='solution dir',
+        xaxis=dict(
+            range=[0, latest_after_file_type_sorted['Energy Consumed (Wh)'].max() * 1.1],
+            tickformat=".6f"  # Fixed decimal format
+        ),
+        margin=dict(l=150, r=50, t=50, b=50),
+        showlegend=False
+    )
+
+
+    div_bar_graph_before = pio.to_html(bar_graph_before, include_plotlyjs=False, full_html=False)
+    div_bar_graph_after = pio.to_html(bar_graph_after, include_plotlyjs=False, full_html=False)
+
+    latest_div_bar_graph_before = pio.to_html(latest_bar_graph_before, include_plotlyjs=False, full_html=False)
+    latest_div_bar_graph_after = pio.to_html(latest_bar_graph_after, include_plotlyjs=False, full_html=False)
+
+    # === Feature 1: Horizontal Bar Graphs for Emissions (gCO2eq) by Solution Dir ===
+    # Group by 'solution dir' and sum 'Emissions (gCO2eq)'
+    before_gco2eq = before_df.groupby('solution dir')['Emissions (gCO2eq)'].sum().reset_index()
+    after_gco2eq = after_df.groupby('solution dir')['Emissions (gCO2eq)'].sum().reset_index()
+
+    latest_before_gco2eq = latest_before_df.groupby('solution dir')['Emissions (gCO2eq)'].sum().reset_index()
+    latest_after_gco2eq = latest_after_df.groupby('solution dir')['Emissions (gCO2eq)'].sum().reset_index()
+
+    # Sort the data by emissions (descending for top 5)
+    before_gco2eq_sorted = before_gco2eq.sort_values('Emissions (gCO2eq)', ascending=False)
+    after_gco2eq_sorted = after_gco2eq.sort_values('Emissions (gCO2eq)', ascending=False)
+
+    # Sort the data by emissions (descending for top 5)
+    latest_before_gco2eq_sorted = latest_before_gco2eq.sort_values('Emissions (gCO2eq)', ascending=False)
+    latest_after_gco2eq_sorted = latest_after_gco2eq.sort_values('Emissions (gCO2eq)', ascending=False)
+
+    unique_solution_dirs_gco2eq = sorted(set(before_gco2eq_sorted['solution dir']).union(after_gco2eq_sorted['solution dir']))
+
+    latest_unique_solution_dirs_gco2eq = sorted(set(latest_before_gco2eq_sorted['solution dir']).union(latest_after_gco2eq_sorted['solution dir']))
+
+    # Create a separate color mapping for gCO2eq graphs
+    color_palette_gco2eq = px.colors.qualitative.Plotly  # Or choose another palette if preferred
+    color_mapping_gco2eq = {}
+    for i, solution_dir in enumerate(unique_solution_dirs_gco2eq):
+        color_mapping_gco2eq[solution_dir] = color_palette_gco2eq[i % len(color_palette_gco2eq)]
+
+    # Create Plotly Horizontal Bar Graph for Before Emissions (gCO2eq)
+    bar_graph_before_gco2eq = go.Figure()
+    for _, row in before_gco2eq_sorted.iterrows():
+        bar_graph_before_gco2eq.add_trace(go.Bar(
+            x=[row['Emissions (gCO2eq)']],
+            y=[row['solution dir']],
+            orientation='h',
+            name=row['solution dir'],
+            marker=dict(color=color_mapping_gco2eq.get(row['solution dir'], 'blue'))  # Use color_mapping_gco2eq
+        ))
+
+    bar_graph_before_gco2eq.update_layout(
+        barmode='stack',
+        title='Emissions by Solution Directory Before Refinement (gCO2eq)',
+        xaxis_title='Emissions (gCO2eq)',
+        yaxis_title='Solution Directory',
+        xaxis=dict(
+            range=[0, before_gco2eq_sorted['Emissions (gCO2eq)'].max() * 1.1],
+            tickformat=".6f"  # Fixed decimal format
+        ),
+        margin=dict(l=150, r=50, t=50, b=50),
+        showlegend=False
+    )
+
+    # Create Plotly Horizontal Bar Graph for After Emissions (gCO2eq)
+    bar_graph_after_gco2eq = go.Figure()
+    for _, row in after_gco2eq_sorted.iterrows():
+        bar_graph_after_gco2eq.add_trace(go.Bar(
+            x=[row['Emissions (gCO2eq)']],
+            y=[row['solution dir']],
+            orientation='h',
+            name=row['solution dir'],
+            marker=dict(color=color_mapping_gco2eq.get(row['solution dir'], 'blue'))
+        ))
+
+    bar_graph_after_gco2eq.update_layout(
+        barmode='stack',
+        title='Emissions by Solution Directory After Refinement (gCO2eq)',
+        xaxis_title='Emissions (gCO2eq)',
+        yaxis_title='Solution Directory',
+        xaxis=dict(
+            range=[0, after_gco2eq_sorted['Emissions (gCO2eq)'].max() * 1.1],
+            tickformat=".6f"  # Fixed decimal format
+        ),
+        margin=dict(l=150, r=50, t=50, b=50),
+        showlegend=False
+    )
+
+    # --------------------------------------------------------------------------------------------
+    # Create a separate color mapping for gCO2eq graphs
+    color_palette_gco2eq = px.colors.qualitative.Plotly  # Or choose another palette if preferred
+    color_mapping_gco2eq = {}
+    for i, solution_dir in enumerate(latest_unique_solution_dirs_gco2eq):
+        color_mapping_gco2eq[solution_dir] = color_palette_gco2eq[i % len(color_palette_gco2eq)]
+
+    # Create Plotly Horizontal Bar Graph for Before Emissions (gCO2eq)
+    latest_bar_graph_before_gco2eq = go.Figure()
+    for _, row in latest_before_gco2eq_sorted.iterrows():
+        latest_bar_graph_before_gco2eq.add_trace(go.Bar(
+            x=[row['Emissions (gCO2eq)']],
+            y=[row['solution dir']],
+            orientation='h',
+            name=row['solution dir'],
+            marker=dict(color=color_mapping_gco2eq.get(row['solution dir'], 'blue'))
+        ))
+
+    latest_bar_graph_before_gco2eq.update_layout(
+        barmode='stack',
+        title='Emissions by Solution Directory Before Refinement (gCO2eq)',
+        xaxis_title='Emissions (gCO2eq)',
+        yaxis_title='Solution Directory',
+        xaxis=dict(
+            range=[0, latest_before_gco2eq_sorted['Emissions (gCO2eq)'].max() * 1.1],
+            tickformat=".6f"  # Fixed decimal format
+        ),
+        margin=dict(l=150, r=50, t=50, b=50),
+        showlegend=False
+    )
+
+    # Create Plotly Horizontal Bar Graph for After Emissions (gCO2eq)
+    latest_bar_graph_after_gco2eq = go.Figure()
+    for _, row in latest_after_gco2eq_sorted.iterrows():
+        latest_bar_graph_after_gco2eq.add_trace(go.Bar(
+            x=[row['Emissions (gCO2eq)']],
+            y=[row['solution dir']],
+            orientation='h',
+            name=row['solution dir'],
+            marker=dict(color=color_mapping_gco2eq.get(row['solution dir'], 'blue'))
+        ))
+
+    latest_bar_graph_after_gco2eq.update_layout(
+        barmode='stack',
+        title='Emissions by Solution Directory After Refinement (gCO2eq)',
+        xaxis_title='Emissions (gCO2eq)',
+        yaxis_title='Solution Directory',
+        xaxis=dict(
+            range=[0, latest_after_gco2eq_sorted['Emissions (gCO2eq)'].max() * 1.1],
+            tickformat=".6f"  # Fixed decimal format
+        ),
+        margin=dict(l=150, r=50, t=50, b=50),
+        showlegend=False
+    )
+    # Convert figures to HTML div
+    div_bar_graph_before_gco2eq = pio.to_html(bar_graph_before_gco2eq, include_plotlyjs=False, full_html=False)
+    div_bar_graph_after_gco2eq = pio.to_html(bar_graph_after_gco2eq, include_plotlyjs=False, full_html=False)
+    
+    # Convert figures to HTML div
+    latest_div_bar_graph_before_gco2eq = pio.to_html(latest_bar_graph_before_gco2eq, include_plotlyjs=False, full_html=False)
+    latest_div_bar_graph_after_gco2eq = pio.to_html(latest_bar_graph_after_gco2eq, include_plotlyjs=False, full_html=False)
+
+    # === Feature 2: Top Five Tables ===
+    # Top Five Files Generating Most Energy (Before Refinement)
+    top_five_energy_before = before_df.sort_values('Energy Consumed (Wh)', ascending=False).head(5)[['Application name', 'Timestamp', 'Energy Consumed (Wh)']]
+    top_five_energy_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp', 'Energy Consumed (Wh)': 'Energy Consumed (Wh)'}, inplace=True)
+    energy_table_html = top_five_energy_before.to_html(index=False, classes='table', border=0, float_format=lambda x: f"{x:.6f}")
+
+    # Top Five Files Generating Most Emissions (Before Refinement)
+    top_five_emissions_before = before_df.sort_values('Emissions (gCO2eq)', ascending=False).head(5)[['Application name', 'Timestamp', 'Emissions (gCO2eq)']]
+    top_five_emissions_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp', 'Emissions (gCO2eq)': 'Emissions (gCO2eq)'}, inplace=True)
+    emissions_table_html = top_five_emissions_before.to_html(index=False, classes='table', border=0, float_format=lambda x: f"{x:.6f}")
+
+# --------------------------------------------------------------------------------------------
+
+    latest_top_five_energy_before = latest_before_df.sort_values('Energy Consumed (Wh)', ascending=False).head(5)[['Application name', 'Timestamp', 'Energy Consumed (Wh)']]
+    latest_top_five_energy_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp', 'Energy Consumed (Wh)': 'Energy Consumed (Wh)'}, inplace=True)
+    latest_energy_table_html = latest_top_five_energy_before.to_html(index=False, classes='table', border=0, float_format=lambda x: f"{x:.6f}")
+
+    # Top Five Files Generating Most Emissions (Before Refinement)
+    latest_top_five_emissions_before = latest_before_df.sort_values('Emissions (gCO2eq)', ascending=False).head(5)[['Application name', 'Timestamp', 'Emissions (gCO2eq)']]
+    latest_top_five_emissions_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp', 'Emissions (gCO2eq)': 'Emissions (gCO2eq)'}, inplace=True)
+    latest_emissions_table_html = latest_top_five_emissions_before.to_html(index=False, classes='table', border=0, float_format=lambda x: f"{x:.6f}")
+
+    # === Feature 3: Emissions for Embedded and Non-Embedded Code ===
+    # Define embedded and non-embedded file extensions
+    embedded_types = ['.html', '.css', '.xml', '.php', '.ts']
+    non_embedded_types = ['.py', '.java', '.cpp', '.rb']
+
+    # Filter comparison_df for embedded and non-embedded types
+    # Assuming comparison_results.csv has columns: 'File Type', 'Before', 'After'
+    embedded_df = comparison_df[comparison_df['File Type'].isin(embedded_types)]
+    non_embedded_df = comparison_df[comparison_df['File Type'].isin(non_embedded_types)]
+
+    # Sum 'Before' and 'After' emissions for embedded and non-embedded
+    total_embedded_before = embedded_df['Before'].astype(float).sum()
+    total_embedded_after = embedded_df['After'].astype(float).sum()
+
+    total_non_embedded_before = non_embedded_df['Before'].astype(float).sum()
+    total_non_embedded_after = non_embedded_df['After'].astype(float).sum()
+
+    # --------------------------------------------------------------------------------------------
+
+    before_embedded_df = latest_before_df[latest_before_df['File Type'].isin(embedded_types)]
+    before_non_embedded_df = latest_before_df[latest_before_df['File Type'].isin(non_embedded_types)]
+
+    after_embedded_df = latest_after_df[latest_after_df['File Type'].isin(embedded_types)]
+    after_non_embedded_df = latest_after_df[latest_after_df['File Type'].isin(non_embedded_types)]
+
+    # Combine the two filtered DataFrames into a single DataFrame
+    latest_emissions_df = pd.concat([before_embedded_df, after_embedded_df], ignore_index=True)
+    latest_non_emissions_df = pd.concat([before_non_embedded_df, after_non_embedded_df], ignore_index=True)
+
+    # Sum 'Before' and 'After' emissions for embedded and non-embedded
+    latest_total_embedded_before = before_embedded_df['Emissions (gCO2eq)'].astype(float).sum()
+    latest_total_embedded_after = after_embedded_df['Emissions (gCO2eq)'].astype(float).sum()
+
+    latest_total_non_embedded_before = before_non_embedded_df['Emissions (gCO2eq)'].astype(float).sum()
+    latest_total_non_embedded_after = after_non_embedded_df['Emissions (gCO2eq)'].astype(float).sum()
+# --------------------------------------------------------------------------------------------
+
+    # Check if there are any embedded code files
+    if embedded_df.empty:
+        div_bar_graph_embedded = "<p>No embedded code files found for generating the Embedded Code Emissions graph.</p>"
+    else:
+        # Create Plotly Horizontal Bar Graph for Embedded Code Emissions
+        bar_graph_embedded = go.Figure()
+
+        bar_graph_embedded.add_trace(go.Bar(
+            x=[total_embedded_before],
+            y=['Embedded Code'],
+            orientation='h',
+            name='Before',
+            marker=dict(color='red')
+        ))
+
+        bar_graph_embedded.add_trace(go.Bar(
+            x=[total_embedded_after],
+            y=['Embedded Code'],
+            orientation='h',
+            name='After',
+            marker=dict(color='green')
+        ))
+
+        bar_graph_embedded.update_layout(
+            barmode='group',
+            title='Emissions for Embedded Code (gCO2eq)',
+            xaxis_title='Emissions (gCO2eq)',
+            yaxis_title='Code Type',
+            xaxis=dict(
+                range=[0, max(total_embedded_before, total_embedded_after) * 1.1],
+                tickformat=".6f"  # Fixed decimal format
+            ),
+            margin=dict(l=100, r=50, t=50, b=50),
+            showlegend=True
+        )
+
+        # Convert embedded bar graph to HTML div
+        div_bar_graph_embedded = pio.to_html(bar_graph_embedded, include_plotlyjs=False, full_html=False)
+
+    # Check if there are any non-embedded code files
+    if non_embedded_df.empty:
+        div_bar_graph_non_embedded = "<p>No non-embedded code files found for generating the Non-Embedded Code Emissions graph.</p>"
+    else:
+        # Create Plotly Horizontal Bar Graph for Non-Embedded Code Emissions
+        bar_graph_non_embedded = go.Figure()
+
+        bar_graph_non_embedded.add_trace(go.Bar(
+            x=[total_non_embedded_before],
+            y=['Non-Embedded Code'],
+            orientation='h',
+            name='Before',
+            marker=dict(color='red')
+        ))
+
+        bar_graph_non_embedded.add_trace(go.Bar(
+            x=[total_non_embedded_after],
+            y=['Non-Embedded Code'],
+            orientation='h',
+            name='After',
+            marker=dict(color='green')
+        ))
+
+        bar_graph_non_embedded.update_layout(
+            barmode='group',
+            title='Emissions for Non-Embedded Code (gCO2eq)',
+            xaxis_title='Emissions (gCO2eq)',
+            yaxis_title='Code Type',
+            xaxis=dict(
+                range=[0, max(total_non_embedded_before, total_non_embedded_after) * 1.1],
+                tickformat=".6f"  # Fixed decimal format
+            ),
+            margin=dict(l=150, r=50, t=50, b=50),
+            showlegend=True
+        )
+
+        # Convert non-embedded bar graph to HTML div
+        div_bar_graph_non_embedded = pio.to_html(bar_graph_non_embedded, include_plotlyjs=False, full_html=False)
+
+# --------------------------------------------------------------------------------------------
+# Check if there are any embedded code files
+    if latest_emissions_df.empty:
+        latest_div_bar_graph_embedded = "<p>No embedded code files found for generating the Embedded Code Emissions graph.</p>"
+    else:
+        # Create Plotly Horizontal Bar Graph for Embedded Code Emissions
+        latest_bar_graph_embedded = go.Figure()
+
+        latest_bar_graph_embedded.add_trace(go.Bar(
+            x=[latest_total_embedded_before],
+            y=['Embedded Code'],
+            orientation='h',
+            name='Before',
+            marker=dict(color='red')
+        ))
+
+        latest_bar_graph_embedded.add_trace(go.Bar(
+            x=[latest_total_embedded_after],
+            y=['Embedded Code'],
+            orientation='h',
+            name='After',
+            marker=dict(color='green')
+        ))
+
+        latest_bar_graph_embedded.update_layout(
+            barmode='group',
+            title='Emissions for Embedded Code (gCO2eq)',
+            xaxis_title='Emissions (gCO2eq)',
+            yaxis_title='Code Type',
+            xaxis=dict(
+                range=[0, max(latest_total_embedded_before, latest_total_embedded_after) * 1.1],
+                tickformat=".6f"  # Fixed decimal format
+            ),
+            margin=dict(l=100, r=50, t=50, b=50),
+            showlegend=True
+        )
+
+        # Convert embedded bar graph to HTML div
+        latest_div_bar_graph_embedded = pio.to_html(latest_bar_graph_embedded, include_plotlyjs=False, full_html=False)
+
+    # Check if there are any non-embedded code files
+    if latest_non_emissions_df.empty:
+        latest_div_bar_graph_non_embedded = "<p>No non-embedded code files found for generating the Non-Embedded Code Emissions graph.</p>"
+    else:
+        # Create Plotly Horizontal Bar Graph for Non-Embedded Code Emissions
+        latest_bar_graph_non_embedded = go.Figure()
+
+        latest_bar_graph_non_embedded.add_trace(go.Bar(
+            x=[latest_total_non_embedded_before],
+            y=['Non-Embedded Code'],
+            orientation='h',
+            name='Before',
+            marker=dict(color='red')
+        ))
+
+        latest_bar_graph_non_embedded.add_trace(go.Bar(
+            x=[latest_total_non_embedded_after],
+            y=['Non-Embedded Code'],
+            orientation='h',
+            name='After',
+            marker=dict(color='green')
+        ))
+
+        latest_bar_graph_non_embedded.update_layout(
+            barmode='group',
+            title='Emissions for Non-Embedded Code (gCO2eq)',
+            xaxis_title='Emissions (gCO2eq)',
+            yaxis_title='Code Type',
+            xaxis=dict(
+                range=[0, max(latest_total_non_embedded_before, latest_total_non_embedded_after) * 1.1],
+                tickformat=".6f"  # Fixed decimal format
+            ),
+            margin=dict(l=150, r=50, t=50, b=50),
+            showlegend=True
+        )
+
+        # Convert non-embedded bar graph to HTML div
+        latest_div_bar_graph_non_embedded = pio.to_html(latest_bar_graph_non_embedded, include_plotlyjs=False, full_html=False)
+# --------------------------------------------------------------------------------------------
+
+    # Render the template with dynamic data
+    html_content = template.render(
+        total_before=f"{total_before:.6f}",
+        total_after=f"{total_after:.6f}",
+        energy_table_html=energy_table_html,
+        emissions_table_html=emissions_table_html,
+        div_bar_graph_before=div_bar_graph_before,
+        div_bar_graph_after=div_bar_graph_after,
+        total_emissions_before=f"{total_emissions_before:.6f}",
+        total_emissions_after=f"{total_emissions_after:.6f}",
+        div_bar_graph_before_gco2eq=div_bar_graph_before_gco2eq,
+        div_bar_graph_after_gco2eq=div_bar_graph_after_gco2eq,
+        div_bar_graph_embedded=div_bar_graph_embedded,
+        div_bar_graph_non_embedded=div_bar_graph_non_embedded,
+        last_run_timestamp=last_run_timestamp,  # Pass the timestamp
+        div_line_chart=div_line_chart
+    )
+
+    # Render the details template with detailed data
+    html_details_content = details_template.render(
+        solution_dirs=solution_dirs,
+        before_details=before_details,
+        after_details=after_details
+    )
+
+        # Render the template with dynamic data
+    timestamp_html_content = lastrun_template.render(
+        latest_total_before=f"{latest_total_before:.6f}",
+        latest_total_after=f"{latest_total_after:.6f}",
+        latest_energy_table_html=latest_energy_table_html,
+        latest_emissions_table_html=latest_emissions_table_html,
+        latest_div_bar_graph_before=latest_div_bar_graph_before,
+        latest_div_bar_graph_after=latest_div_bar_graph_after,
+        latest_total_emissions_before=f"{latest_total_emissions_before:.6f}",
+        latest_total_emissions_after=f"{latest_total_emissions_after:.6f}",
+        latest_div_bar_graph_before_gco2eq=latest_div_bar_graph_before_gco2eq,
+        latest_div_bar_graph_after_gco2eq=latest_div_bar_graph_after_gco2eq,
+        latest_div_bar_graph_embedded=latest_div_bar_graph_embedded,
+        latest_div_bar_graph_non_embedded=latest_div_bar_graph_non_embedded,
+        last_run_timestamp=last_run_timestamp,  # Pass the timestamp
+    )
+
+        # Render the timestamp-based report template
+    timestamp_html_details_content = lastrun_details_template.render(
+        solution_dirs=solution_dirs,
+        latest_before_details=latest_before_details,
+        latest_after_details=latest_after_details
+    )
+
+    # === Finalizing the HTML Content ===
+        # === Finalizing the HTML Content ===
+    # Create the current date folder inside REPORT_DIR
     current_date = datetime.now().strftime('%Y-%m-%d')
     current_time = datetime.now().strftime('%H-%M')
     date_folder_path = os.path.join(REPORT_DIR, current_date)
     time_folder_path = os.path.join(date_folder_path, current_time)
-    
-    os.makedirs(time_folder_path, exist_ok=True)
-    os.makedirs(REPORT_DIR, exist_ok=True)
-    
-    # Save reports
-    report_paths = {
-        'main': os.path.join(REPORT_DIR, 'emissions_report.html'),
-        'details': os.path.join(REPORT_DIR, 'details_report.html'),
-        'timestamp_main': os.path.join(time_folder_path, 'emissions_report.html'),
-        'timestamp_details': os.path.join(time_folder_path, 'details_report.html')
-    }
-    
-    for path_key, file_path in report_paths.items():
-        try:
-            with open(file_path, 'w') as f:
-                f.write(content[path_key])
-            logging.info(f"Report saved: {file_path}")
-        except Exception as e:
-            logging.error(f"Failed to save report {path_key}: {e}")
 
-if __name__ == "__main__":
-    generate_html_report(RESULT_DIR)
+    # Create both date and time folders if they don't exist
+    if not os.path.exists(time_folder_path):
+        os.makedirs(time_folder_path)
+        logging.info(f"Directory '{time_folder_path}' created successfully!")
+    else:
+        logging.info(f"Directory '{time_folder_path}' already exists.")
+
+    # Save the timestamp-based HTML report
+    details_report_path = os.path.join(time_folder_path, 'details_report.html')
+    with open(details_report_path, 'w') as f:
+        f.write(timestamp_html_details_content)
+
+    logging.info(f"Last Run Detailed HTML report generated at {details_report_path}")
+
+    # Save the timestamp-based HTML report
+    emissions_report_path = os.path.join(time_folder_path, 'emissions_report.html')
+    with open(emissions_report_path, 'w') as f:
+        f.write(timestamp_html_content)
+
+    logging.info(f"Last Run Emissions HTML report generated at {emissions_report_path}")
+
+    # Create the report directory if it doesn't exist
+    if not os.path.exists(REPORT_DIR):
+        os.makedirs(REPORT_DIR)
+        logging.info(f"Directory '{REPORT_DIR}' created successfully!")
+    else:
+        logging.info(f"Directory '{REPORT_DIR}' already exists.")
+
+    # Save the main HTML report
+    report_path = os.path.join(REPORT_DIR, 'emissions_report.html')
+    with open(report_path, 'w') as f:
+        f.write(html_content)
+
+    logging.info(f"HTML report generated at {report_path}")
+
+    # Save the detailed HTML report
+    detailed_report_path = os.path.join(REPORT_DIR, 'details_report.html')
+    with open(detailed_report_path, 'w') as f:
+        f.write(html_details_content)
+    
+    logging.info(f"Detailed HTML report generated at {detailed_report_path}")
+
+# Generate HTML report
+generate_html_report(RESULT_DIR)
