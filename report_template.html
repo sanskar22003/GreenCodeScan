@@ -328,162 +328,237 @@
             height: 400px;
             position: relative;
         }
+                /* Header Styles */
+        header {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        padding: 1rem 2rem;
+        background: white;
+        box-shadow: var(--shadow);
+        }
+
+        header img {
+        height: 50px;
+        margin-right: 0rem;
+        }
+
+        header img:hover {
+        transform: scale(1.05);
+        }
+
+        .header-titles {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        }
+
+        .green {
+        color: var(--primary);
+        margin: 0;
+        }
+
+        .coderefiner {
+        color: var(--text-color);
+        margin: 0;
+        margin-right: 7rem;
+        }
+        /* Add these new styles for the side-by-side layout */
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .section-column {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .full-width-section {
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .section-column {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Green Code Emissions Report</h1>
-    </div>
+    <header>
+        <img src="static/logo.png" alt="Tech Mahindra Logo">
+        <div class="header-titles">
+            <h1 class="green">Green</h1>
+            <h1 class="coderefiner">Code Emissions Report</h1>
+        </div>    
+    </header>
     <div class="navigation">
         <i class="fas fa-chart-bar"></i> 
         <a href="details_report.html">View Detailed Report</a>
     </div> 
 
-    <section class="section">
-        <h2 class="section-title">
-            <i class="fas fa-bolt"></i>
-            Energy Consumption
-        </h2>
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-icon">
-                        <i class="fas fa-bolt"></i>
+    <div class="main-content">
+        <div class="section-column">
+            <section class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-bolt"></i>
+                    Energy Consumption
+                </h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <h3 class="metric-title">Before Refinement</h3>
+                        </div>
+                        <div class="metric-value">{{ total_before }} Wh</div>
+                        <div class="metric-change">
+                            <i class="fas fa-clock"></i>
+                            Last Run: {{ last_run_timestamp }}
+                        </div>
                     </div>
-                    <h3 class="metric-title">Before Refinement</h3>
-                </div>
-                <div class="metric-value">{{ total_before }} Wh</div>
-                <div class="metric-change">
-                    <i class="fas fa-clock"></i>
-                    Last Run: {{ last_run_timestamp }}
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-icon">
-                        <i class="fas fa-leaf"></i>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon">
+                                <i class="fas fa-leaf"></i>
+                            </div>
+                            <h3 class="metric-title">After Refinement</h3>
+                        </div>
+                        <div class="metric-value">{{ total_after }} Wh</div>
+                        <div class="metric-change">
+                            <i class="fas fa-clock"></i>
+                            Last Run: {{ last_run_timestamp }}
+                        </div>
                     </div>
-                    <h3 class="metric-title">After Refinement</h3>
                 </div>
-                <div class="metric-value">{{ total_after }} Wh</div>
-                <div class="metric-change">
-                    <i class="fas fa-clock"></i>
-                    Last Run: {{ last_run_timestamp }}
+                <div class="improvement-card">
+                    <div class="improvement-label">Energy Efficiency Improvement</div>
+                    {% set energy_improvement = ((total_before|float - total_after|float) / total_before|float * 100) | round(2) %}
+                    <div class="improvement-value {{ 'positive' if energy_improvement > 0 else 'negative' }}">
+                        {{ energy_improvement }}%
+                        <i class="fas {{ 'fa-arrow-up' if energy_improvement > 0 else 'fa-arrow-down' }}"></i>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="improvement-card">
-            <div class="improvement-label">Energy Efficiency Improvement</div>
-            {% set energy_improvement = ((total_before|float - total_after|float) / total_before|float * 100) | round(2) %}
-            <div class="improvement-value {{ 'positive' if energy_improvement > 0 else 'negative' }}">
-                {{ energy_improvement }}%
-                <i class="fas {{ 'fa-arrow-up' if energy_improvement > 0 else 'fa-arrow-down' }}"></i>
-            </div>
+
+                <div class="graph-container">
+                    {{ div_bar_graph_before | safe }}
+                </div>
+                <div class="graph-container">
+                    {{ div_bar_graph_after | safe }}
+                </div>
+
+                <div class="table-wrapper">
+                    <h3>Most Energy Consumption (Wh)</h3>
+                    <div class="table-container">
+                        {{ energy_table_html | safe }}
+                    </div>
+                </div>
+            </section>
         </div>
 
-        <div class="graph-container">
-            {{ div_bar_graph_before | safe }}
-        </div>
-        <div class="graph-container">
-            {{ div_bar_graph_after | safe }}
-        </div>
-
-        <div class="table-wrapper">
-            <h3>Most Energy Consumption (Wh)</h3>
-            <div class="table-container">
-                {{ energy_table_html | safe }}
-            </div>
-        </div>
-    </section>
-
-    <section class="section">
-        <h2 class="section-title">
-            <i class="fas fa-cloud"></i>
-            Emissions Analysis
-        </h2>
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-icon">
-                        <i class="fas fa-smog"></i>
+        <div class="section-column">
+            <section class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-cloud"></i>
+                    Emissions Analysis
+                </h2>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon">
+                                <i class="fas fa-smog"></i>
+                            </div>
+                            <h3 class="metric-title">Before Refinement</h3>
+                        </div>
+                        <div class="metric-value">{{ total_emissions_before }} gCO2eq</div>
+                        <div class="metric-change">
+                            <i class="fas fa-clock"></i>
+                            Last Run: {{ last_run_timestamp }}
+                        </div>
                     </div>
-                    <h3 class="metric-title">Before Refinement</h3>
-                </div>
-                <div class="metric-value">{{ total_emissions_before }} gCO2eq</div>
-                <div class="metric-change">
-                    <i class="fas fa-clock"></i>
-                    Last Run: {{ last_run_timestamp }}
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-icon">
-                        <i class="fas fa-seedling"></i>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon">
+                                <i class="fas fa-seedling"></i>
+                            </div>
+                            <h3 class="metric-title">After Refinement</h3>
+                        </div>
+                        <div class="metric-value">{{ total_emissions_after }} gCO2eq</div>
+                        <div class="metric-change">
+                            <i class="fas fa-clock"></i>
+                            Last Run: {{ last_run_timestamp }}
+                        </div>
                     </div>
-                    <h3 class="metric-title">After Refinement</h3>
                 </div>
-                <div class="metric-value">{{ total_emissions_after }} gCO2eq</div>
-                <div class="metric-change">
-                    <i class="fas fa-clock"></i>
-                    Last Run: {{ last_run_timestamp }}
+                <div class="improvement-card">
+                    <div class="improvement-label">Emissions Reduction</div>
+                    {% set emissions_improvement = 0 %}
+                    {% if total_emissions_before|float > 0 %}
+                        {% set emissions_improvement = ((total_emissions_before|float - total_emissions_after|float) / total_emissions_before|float * 100) | round(2) %}
+                    {% endif %}
+                    <div class="improvement-value {{ 'positive' if emissions_improvement > 0 else 'negative' if emissions_improvement < 0 else 'neutral' }}">
+                        {{ emissions_improvement }}%
+                        {% if emissions_improvement > 0 %}
+                            <i class="fas fa-arrow-up"></i>
+                        {% elif emissions_improvement < 0 %}
+                            <i class="fas fa-arrow-down"></i>
+                        {% else %}
+                            <i class="fas fa-minus"></i>
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="improvement-card">
-            <div class="improvement-label">Emissions Reduction</div>
-            {% set emissions_improvement = 0 %}
-            {% if total_emissions_before|float > 0 %}
-                {% set emissions_improvement = ((total_emissions_before|float - total_emissions_after|float) / total_emissions_before|float * 100) | round(2) %}
-            {% endif %}
-            <div class="improvement-value {{ 'positive' if emissions_improvement > 0 else 'negative' if emissions_improvement < 0 else 'neutral' }}">
-                {{ emissions_improvement }}%
-                {% if emissions_improvement > 0 %}
-                    <i class="fas fa-arrow-up"></i>
-                {% elif emissions_improvement < 0 %}
-                    <i class="fas fa-arrow-down"></i>
-                {% else %}
-                    <i class="fas fa-minus"></i>
-                {% endif %}
-            </div>
-        </div>
-        <div class="graph-container">
-            {{ div_bar_graph_before_gco2eq | safe }}
-        </div>
-        <div class="graph-container">
-            {{ div_bar_graph_after_gco2eq | safe }}
-        </div>
+                <div class="graph-container">
+                    {{ div_bar_graph_before_gco2eq | safe }}
+                </div>
+                <div class="graph-container">
+                    {{ div_bar_graph_after_gco2eq | safe }}
+                </div>
 
-        <div class="table-wrapper">
-            <h3>Most Emissions (gCO2eq)</h3>
-            <table class="energy-table">
-                {{ emissions_table_html | safe }}
-            </table>
+                <div class="table-wrapper">
+                    <h3>Most Emissions (gCO2eq)</h3>
+                    <table class="energy-table">
+                        {{ emissions_table_html | safe }}
+                    </table>
+                </div>
+            </section>
         </div>
-    </section>
 
     <!-- Server Analysis Section -->
-    <section class="section">
-        <div class="chart-wrapper">
-            <h3><i class="fas fa-server"></i> Server Emissions and Energy Consumption</h3>
-            <div class="chart-container">
-                {{ div_line_chart | safe }}
-            </div>
-        </div>
-    </section>
+        <div class="full-width-section">
+            <section class="section">
+                <div class="chart-wrapper">
+                    <h3><i class="fas fa-server"></i> Server Emissions and Energy Consumption</h3>
+                    <div class="chart-container">
+                        {{ div_line_chart | safe }}
+                    </div>
+                </div>
+            </section>
 
-    <section class="section">
-        <h2 class="section-title">
-            <i class="fas fa-code"></i>
-            Code Analysis
-        </h2>
-        <div class="metrics-grid">
-            <div class="graph-container">
-                {{ div_bar_graph_embedded | safe }}
-            </div>
-            <div class="graph-container">
-                {{ div_bar_graph_non_embedded | safe }}
-            </div>
+            <section class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-code"></i>
+                    Code Analysis
+                </h2>
+                <div class="metrics-grid">
+                    <div class="graph-container">
+                        {{ div_bar_graph_embedded | safe }}
+                    </div>
+                    <div class="graph-container">
+                        {{ div_bar_graph_non_embedded | safe }}
+                    </div>
+                </div>
+            </section>
         </div>
-    </section>
+    </div>
 </body>
 </html>
