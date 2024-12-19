@@ -363,7 +363,7 @@
         margin: 0;
         margin-right: 7rem;
         }
-        /* Add these new styles for the side-by-side layout */
+        /* Update these styles for the side-by-side layout */
         .main-content {
             display: flex;
             flex-wrap: wrap;
@@ -376,10 +376,22 @@
         .section-column {
             flex: 1;
             min-width: 300px;
+            display: flex;
+            flex-direction: column;
         }
 
         .full-width-section {
             width: 100%;
+        }
+
+        .section {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .graph-container {
+            width: 100%;
+            overflow: hidden;
         }
 
         @media (max-width: 768px) {
@@ -395,7 +407,7 @@
 </head>
 <body>
     <header>
-        <img src="static/logo.png" alt="Tech Mahindra Logo">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Tech Mahindra Logo">
         <div class="header-titles">
             <h1 class="green">Green</h1>
             <h1 class="coderefiner">Code Emissions Report</h1>
@@ -560,5 +572,20 @@
             </section>
         </div>
     </div>
+        <script>
+        // Function to resize graphs
+        function resizeGraphs() {
+            var graphs = document.querySelectorAll('.graph-container');
+            graphs.forEach(function(graph) {
+                Plotly.relayout(graph, {
+                    width: graph.offsetWidth
+                });
+            });
+        }
+
+        // Resize graphs on page load and window resize
+        window.addEventListener('load', resizeGraphs);
+        window.addEventListener('resize', resizeGraphs);
+    </script>
 </body>
 </html>
