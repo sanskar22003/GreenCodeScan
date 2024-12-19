@@ -207,12 +207,11 @@
         .metric-change.negative {
             color: var(--danger);
         }
-
         .graph-container {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: var(--shadow);
+            width: 100%;
+            overflow: hidden;
+            max-width: 100%;
+            height: auto !important;
             margin-bottom: 2rem;
         }
 
@@ -372,10 +371,16 @@
             margin: 0 auto;
             padding: 0 2rem;
         }
+        .js-plotly-plot {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
 
         .section-column {
             flex: 1;
             min-width: 300px;
+            max-width: calc(50% - 1rem);
             display: flex;
             flex-direction: column;
         }
@@ -387,6 +392,7 @@
         .section {
             width: 100%;
             box-sizing: border-box;
+            overflow: hidden;
         }
 
         .graph-container {
@@ -400,7 +406,7 @@
             }
 
             .section-column {
-                width: 100%;
+                max-width: 100%;
             }
         }
     </style>
@@ -572,20 +578,50 @@
             </section>
         </div>
     </div>
-        <script>
-        // Function to resize graphs
+    <script>
+        // Enhanced graph resizing function
         function resizeGraphs() {
             var graphs = document.querySelectorAll('.graph-container');
             graphs.forEach(function(graph) {
+                var container = graph.closest('.section');
+                var containerWidth = container.offsetWidth;
+                
                 Plotly.relayout(graph, {
-                    width: graph.offsetWidth
+                    width: containerWidth - 40, // Account for padding
+                    'autosize': true,
+                    'margin': {
+                        l: 50,
+                        r: 50,
+                        t: 50,
+                        b: 50,
+                        pad: 4
+                    }
                 });
             });
         }
 
-        // Resize graphs on page load and window resize
-        window.addEventListener('load', resizeGraphs);
-        window.addEventListener('resize', resizeGraphs);
+        // Resize graphs on page load
+        window.addEventListener('load', function() {
+            setTimeout(resizeGraphs, 100); // Small delay to ensure proper rendering
+        });
+
+        // Debounced resize handler
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(resizeGraphs, 100);
+        });
+
+        // Observe DOM changes that might affect layout
+        const observer = new MutationObserver(function(mutations) {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(resizeGraphs, 100);
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
     </script>
 </body>
 </html>
