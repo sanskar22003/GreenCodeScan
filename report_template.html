@@ -208,10 +208,10 @@
             color: var(--danger);
         }
         .graph-container {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: var(--shadow);
+            width: 100%;
+            overflow: hidden;
+            max-width: 100%;
+            height: auto !important;
             margin-bottom: 2rem;
         }
         .table-wrapper {
@@ -394,7 +394,10 @@
             width: 100%;
             overflow: hidden;
         }
-        @media (max-width: 768px) {
+        @media (max-width: 768px) {            
+            .main-content {
+                flex-direction: column;
+            }
             .section-column {
                 max-width: 100%;
             }
