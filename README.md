@@ -71,6 +71,56 @@ Windows:
 <br>		○ Dotnet restore
 <br>	
 <br>		○ Run, dotnet test
-			
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central Server Emissions Tracker</title>
+</head>
+<body>
+
+<h1>Central Server Emissions Tracker</h1>
+
+<p>To test the <code>CentralServerEmissionsTrackerCSV.py</code> file, you need to set up the configurations below:</p>
+
+<h2>1. For Windows:</h2>
+
+<p>Open a terminal where the script is located and set the following configuration:</p>
+
+<h3>In Terminal 1 (for central server running):</h3>
+<pre><code>a. set SERVER_MODE=central
+b. set CENTRAL_SERVER_PORT=5000
+c. python CentralServerEmissionsTrackerCSV.py</code></pre>
+
+<p>Open another terminal for the agent where the script is located:</p>
+
+<h3>In Terminal 2:</h3>
+<pre><code>a. set SERVER_MODE=agent
+b. set CENTRAL_SERVER_URL=http://localhost:5000
+c. set RUN_TIME_IN_MINUTES=5  # Set how long you want it to run
+d. python CentralServerEmissionsTrackerCSV.py</code></pre>
+
+<p><strong>Optional:</strong> Start multiple agents in different terminals by just changing the <code>SERVER_ID</code>:</p>
+
+<h3>In Terminal 3:</h3>
+<pre><code>a. set SERVER_MODE=agent
+b. set CENTRAL_SERVER_URL=http://localhost:5000
+c. set SERVER_ID=server2
+d. set RUN_TIME_IN_MINUTES=5
+e. python CentralServerEmissionsTrackerCSV.py</code></pre>
+
+<h2>Conclusion:</h2>
+<p>The agent will start fetching the data and send it to the central server. The central server will store the data in a CSV file. At the end, the agent will stop after the specified duration.</p>
+
+<h2>2. For Linux/Mac:</h2>
+
+<p>Perform the same commands mentioned above for Windows; just change the keyword <code>set</code> with <code>export</code>.</p>
+
+</body>
+</html>
+
 
  
