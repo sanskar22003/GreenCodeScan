@@ -589,8 +589,8 @@ def generate_html_report(result_dir):
         xaxis_title="Date",
         yaxis_title="Value",
         xaxis_type="category",
-        width=1250,
-        height=440,
+        width=1280,
+        height=410,
     )
 
     # Save the chart as a Plotly HTML div
