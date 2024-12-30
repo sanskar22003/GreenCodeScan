@@ -65,16 +65,6 @@ def _handle_remove_error(func, path, exc_info):
     else:
         logging.error(f"Unexpected error while removing '{path}': {exc_info[1]}")
 
-# def remove_directory(directory):
-#     if os.path.exists(directory):
-#         shutil.rmtree(directory)
-#         logging.info(f"Directory '{directory}' deleted successfully!")
-
-# def ensure_directory_structure(path):
-#     if not os.path.exists(path):
-#         os.makedirs(path)
-#         logging.info(f"Folder '{path}' created.")
-
 def ensure_directory_structure(path):
     """Ensure that the directory structure exists."""
     try:
