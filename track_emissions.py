@@ -605,9 +605,9 @@ def generate_html_report(result_dir):
     fig.add_trace(
         go.Scatter(
             x=server_df["Date"],
-            y=server_df["CO2 emission (kt)"],
+            y=server_df["CO2 emission (Metric Tons)"],
             mode="lines",
-            name="CO2 Emission (kt)",
+            name="CO2 emission (Metric Tons)",
         )
     )
 
