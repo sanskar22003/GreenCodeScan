@@ -90,7 +90,8 @@ def get_system_info(previous_network):
             'Disk usage (%)': disk_usage,
             'Network usage (bytes)': total_network_usage,
             'Energy consumption (KWH)': round(energy_consumption, 4),
-            'CO2 emission (Kilograms)': round(co2_emission * 1e3, 2)  # Scale up to Kilograms
+            'CO2 emission (Metric Tons)': round(co2_emission * 1e6, 2)
+            # 'CO2 emission (Kilograms)': round(co2_emission * 1e3, 2)  # Scale up to Kilograms
             # 'CO2 emission (kt)': round(co2_emission, 4)
         }
 
