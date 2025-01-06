@@ -395,7 +395,7 @@ def prepare_detailed_data(result_dir):
 
 def generate_html_report(result_dir):
     # Initialize Jinja2 environment
-    env = Environment(loader=FileSystemLoader(TEMP_DIR))
+    env = Environment(loader=FileSystemLoader(SOURCE_DIRECTORY))
     template_path = 'report_template.html'
     last_run_template_path = 'last_run_report_template.html'
     details_template_path = 'details_template.html'
@@ -405,23 +405,23 @@ def generate_html_report(result_dir):
     solution_dirs, detailed_data = prepare_detailed_data(result_dir)
     
     # Check if the templates exist
-    if not os.path.isfile(os.path.join(TEMP_DIR, details_template_path)):
+    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, details_template_path)):
         logging.error(f"Detailed HTML template file not found: {details_template_path}")
-        logging.error(f"Looking in: {os.path.join(TEMP_DIR, details_template_path)}")
+        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, details_template_path)}")
         return 
-    if not os.path.isfile(os.path.join(TEMP_DIR, template_path)):
+    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, template_path)):
         logging.error(f"HTML template file not found: {template_path}")
-        logging.error(f"Looking in: {os.path.join(TEMP_DIR, template_path)}")
+        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, template_path)}")
         return
     
     # Check if the last run templates exist
-    if not os.path.isfile(os.path.join(TEMP_DIR, last_run_details_template_path)):
+    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, last_run_details_template_path)):
         logging.error(f"Detailed HTML template file not found: {last_run_details_template_path}")
-        logging.error(f"Looking in: {os.path.join(TEMP_DIR, last_run_details_template_path)}")
+        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, last_run_details_template_path)}")
         return 
-    if not os.path.isfile(os.path.join(TEMP_DIR, last_run_template_path)):
+    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, last_run_template_path)):
         logging.error(f"HTML template file not found: {last_run_template_path}")
-        logging.error(f"Looking in: {os.path.join(TEMP_DIR, last_run_template_path)}")
+        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, last_run_template_path)}")
         return
 
     # Load the templates
