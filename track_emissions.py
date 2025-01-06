@@ -36,25 +36,19 @@ EXCLUDED_DIRECTORIES = [
     if file.strip()
 ]
 
-
-def process_emissions_for_file(
-    tracker, script_path, emissions_csv, file_type, result_dir, test_command
-):
+def process_emissions_for_file(tracker, script_path, emissions_csv, file_type, result_dir, test_command):
     # If no test command (not a test file), return immediately
     if not test_command:
         return
-
+   
     emissions_data = None
     duration = 0
-    test_output = "Unknown"
+    test_output = 'Unknown'
     script_name = os.path.basename(script_path)
 
     # Extract 'solution dir' (immediate parent directory)
     solution_dir = os.path.basename(os.path.dirname(script_path))
-    is_green_refined = (
-        os.path.commonpath([script_path, GREEN_REFINED_DIRECTORY])
-        == GREEN_REFINED_DIRECTORY
-    )
+    is_green_refined = os.path.commonpath([script_path, GREEN_REFINED_DIRECTORY]) == GREEN_REFINED_DIRECTORY
 
     tracker_started = False
     try:
@@ -65,29 +59,26 @@ def process_emissions_for_file(
         start_time = time.time()
         try:
             # Run test command for test files
-            test_result = subprocess.run(
-                test_command, capture_output=True, text=True, timeout=20
-            )
+            test_result = subprocess.run(test_command, capture_output=True, text=True, timeout=20)
             duration = time.time() - start_time
-            test_output = "Pass" if test_result.returncode == 0 else "Fail"
+            test_output = 'Pass' if test_result.returncode == 0 else 'Fail'
         except subprocess.TimeoutExpired:
-            test_output = "Timeout"
-
+            test_output = 'Timeout'
+    
     except Exception as e:
         logging.error(f"An error occurred while processing {script_name}: {e}")
-        test_output = "Error"
+        test_output = 'Error'
 
     finally:
         try:
             if tracker_started:
-                # Stop the emissions tracking
-                emissions_data = tracker.stop()
+                emissions_data = tracker.stop()  # Stop the emissions tracking
         except Exception as e:
             logging.error(f"Error stopping the tracker for {script_name}: {e}")
 
     if emissions_data is not None:
-        emissions_csv_default_path = "emissions.csv"
-        emissions_csv_target_path = os.path.join(result_dir, "emissions.csv")
+        emissions_csv_default_path = 'emissions.csv'
+        emissions_csv_target_path = os.path.join(result_dir, 'emissions.csv')
         try:
             if os.path.exists(emissions_csv_default_path):
                 shutil.move(emissions_csv_default_path, emissions_csv_target_path)
@@ -97,7 +88,7 @@ def process_emissions_for_file(
                 data = [
                     os.path.basename(script_path),
                     file_type,
-                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                     f"{emissions_data['emissions'] * 1000:.6f}",
                     f"{duration:.2f}",
                     f"{emissions_data['emissions_rate'] * 1000:.6f}",
@@ -110,9 +101,9 @@ def process_emissions_for_file(
                     f"{emissions_data['energy_consumed'] * 1000:.6f}",
                     test_output,
                     solution_dir,
-                    is_green_refined,
+                    is_green_refined
                 ]
-                with open(emissions_csv, "a", newline="") as file:
+                with open(emissions_csv, 'a', newline='') as file:
                     writer = csv.writer(file)
                     writer.writerow(data)
                     file.flush()
@@ -123,30 +114,19 @@ def process_emissions_for_file(
     else:
         logging.error(f"Emissions data collection failed for {script_name}")
 
-
-def process_files_by_type(
-    base_dir,
-    emissions_data_csv,
-    result_dir,
-    file_extension,
-    excluded_files,
-    excluded_dirs,
-    tracker,
-    test_command_generator,
-):
+# Function to process test execution for different file types
+def process_files_by_type(base_dir, emissions_data_csv, result_dir, file_extension, excluded_files, excluded_dirs, tracker, test_command_generator):
     files = []
     for root, dirs, file_list in os.walk(base_dir):
         # Exclude specified directories
         dirs[:] = [d for d in dirs if d not in excluded_dirs]
 
-        # Additional check to ensure we're only processing files
-        # in the correct directory
+        # Additional check to ensure we're only processing files in the correct directory
         if base_dir == SOURCE_DIRECTORY:
             # For SOURCE_DIRECTORY, exclude files in GREEN_REFINED_DIRECTORY
             file_list = [f for f in file_list if GREEN_REFINED_DIRECTORY not in root]
         elif base_dir == GREEN_REFINED_DIRECTORY:
-            # For GREEN_REFINED_DIRECTORY, only process files
-            # within this directory
+            # For GREEN_REFINED_DIRECTORY, only process files within this directory
             file_list = [f for f in file_list if GREEN_REFINED_DIRECTORY in root]
 
         for script in file_list:
@@ -156,7 +136,7 @@ def process_files_by_type(
                 test_command = test_command_generator(script_path)
                 if test_command:
                     files.append((script_path, test_command))
-
+    
     # Process test files
     for script_path, test_command in files:
         process_emissions_for_file(
@@ -165,160 +145,146 @@ def process_files_by_type(
             emissions_csv=emissions_data_csv,
             file_type=file_extension,
             result_dir=result_dir,
-            test_command=test_command,
+            test_command=test_command
         )
-
-
+# Generate test commands for each language
 def get_python_test_command(script_path):
-    """Generate test command for Python test files."""
-    return (
-        [os.getenv("PYTEST_PATH"), script_path]
-        if "test" in script_path.lower()
-        else None
-    )
+    return [os.getenv('PYTEST_PATH', 'pytest'), script_path] if 'test' in script_path.lower() else None
 
-
+# --------------- Improved version of get_java_test_command ----------------
 def get_java_test_command(script_path):
-    """Generate test command for Java test files."""
-    if "test" in script_path.lower():
-        test_name = os.path.splitext(os.path.basename(script_path))[0] + "Test"
-        return [os.getenv("MAVEN_PATH"), f"-Dtest={test_name}", "test"]
-    return None
-
+    maven_path = os.getenv('MAVEN_PATH', 'mvn')
+    test_name = os.path.splitext(os.path.basename(script_path))[0] + 'Test'
+    return [maven_path, '-Dtest=' + test_name, 'test'] if 'test' in script_path.lower() else None
+# ------------------------------------------------------------------------  
 
 def get_cpp_test_command(script_path):
-    """Generate test command for C++ test files."""
-    if "test" in script_path.lower():
+    if 'test' in script_path.lower():
         # Assuming a standard project structure
-        test_file_name = os.path.basename(script_path).replace(".cpp", "_test.cpp")
-        test_dir = os.path.join(os.path.dirname(script_path), "test")
+        test_file_name = os.path.basename(script_path).replace('.cpp', '_test.cpp')
+        test_dir = os.path.join(os.path.dirname(script_path), 'test')
         test_file_path = os.path.join(test_dir, test_file_name)
 
         # Verify test file exists
         if not os.path.exists(test_file_path):
             logging.info(f"Warning: Test file {test_file_path} does not exist")
             return None
-
+        
         # Create a temporary build directory
-        build_dir = os.path.join(test_dir, "build")
+        build_dir = os.path.join(test_dir, 'build')
         os.makedirs(build_dir, exist_ok=True)
-
+        
         # CMake command to configure the project
-        cmake_config_cmd = [
-            os.getenv("GTEST_CMAKE_PATH", "cmake"),
-            f"-S{test_dir}",
-            f"-B{build_dir}",
-            "-DCMAKE_PREFIX_PATH=/usr/local",  # Ensure GTest can be found
-            "-G",
-            "Unix Makefiles",
+        cmake_path = os.getenv('GTEST_CMAKE_PATH', 'cmake')
+        cmake_config_command = [
+            cmake_path,
+            f'-S{test_dir}',
+            f'-B{build_dir}',
+            '-DCMAKE_PREFIX_PATH=/usr/local',
+            '-G', 'Unix Makefiles'
         ]
-
+        
         # CMake build command
-        cmake_build_cmd = [os.getenv("GTEST_CMAKE_PATH", "cmake"), "--build", build_dir]
-
+        cmake_build_command = [cmake_path, '--build', build_dir]
+        
         # Test run command
-        test_executable = os.path.join(
-            build_dir, f"{os.path.splitext(test_file_name)[0]}"
-        )
-        run_test_cmd = [test_executable]
-
-        return cmake_config_cmd + cmake_build_cmd + run_test_cmd
-
+        test_executable = os.path.join(build_dir, os.path.splitext(test_file_name)[0])        
+        if not os.path.exists(test_executable):
+            logging.warning(f"Test executable {test_executable} not found")
+            return None
+        
+        return cmake_config_command + cmake_build_command + [test_executable]    
     return None
 
-
+# ------------------ improved version of get_cs_test_command --------------
 def get_cs_test_command(script_path):
-    """Generate test command for C# test files."""
-    if "test" in script_path.lower():
-        test_dll = os.path.splitext(os.path.basename(script_path))[0] + ".dll"
-        return [os.getenv("NUNIT_PATH"), "test", test_dll]
-    return None
+    test_project = os.path.splitext(os.path.basename(script_path))[0]
+    test_command = ['dotnet', 'test', test_project] if 'test' in script_path.lower() else None
+    return test_command
+# --------------------------------------------------------------------------
 
 
+# Refactored process_folder function
 def process_folder(base_dir, emissions_data_csv, result_dir, suffix, excluded_dirs):
-    """
-    Process a folder for emissions tracking across multiple languages.
-
-    Args:
-        base_dir (str): Base directory to process
-        emissions_data_csv (str): Path to the output CSV file
-        result_dir (str): Directory to store results
-        suffix (str): Suffix for logging
-        excluded_dirs (list): Directories to exclude from processing
-    """
     # Ensure the 'result' directory exists
-    os.makedirs(result_dir, exist_ok=True)
-    logging.info(f"Ensuring directory '{result_dir}' exists.")
-
+    if not os.path.exists(result_dir):
+        os.makedirs(result_dir)
+        logging.info(f"Directory '{result_dir}' created successfully!")
+    else:
+        logging.info(f"Directory '{result_dir}' already exists.")
+    
     # Check if the CSV file exists, if not, create it and write the header
     if not os.path.exists(emissions_data_csv):
-        with open(emissions_data_csv, "w", newline="") as file:
+        with open(emissions_data_csv, 'w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(
-                [
-                    "Application name",
-                    "File Type",
-                    "Timestamp",
-                    "Emissions (gCO2eq)",
-                    "Duration",
-                    "emissions_rate",
-                    "CPU Power (KWh)",
-                    "GPU Power (KWh)",
-                    "RAM Power (KWh)",
-                    "CPU Energy (Wh)",
-                    "GPU Energy (KWh)",
-                    "RAM Energy (Wh)",
-                    "Energy Consumed (Wh)",
-                    "Test Results",
-                    "solution dir",
-                    "Is Green Refined",
-                ]
-            )
+            writer.writerow([
+                "Application name", "File Type", "Timestamp", "Emissions (gCO2eq)",
+                "Duration", "emissions_rate", "CPU Power (KWh)", "GPU Power (KWh)", "RAM Power (KWh)",
+                "CPU Energy (Wh)", "GPU Energy (KWh)", "RAM Energy (Wh)", "Energy Consumed (Wh)", "Test Results", "solution dir", "Is Green Refined"
+            ])
         logging.info(f"CSV file '{emissions_data_csv}' created with headers.")
-
-    # Initialize emissions tracker
     tracker = EmissionsTracker()
 
-    # Process files for each supported language
-    language_extensions = [
-        (".py", get_python_test_command),
-        (".java", get_java_test_command),
-        (".cpp", get_cpp_test_command),
-        (".cs", get_cs_test_command),
-    ]
-
-    for file_extension, test_command_generator in language_extensions:
-        process_files_by_type(
-            base_dir=base_dir,
-            emissions_data_csv=emissions_data_csv,
-            result_dir=result_dir,
-            file_extension=file_extension,
-            excluded_files=EXCLUDED_FILES,
-            excluded_dirs=EXCLUDED_DIRECTORIES,
-            tracker=tracker,
-            test_command_generator=test_command_generator,
-        )
+    # Process files for each language
+    process_files_by_type(
+        base_dir=base_dir,
+        emissions_data_csv=emissions_data_csv,
+        result_dir=result_dir,
+        file_extension='.py',
+        excluded_files=EXCLUDED_FILES,
+        excluded_dirs=EXCLUDED_DIRECTORIES,
+        tracker=tracker,
+        test_command_generator=get_python_test_command
+    )
+    process_files_by_type(
+        base_dir=base_dir,
+        emissions_data_csv=emissions_data_csv,
+        result_dir=result_dir,
+        file_extension='.java',
+        excluded_files=EXCLUDED_FILES,
+        excluded_dirs=EXCLUDED_DIRECTORIES,
+        tracker=tracker,
+        test_command_generator=get_java_test_command
+    )
+    process_files_by_type(
+        base_dir=base_dir,
+        emissions_data_csv=emissions_data_csv,
+        result_dir=result_dir,
+        file_extension='.cpp',
+        excluded_files=EXCLUDED_FILES,
+        excluded_dirs=EXCLUDED_DIRECTORIES,
+        tracker=tracker,
+        test_command_generator=get_cpp_test_command
+    )
+    process_files_by_type(
+        base_dir=base_dir,
+        emissions_data_csv=emissions_data_csv,
+        result_dir=result_dir,
+        file_extension='.cs',
+        excluded_files=EXCLUDED_FILES,
+        excluded_dirs=EXCLUDED_DIRECTORIES,
+        tracker=tracker,
+        test_command_generator=get_cs_test_command
+    )
 
     logging.info(f"Emissions data and test results written to {emissions_data_csv}")
-
 
 # Call process_folder for 'before' and 'after' emissions data
 process_folder(
     base_dir=SOURCE_DIRECTORY,
-    emissions_data_csv=os.path.join(RESULT_DIR, "main_before_emissions_data.csv"),
+    emissions_data_csv=os.path.join(RESULT_DIR, 'main_before_emissions_data.csv'),
     result_dir=RESULT_DIR,
-    suffix="before-in-detail",
-    excluded_dirs=EXCLUDED_DIRECTORIES,
+    suffix='before-in-detail',
+    excluded_dirs=EXCLUDED_DIRECTORIES
 )
 process_folder(
     base_dir=GREEN_REFINED_DIRECTORY,
-    emissions_data_csv=os.path.join(RESULT_DIR, "main_after_emissions_data.csv"),
+    emissions_data_csv=os.path.join(RESULT_DIR, 'main_after_emissions_data.csv'),
     result_dir=RESULT_DIR,
-    suffix="after-in-detail",
-    excluded_dirs=EXCLUDED_DIRECTORIES,
+    suffix='after-in-detail',
+    excluded_dirs=EXCLUDED_DIRECTORIES
 )
 logging.info("Emissions data processed successfully.")
-
 
 # Compare emissions logic
 def compare_emissions():
