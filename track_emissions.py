@@ -560,6 +560,34 @@ def generate_html_report(result_dir):
     comparison_df = pd.read_csv(comparison_csv)
     server_df = pd.read_csv(server_csv)
 
+        # Calculate unique hosts and average CO2 emissions
+    unique_hosts = server_df['Host-name'].nunique()  # Count of unique host names
+    average_co2_emission = server_df['CO2 emission (Metric Tons)'].sum() / unique_hosts  # Average CO2 emissions
+    average_energy_consumption = server_df['Energy consumption (KWH)'].sum() / unique_hosts  # Average Energy consumption
+
+    # Calculate averages for additional metrics
+    average_cpu_usage = server_df['CPU usage (%)'].mean()
+    average_ram_usage = server_df['RAM usage (%)'].mean()
+    average_disk_usage = server_df['Disk usage (%)'].mean()
+    average_network_usage = server_df['Network usage (bytes)'].mean()
+
+    cpu_data = server_df['CPU usage (%)'].tail(10).tolist()
+    ram_data = server_df['RAM usage (%)'].tail(10).tolist()
+    disk_data = server_df['Disk usage (%)'].tail(10).tolist()
+    network_data = server_df['Network usage (bytes)'].tail(10).tolist()
+
+    # Calculate max network value for scaling
+    max_network = max(network_data)
+
+    # Filter servers with CO2 emissions > 50 metric tons
+    critical_servers = server_df[server_df['CO2 emission (Metric Tons)'] > 50][['Host-name', 'CO2 emission (Metric Tons)']]
+
+    # Sort by emission value in descending order
+    critical_servers = critical_servers.sort_values(by='CO2 emission (Metric Tons)', ascending=False)
+
+    # Convert the DataFrame to a list of dictionaries for Jinja2
+    critical_servers_list = critical_servers.to_dict(orient='records') if not critical_servers.empty else None
+
     # Prepare the data for the line chart
     fig = go.Figure()
 
@@ -589,8 +617,8 @@ def generate_html_report(result_dir):
         xaxis_title="Date",
         yaxis_title="Value",
         xaxis_type="category",
-        width=1280,
-        height=410,
+        width=700,
+        height=380,
     )
 
     # Save the chart as a Plotly HTML div
@@ -801,6 +829,8 @@ def generate_html_report(result_dir):
         ),
         margin=dict(l=150, r=50, t=50, b=50),
         showlegend=False,
+        width=700,  # Set width
+        height=250  # Set height
     )
 
     # Create Plotly Horizontal Bar Graph for After Emissions with consistent colors
@@ -827,6 +857,8 @@ def generate_html_report(result_dir):
         ),
         margin=dict(l=150, r=50, t=50, b=50),
         showlegend=False,
+        width=700,  # Set width
+        height=250  # Set height
     )
 
     # --------------------------------------------------------------------------------------------
@@ -866,6 +898,8 @@ def generate_html_report(result_dir):
         ),
         margin=dict(l=150, r=50, t=50, b=50),
         showlegend=False,
+        width=700,  # Set width
+        height=250  # Set height
     )
 
     # Create Plotly Horizontal Bar Graph for After Emissions with consistent colors
@@ -895,6 +929,8 @@ def generate_html_report(result_dir):
         ),
         margin=dict(l=150, r=50, t=50, b=50),
         showlegend=False,
+        width=700,  # Set width
+        height=250  # Set height
     )
 
     div_bar_graph_before = pio.to_html(
@@ -995,6 +1031,8 @@ def generate_html_report(result_dir):
         ),
         margin=dict(l=150, r=50, t=50, b=50),
         showlegend=False,
+        width=700,  # Set width
+        height=250  # Set height
     )
 
     # Create Plotly Horizontal Bar Graph for After Emissions (gCO2eq)
@@ -1023,6 +1061,8 @@ def generate_html_report(result_dir):
         ),
         margin=dict(l=150, r=50, t=50, b=50),
         showlegend=False,
+        width=700,  # Set width
+        height=250  # Set height
     )
 
     # --------------------------------------------------------------------------------------------
@@ -1062,6 +1102,8 @@ def generate_html_report(result_dir):
         ),
         margin=dict(l=150, r=50, t=50, b=50),
         showlegend=False,
+        width=700,  # Set width
+        height=250  # Set height
     )
 
     # Create Plotly Horizontal Bar Graph for After Emissions (gCO2eq)
@@ -1090,6 +1132,8 @@ def generate_html_report(result_dir):
         ),
         margin=dict(l=150, r=50, t=50, b=50),
         showlegend=False,
+        width=700,  # Set width
+        height=250  # Set height
     )
     # Convert figures to HTML div
     div_bar_graph_before_gco2eq = pio.to_html(
@@ -1268,6 +1312,8 @@ def generate_html_report(result_dir):
             ),
             margin=dict(l=100, r=50, t=50, b=50),
             showlegend=True,
+            width=700,  # Set width
+            height=250  # Set height
         )
 
         # Convert embedded bar graph to HTML div
@@ -1316,6 +1362,8 @@ def generate_html_report(result_dir):
             ),
             margin=dict(l=150, r=50, t=50, b=50),
             showlegend=True,
+            width=700,  # Set width
+            height=250  # Set height
         )
 
         # Convert non-embedded bar graph to HTML div
@@ -1366,6 +1414,8 @@ def generate_html_report(result_dir):
             ),
             margin=dict(l=100, r=50, t=50, b=50),
             showlegend=True,
+            width=700,  # Set width
+            height=250  # Set height
         )
 
         # Convert embedded bar graph to HTML div
@@ -1418,6 +1468,8 @@ def generate_html_report(result_dir):
             ),
             margin=dict(l=150, r=50, t=50, b=50),
             showlegend=True,
+            width=700,  # Set width
+            height=250  # Set height
         )
 
         # Convert non-embedded bar graph to HTML div
@@ -1442,6 +1494,20 @@ def generate_html_report(result_dir):
         div_bar_graph_non_embedded=div_bar_graph_non_embedded,
         last_run_timestamp=last_run_timestamp,  # Pass the timestamp
         div_line_chart=div_line_chart,
+        unique_hosts=unique_hosts,
+        average_co2_emission=round(average_co2_emission, 4),  # Round for better display
+        average_energy_consumption=round(average_energy_consumption, 4),  # Round for better display
+        average_cpu_usage=round(average_cpu_usage, 2),
+        average_ram_usage=round(average_ram_usage, 2),
+        average_disk_usage=round(average_disk_usage, 2),
+        average_network_usage=round(average_network_usage, 2),
+        cpu_usage_data=cpu_data,
+        ram_usage_data=ram_data,
+        disk_usage_data=disk_data,
+        network_usage_data=network_data,
+        max_network=max_network,
+        critical_servers=critical_servers_list,
+    )
     )
 
     # Render the details template with detailed data
