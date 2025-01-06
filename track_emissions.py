@@ -1508,7 +1508,6 @@ def generate_html_report(result_dir):
         max_network=max_network,
         critical_servers=critical_servers_list,
     )
-    )
 
     # Render the details template with detailed data
     html_details_content = details_template.render(
