@@ -36,8 +36,24 @@ EXCLUDED_DIRECTORIES = [
     if file.strip()
 ]
 
+def is_test_file(file_path):
+    """
+    Check if a file is a test file based on its name and content.
+    """
+    file_name = os.path.basename(file_path).lower()
+    return ('test' in file_name or 
+            file_name.startswith('test_') or 
+            file_name.endswith('_test.py') or
+            file_name.endswith('test.java') or
+            file_name.endswith('test.cpp') or
+            file_name.endswith('test.cs'))
+
 def process_emissions_for_file(tracker, script_path, emissions_csv, file_type, result_dir, test_command):
-    # If no test command (not a test file), return immediately
+    # First check if it's a test file
+    if not is_test_file(script_path):
+        return
+    
+    # If no test command, return immediately
     if not test_command:
         return
    
@@ -53,6 +69,7 @@ def process_emissions_for_file(tracker, script_path, emissions_csv, file_type, r
     tracker_started = False
     try:
         # Start the emissions tracking ONLY for test files
+        tracker = EmissionsTracker(allow_multiple_runs=True)
         tracker.start()
         tracker_started = True
 
@@ -85,6 +102,7 @@ def process_emissions_for_file(tracker, script_path, emissions_csv, file_type, r
 
             if os.stat(emissions_csv_target_path).st_size != 0:
                 emissions_data = pd.read_csv(emissions_csv_target_path).iloc[-1]
+                
                 data = [
                     os.path.basename(script_path),
                     file_type,
@@ -114,7 +132,6 @@ def process_emissions_for_file(tracker, script_path, emissions_csv, file_type, r
     else:
         logging.error(f"Emissions data collection failed for {script_name}")
 
-# Function to process test execution for different file types
 def process_files_by_type(base_dir, emissions_data_csv, result_dir, file_extension, excluded_files, excluded_dirs, tracker, test_command_generator):
     files = []
     for root, dirs, file_list in os.walk(base_dir):
@@ -130,9 +147,10 @@ def process_files_by_type(base_dir, emissions_data_csv, result_dir, file_extensi
             file_list = [f for f in file_list if GREEN_REFINED_DIRECTORY in root]
 
         for script in file_list:
-            if script.endswith(file_extension) and script not in excluded_files:
+            if (script.endswith(file_extension) and 
+                script not in excluded_files and 
+                is_test_file(os.path.join(root, script))):  # Only add test files
                 script_path = os.path.join(root, script)
-                # Only add files that have a test command
                 test_command = test_command_generator(script_path)
                 if test_command:
                     files.append((script_path, test_command))
@@ -504,27 +522,59 @@ def generate_html_report(result_dir):
     # Convert the DataFrame to a list of dictionaries for Jinja2
     critical_servers_list = critical_servers.to_dict(orient='records') if not critical_servers.empty else None
 
+    # Combine Date and Time into a single datetime column
+    server_df['Datetime'] = pd.to_datetime(server_df['Date'] + ' ' + server_df['Time'])
+
     # Prepare the data for the line chart
     fig = go.Figure()
 
     # Add the energy consumption line
-    fig.add_trace(go.Scatter(x=server_df['Date'], y=server_df['Energy consumption (KWH)'], mode='lines', name='Energy Consumption (KWH)'))
+    fig.add_trace(go.Scatter(
+        x=server_df['Datetime'], 
+        y=server_df['Energy consumption (KWH)'], 
+        mode='lines', 
+        name='Energy Consumption (KWH)'
+    ))
 
     # Add the CO2 emission line
-    fig.add_trace(go.Scatter(x=server_df['Date'], y=server_df['CO2 emission (Metric Tons)'], mode='lines', name='CO2 emission (Metric Tons)'))
+    fig.add_trace(go.Scatter(
+        x=server_df['Datetime'], 
+        y=server_df['CO2 emission (Metric Tons)'], 
+        mode='lines', 
+        name='CO2 emission (Metric Tons)'
+    ))
 
     # Update the layout
     fig.update_layout(
-        title='Server Emissions and Energy Consumption',
-        xaxis_title='Date',
+        title='Server Emissions and Energy Consumption Over Time',
+        xaxis_title='Datetime',
         yaxis_title='Value',
-        xaxis_type='category',
+        xaxis=dict(type='date'),  # Ensure the x-axis is treated as dates
         width=700,
         height=380
     )
 
     # Save the chart as a Plotly HTML div
     div_line_chart = fig.to_html(full_html=False, include_plotlyjs='cdn')
+
+    # # Add the energy consumption line
+    # fig.add_trace(go.Scatter(x=server_df['Date'], y=server_df['Energy consumption (KWH)'], mode='lines', name='Energy Consumption (KWH)'))
+
+    # # Add the CO2 emission line
+    # fig.add_trace(go.Scatter(x=server_df['Date'], y=server_df['CO2 emission (Metric Tons)'], mode='lines', name='CO2 emission (Metric Tons)'))
+
+    # # Update the layout
+    # fig.update_layout(
+    #     title='Date-wise Server Emissions and Energy Consumption',
+    #     xaxis_title='Date',
+    #     yaxis_title='Value',
+    #     xaxis_type='category',
+    #     width=700,
+    #     height=380
+    # )
+
+    # # Save the chart as a Plotly HTML div
+    # div_line_chart = fig.to_html(full_html=False, include_plotlyjs='cdn')
     
     # Check if DataFrames are not empty before getting the latest record
     if not before_df.empty:
@@ -611,7 +661,7 @@ def generate_html_report(result_dir):
 
     bar_graph_before.update_layout(
         barmode='stack',
-        title='Before Refinment: Energy Consumption Solution Based(Wh)',
+        title='Before Optimizing code: Source Code Directory level Energy Consumption(Wh)',
         xaxis_title='Energy Consumed (Wh)',
         yaxis_title='Solution Dir',
         xaxis=dict(
@@ -637,7 +687,7 @@ def generate_html_report(result_dir):
 
     bar_graph_after.update_layout(
         barmode='stack',
-        title='After Refinment: Energy Consumption Solution Based(Wh)',
+        title='After Optimizing code: Source Code Directory level Energy Consumption(Wh)',
         xaxis_title='Energy Consumed (Wh)',
         yaxis_title='Solution Dir',
         xaxis=dict(
@@ -671,7 +721,7 @@ def generate_html_report(result_dir):
 
     latest_bar_graph_before.update_layout(
         barmode='stack',
-        title='Before Refinment: Energy Consumption Solution Based(Wh)',
+        title='Before Optimizing code: Source Code Directory level Energy Consumption(Wh)',
         xaxis_title='Energy Consumed (Wh)',
         yaxis_title='solution dir',
         xaxis=dict(
@@ -697,7 +747,7 @@ def generate_html_report(result_dir):
 
     latest_bar_graph_after.update_layout(
         barmode='stack',
-        title='After Refinment: Energy Consumption Solution Based(Wh)',
+        title='Before Optimizing code: Source Code Directory level Energy Consumption(Wh)',
         xaxis_title='Energy Consumed (Wh)',
         yaxis_title='solution dir',
         xaxis=dict(
@@ -756,7 +806,7 @@ def generate_html_report(result_dir):
 
     bar_graph_before_gco2eq.update_layout(
         barmode='stack',
-        title='Before Refinment: Emissions Solution Based(gCO2eq)',
+        title='Before Optimizing code: Source Code Directory level Emissions(gCO2eq)',
         xaxis_title='Emissions (gCO2eq)',
         yaxis_title='Solution Directory',
         xaxis=dict(
@@ -782,7 +832,7 @@ def generate_html_report(result_dir):
 
     bar_graph_after_gco2eq.update_layout(
         barmode='stack',
-        title='After Refinment: Emissions Solution Based(gCO2eq)',
+        title='After Optimizing code: Source Code Directory level Emissions(gCO2eq)',
         xaxis_title='Emissions (gCO2eq)',
         yaxis_title='Solution Directory',
         xaxis=dict(
@@ -815,7 +865,7 @@ def generate_html_report(result_dir):
 
     latest_bar_graph_before_gco2eq.update_layout(
         barmode='stack',
-        title='Before Refinment: Emissions Solution Based(gCO2eq)',
+        title='Before Optimizing code: Source Code Directory level Emissions(gCO2eq)',
         xaxis_title='Emissions (gCO2eq)',
         yaxis_title='Solution Directory',
         xaxis=dict(
@@ -841,7 +891,7 @@ def generate_html_report(result_dir):
 
     latest_bar_graph_after_gco2eq.update_layout(
         barmode='stack',
-        title='After Refinment: Emissions Solution Based(gCO2eq)',
+        title='After Optimizing code: Source Code Directory level Emissions(gCO2eq)',
         xaxis_title='Emissions (gCO2eq)',
         yaxis_title='Solution Directory',
         xaxis=dict(
@@ -1088,14 +1138,14 @@ def generate_html_report(result_dir):
 
     # Render the template with dynamic data
     html_content = template.render(
-        total_before=f"{total_before:.2f}",
-        total_after=f"{total_after:.2f}",
+        total_before=f"{total_before:.6f}",
+        total_after=f"{total_after:.6f}",
         energy_table_html=energy_table_html,
         emissions_table_html=emissions_table_html,
         div_bar_graph_before=div_bar_graph_before,
         div_bar_graph_after=div_bar_graph_after,
-        total_emissions_before=f"{total_emissions_before:.2f}",
-        total_emissions_after=f"{total_emissions_after:.2f}",
+        total_emissions_before=f"{total_emissions_before:.6f}",
+        total_emissions_after=f"{total_emissions_after:.6f}",
         div_bar_graph_before_gco2eq=div_bar_graph_before_gco2eq,
         div_bar_graph_after_gco2eq=div_bar_graph_after_gco2eq,
         div_bar_graph_embedded=div_bar_graph_embedded,
@@ -1169,14 +1219,14 @@ def generate_html_report(result_dir):
 
     # Save the timestamp-based HTML report
     details_report_path = os.path.join(time_folder_path, 'details_report.html')
-    with open(details_report_path, 'w') as f:
+    with open(details_report_path, 'w', encoding="utf-8") as f:
         f.write(timestamp_html_details_content)
 
     logging.info(f"Last Run Detailed HTML report generated at {details_report_path}")
 
     # Save the timestamp-based HTML report
     emissions_report_path = os.path.join(time_folder_path, 'emissions_report.html')
-    with open(emissions_report_path, 'w') as f:
+    with open(emissions_report_path, 'w', encoding="utf-8") as f:
         f.write(timestamp_html_content)
 
     logging.info(f"Last Run Emissions HTML report generated at {emissions_report_path}")
@@ -1190,14 +1240,14 @@ def generate_html_report(result_dir):
 
     # Save the main HTML report
     report_path = os.path.join(REPORT_DIR, 'emissions_report.html')
-    with open(report_path, 'w') as f:
+    with open(report_path, 'w', encoding="utf-8") as f:
         f.write(html_content)
 
     logging.info(f"HTML report generated at {report_path}")
 
     # Save the detailed HTML report
     detailed_report_path = os.path.join(REPORT_DIR, 'details_report.html')
-    with open(detailed_report_path, 'w') as f:
+    with open(detailed_report_path, 'w', encoding="utf-8") as f:
         f.write(html_details_content)
     
     logging.info(f"Detailed HTML report generated at {detailed_report_path}")
