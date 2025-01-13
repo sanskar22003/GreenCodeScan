@@ -632,10 +632,52 @@ def generate_html_report(result_dir):
     div_faceted_area_charts = pio.to_html(fig, include_plotlyjs=False, full_html=False)
 
     # Multi-server data:
-    unique_servers = mul_server_df['hostname'].unique()  # Get unique host names
+    # unique_servers = mul_server_df['hostname'].unique()  # Get unique host names
+    # Get unique hostnames
+    unique_servers = mul_server_df['hostname'].unique().tolist()
 
     # Prepare lists for before and after details to pass to the template
-    server_details = mul_server_df[['os_version','storage_device_count','storage_devices','cpu_percent','ram_total','ram_used','ram_percent','disk_read_bytes','disk_write_bytes','timestamp','hostname','os_type','total_power','cpu_power','ram_power','disk_base_power','disk_io_power','total_co2','cpu_co2','ram_co2','disk_base_co2','disk_io_co2','co2_factor','region']].to_dict(orient='records')
+    # server_details = mul_server_df[['os_version','storage_device_count','storage_devices','cpu_percent','ram_total','ram_used','ram_percent','disk_read_bytes','disk_write_bytes','timestamp','hostname','os_type','total_power','cpu_power','ram_power','disk_base_power','disk_io_power','total_co2','cpu_co2','ram_co2','disk_base_co2','disk_io_co2','co2_factor','region']].to_dict(orient='records')
+    
+    # Convert DataFrame to list of dictionaries
+    # Create a copy of the DataFrame to avoid modifying the original
+    df = mul_server_df.copy()
+    
+    # Define columns by type
+    numeric_columns = [
+        'cpu_percent', 'ram_total', 'ram_used', 'ram_percent', 
+        'disk_read_bytes', 'disk_write_bytes', 'total_power', 
+        'cpu_power', 'ram_power', 'disk_base_power', 'disk_io_power',
+        'total_co2', 'cpu_co2', 'ram_co2', 'disk_base_co2', 
+        'disk_io_co2', 'co2_factor', 'storage_device_count'
+    ]
+    
+    string_columns = [
+        'hostname', 'os_version', 'os_type', 'region', 
+        'storage_devices', 'timestamp'
+    ]
+    
+    # Convert numeric columns to float
+    for col in numeric_columns:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+    
+    # Ensure string columns are properly formatted
+    for col in string_columns:
+        if col in df.columns:
+            df[col] = df[col].astype(str)
+    
+    # Handle any missing columns
+    required_columns = numeric_columns + string_columns
+    for col in required_columns:
+        if col not in df.columns:
+            if col in numeric_columns:
+                df[col] = 0
+            else:
+                df[col] = 'N/A'
+    
+    # Convert DataFrame to list of dictionaries
+    server_details = df.to_dict(orient='records')
 
     
     # Check if DataFrames are not empty before getting the latest record
