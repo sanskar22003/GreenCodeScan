@@ -8,63 +8,79 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         :root {
-            /* Colors */
-            --primary: #2ecc71;
-            --primary-dark: #27ae60;
-            --secondary: #3498db;
-            --text: #2c3e50;
-            --text-light: #7f8c8d;
-            --background: #f8fafb;
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --secondary: #3b82f6;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --background: #f3f4f6;
             --card-bg: #ffffff;
-            --success: #27ae60;
-            --danger: #e74c3c;
+            --success: #22c55e;
+            --danger: #ef4444;
+            
+            --text-xs: 0.75rem;
+            --text-sm: 0.875rem;
+            --text-base: 1rem;
+            --text-lg: 1.125rem;
+            --text-xl: 1.25rem;
+            --text-2xl: 1.5rem;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            /* --shadow: 0 4px 10px rgba(0, 0, 0, 0.1), 0 0px 8px rgba(0, 0, 0, 0.06); */
 
-                
-            /* Font Sizes */
-            --text-xs: 0.75rem;    /* 12px */
-            --text-sm: 0.875rem;   /* 14px */
-            --text-base: 0.9375rem; /* 15px */
-            --text-lg: 1.125rem;   /* 18px */
-            --text-xl: 1.25rem;    /* 20px */
-            --text-2xl: 2rem;    /* 28px */
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             
-            /* Shadows */
-            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-            --shadow: 0 4px 6px rgba(0,0,0,0.08);
-            --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
-            
-            /* Transitions */
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             
-            /* Border Radius */
-            --radius-sm: 6px;
-            --radius: 8px;
-            --radius-lg: 12px;
+            --radius-sm: 0.375rem;
+            --radius: 0.5rem;
+            --radius-lg: 0.75rem;
             
-            /* Spacing */
-            --spacing-xs: 0.575rem;  /* 6px */
-            --spacing-sm: 0.75rem;   /* 12px */
-            --spacing: 1rem;         /* 16px */
-            --spacing-lg: 1.5rem;    /* 24px */
-            --spacing-xl: 2rem;      /* 32px */
+            --spacing-xs: 0.5rem;
+            --spacing-sm: 0.75rem;
+            --spacing: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
             
-            /* Grid */
-            --container-width: 1400px;
-            --grid-gap: 1rem;
+            --container-width: 1600px;
+            --grid-gap: 1.5rem;
+        }
+        /* Header */
+        :root {
+        --primary-color: #10b981;
+        --primary-dark: #059669;
+        --secondary-color: #0ea5e9;
+        --text-color: #1f2937;
+        --text-light: #4b5563;
+        --background-color: #f9fafb;
+        --white: #ffffff;
+        --shadow-lg-header: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        --transition-header: all 0.3s ease;
         }
         /* Base Styles */
+
+        html {
+        scroll-behavior: smooth;
+        }
+
+        body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        background: linear-gradient(to bottom, var(--background-color), var(--white));
+        color: var(--text-color);
+        line-height: 1.6;
+        overflow-x: hidden;
+        }
+        .container {
+            width: 100%;
+            max-width: var(--container-width);
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--background);
-            color: var(--text);
-            line-height: 1.6;
-            overflow-x: hidden;
         }
 
         h1, h2, h3, h4, h5, h6 {
@@ -83,26 +99,24 @@
         }
         /* Improvement card styling */
         .improvement-card {
-            grid-column: 2 / span 2; /* Start at column 2 and span 2 columns */
+            grid-column: span 3;
             background: var(--card-bg);
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             padding: var(--spacing);
-            margin-top: calc(-90px); /* Adjust to overlap with space below metric-card-two */
-            transition: var(--transition);
             display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            gap: var(--spacing-sm);
-            height: 75px; /* Match the height of other cards */
+            justify-content: space-between;
+            width: 100%;
         }
 
         .improvement-label {
             font-size: var(--text-base);
+            font-weight: 600;
             color: var(--text);
-            font-weight: 500;
-            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
         }
 
         .improvement-value {
@@ -111,7 +125,6 @@
             display: flex;
             align-items: center;
             gap: var(--spacing-xs);
-            margin-bottom: 5px;
         }
 
         .improvement-value.positive {
@@ -125,6 +138,62 @@
         .improvement-value i {
             font-size: var(--text-lg);
         }
+        /* Info Button */
+        .info-button {
+            position: relative;
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            background-color: var(--text-light);
+            color: var(--card-bg);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 18px;
+            font-size: var(--text-xs);
+            cursor: pointer;
+        }
+
+        .info-icon {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            line-height: 15px;
+            text-align: center;
+            background-color: #2ecc71;
+            color: white;
+            border-radius: 50%;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--text);
+            color: var(--card-bg);
+            text-align: center;
+            border-radius: var(--radius-sm);
+            padding: var(--spacing-xs);
+            position: absolute;
+            z-index: 999;
+            top: 100%;
+            left: 100%;
+            margin-top: 8px;
+            margin-left: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: var(--text-xs);
+            font-weight: normal;
+            box-shadow: var(--shadow);
+        }
+
+        .info-button:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
         /* Component Styles */
         .logo-container {
             display: flex;
@@ -139,19 +208,6 @@
 
         .logo:hover {
             transform: scale(1.05);
-        }
-
-        .header-titles {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .header-titles h1 {
-            font-size: var(--text-xl);
-            color: white;
-            margin: 0;
-            line-height: 1.2;
         }
 
         .nav-link {
@@ -197,6 +253,8 @@
             padding: var(--spacing);
             box-shadow: var(--shadow);
             transition: var(--transition);
+            display: flex;
+            flex-direction: column;
         }
 
         /* New styles for metric-card-two */
@@ -268,21 +326,20 @@
         .metric-header h3 {
             font-size: var(--text-lg);
             margin: 0;
+            color: var(--text);
+            font-weight: 500;
         }
 
         .metric-value {
             font-size: var(--text-xl);
-            font-weight: 700;
+            font-weight: 500;
             color: var(--text);
             margin: var(--spacing-xs) 0;
         }
 
         .metric-meta {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-xs);
+            font-size: var(--text-sm);
             color: var(--text-light);
-            font-size: var(--text-base);
         }
 
         .chart-container {
@@ -290,7 +347,8 @@
             border-radius: var(--radius);
             padding: var(--spacing);
             box-shadow: var(--shadow);
-            margin-bottom: var(--spacing);
+            width: 100%;
+            overflow: hidden;
         }
 
         .section-header {
@@ -307,71 +365,66 @@
         .section-header h2 i {
             color: var(--primary);
         }
-        /* Layout Styles */
-        .header {
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            padding: var(--spacing) var(--spacing-lg);
-        }
-        
-
-        .header-content {
-            max-width: var(--container-width);
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .header-titles .green {
-            font-weight: 700;
-        }
-
-        .header-titles .coderefiner {
-            font-weight: 300;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing);
-        }
-
-        .header-meta {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: var(--text-sm);
-        }
 
         .dashboard {
+            width: 100%;
             max-width: var(--container-width);
-            margin: var(--spacing) auto;
-            padding: 0 var(--spacing);
+            margin: 5rem auto var(--spacing-xl);
+            padding: 0 2rem;
+            overflow-x: hidden;
+            margin-top: 7%;    
         }
 
         .dashboard-grid {
+            grid-template-areas: 
+                "server server"
+                "energy emissions"
+                "code code";
+            max-width: var(--container-width);
+            margin: 0 auto;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            grid-template-areas: 
-                "energy emissions"
-                "server server"
-                "code code";
+            width: 100%;
             gap: var(--grid-gap);
         }
 
-        .dashboard-section[data-area="energy"] { grid-area: energy; }
-        .dashboard-section[data-area="emissions"] { grid-area: emissions; }
-        .dashboard-section[data-area="server"] { grid-area: server; }
-        .dashboard-section[data-area="code"] { grid-area: code; }
+        /* Specific section layouts */
+        .dashboard-section[data-area="server"] { 
+            grid-area: server;
+        }
+
+        .dashboard-section[data-area="energy"] { 
+            grid-area: energy;
+            margin-right: 1rem; /* Add space between energy and emissions sections */
+        }
+
+        .dashboard-section[data-area="emissions"] { 
+            grid-area: emissions;
+            margin-left: 1rem; /* Add space between energy and emissions sections */
+        }
+
+        .dashboard-section[data-area="code"] { 
+            grid-area: code;
+        }
+
+        .dashboard-section {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: var(--spacing-lg);
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+            min-width: 0;
+        }
 
         .metrics-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            /* grid-template-columns: 1fr 1fr 1fr; */
+            grid-template-columns: repeat(3, 1fr);
             gap: var(--spacing);
             margin-bottom: var(--spacing);
+            width: 100%;
             position: relative;
         }
         /* Animation Styles */
@@ -409,9 +462,9 @@
             .dashboard-grid {
                 grid-template-columns: 1fr;
                 grid-template-areas: 
+                    "server"
                     "energy"
                     "emissions"
-                    "server"
                     "code";
             }
         }
@@ -450,10 +503,17 @@
         /* Server Analysis Grid Layout */
         .server-analysis-grid {
             display: grid;
-            /* Adjust the column proportions for better balance */
-            grid-template-columns: minmax(0, 0.9fr) minmax(0, 0.6fr) minmax(0, 0.6fr);
-            gap: var(--spacing);
-            margin-bottom: var(--spacing);
+            grid-template-columns: 1fr 400px 450px;
+            gap: 1rem;
+            width: 100%;
+            max-width: 100%;
+        }
+        /* Ensure all cards stay within bounds */
+        .middle-column,
+        .server-metrics-card {
+            width: 100%;
+            min-width: 0; /* Allow shrinking below content size */
+            overflow: hidden;
         }
 
         /* Left Card - Graph */
@@ -463,8 +523,16 @@
             padding: var(--spacing);
             box-shadow: var(--shadow);
             min-height: 300px;
+            min-width: 0;
             width: 100%;
             overflow: hidden;
+        }
+            /* Style for the middle column container */
+        .middle-column {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing);
+            width: 400px;
         }
 
         /* Right Card - Metrics */
@@ -473,16 +541,17 @@
             border-radius: var(--radius);
             padding: var(--spacing);
             box-shadow: var(--shadow);
-            height: 400px; /* Fixed height to match other cards */
+            height: 600px; /* Fixed height to match other cards */
+            width: 450px;
         }
 
         /* 2x2 Grid for Metrics */
         .metrics-grid-2x2 {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(2, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: var(--spacing);
             height: 100%;
+            width: 100%;
         }
 
         .metric-box:hover {
@@ -515,27 +584,79 @@
             justify-content: center;
             color: var(--primary);
         }
+        /* Responsive adjustments */
+        /* Update responsive breakpoints */
+        @media (max-width: 1600px) {
+            .server-analysis-grid {
+                grid-template-columns: minmax(0, 1fr) 340px 360px;
+            }
+            
+            .middle-column,
+            .server-metrics-card {
+                width: 340px;
+            }
+        }
 
-        /* Responsive Design */
-        @media (max-width: 992px) {
+        @media (max-width: 1400px) {
+            .server-analysis-grid {
+                grid-template-columns: minmax(0, 1fr) 320px 340px;
+            }
+            
+            .middle-column,
+            .server-metrics-card {
+                width: 320px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .server-analysis-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .middle-column,
+            .server-metrics-card {
+                width: 100%;
+            }
+            
+            .server-metrics-card {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 768px) {
             .server-analysis-grid {
                 grid-template-columns: 1fr;
             }
             
-            .server-graph-card,
-            .server-metrics-card {
-                min-height: auto;
+            .server-graph-card {
+                width: 100%;
             }
             
-            .metrics-grid-2x2 {
-                gap: var(--spacing-sm);
+            .middle-column {
+                grid-column: 1 / -1;
+            }
+        }
+        /* Responsive adjustments */
+        @media (max-width: 1600px) {
+            .dashboard {
+                max-width: 95%;
+                padding: 0 1.5rem;
             }
         }
 
-        @media (max-width: 480px) {
-            .metrics-grid-2x2 {
+        @media (max-width: 1200px) {
+            .dashboard-grid {
                 grid-template-columns: 1fr;
-                grid-template-rows: repeat(4, 1fr);
+                grid-template-areas: 
+                    "server"
+                    "energy"
+                    "emissions"
+                    "code";
+            }
+
+            .dashboard-section[data-area="energy"],
+            .dashboard-section[data-area="emissions"] {
+                margin: 0; /* Remove horizontal margins on smaller screens */
             }
         }
         /* Add new styles for sparklines */
@@ -561,6 +682,9 @@
             border: 1px solid rgba(0, 0, 0, 0.1);
             transition: var(--transition);
             min-height: 110px;  /* Added minimum height */
+            width: 100%;
+            min-width: 0;
+            overflow: hidden;
         }
         
         .metric-box-value {
@@ -602,9 +726,10 @@
             border-radius: var(--radius);
             padding: var(--spacing);
             box-shadow: var(--shadow);
-            height: 400px; /* Fixed height to match other cards */
+            height: 480px;
             display: flex;
             flex-direction: column;
+            flex-grow: 0;
         }
 
         .critical-servers-header {
@@ -636,7 +761,7 @@
             flex-grow: 1;
             overflow-y: auto;
             margin-top: 0;
-            max-height: calc(400px - 60px); /* Subtract header height */
+            max-height: calc(450px - 60px);
             scrollbar-width: thin;
             scrollbar-color: var(--primary) transparent;
         }
@@ -652,6 +777,48 @@
         .critical-servers-list::-webkit-scrollbar-thumb {
             background-color: var(--primary);
             border-radius: 3px;
+        }
+        /* Style the total servers card */
+        .total-servers-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: var(--spacing);
+            box-shadow: var(--shadow);
+            height: 100px;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing);
+        }
+
+        .total-servers-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .total-servers-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .total-servers-header h3 {
+            margin: 0;
+            font-size: var(--text-base);
+            color: var(--text);
+        }
+
+        .total-servers-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-left: auto;
+            padding-right: var(--spacing);
         }
 
         /* Ensure server items have consistent height */
@@ -712,14 +879,25 @@
         /* Responsive adjustments */
         @media (max-width: 1200px) {
             .server-analysis-grid {
-                grid-template-columns: 1fr 1fr 1fr; /* Equal columns on smaller screens */
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            }
+            
+            .server-metrics-card {
+                grid-column: span 2;
             }
         }
 
         @media (max-width: 992px) {
             .server-analysis-grid {
                 grid-template-columns: 1fr;
-                gap: var(--spacing-lg);
+            }
+            
+            .server-metrics-card {
+                grid-column: auto;
+            }
+            
+            .middle-column {
+                gap: var(--spacing);
             }
             
             .server-graph-card,
@@ -747,163 +925,104 @@
                 min-width: 120px;
             }
         }
+
+        /* Header Styles */
+        header {
+        background-color: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(8px);
+        position: fixed;
+        width: 100%;
+        top: 0;
+        z-index: 1000;
+        border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+        padding: 15px;
+        }
+
+        .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 4rem;
+        }
+
+        .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        }
+
+        .logo-icon {
+        font-size: 2rem;
+        color: var(--primary-color);
+        }
+
+        .header-titles {
+        display: flex;
+        align-items: flex-start;
+        flex-direction: column;
+        }
+        .title-row {
+            display: flex;
+            gap: 0.25rem; /* Space between Green and CodeRefiner */
+            align-items: baseline; /* Align Green and CodeRefiner text properly */
+        }
+
+        .green {
+        color: var(--primary-color);
+        font-size: 1.25rem;
+        font-weight: 700;
+        }
+
+        .coderefiner {
+        color: var(--text-color);
+        font-size: 1.25rem;
+        font-weight: 700;
+        }
+
+        nav ul {
+        display: flex;
+        gap: 2rem;
+        list-style: none;
+        }
+
+        nav a {
+        color: var(--text-light);
+        text-decoration: none;
+        font-weight: 500;
+        transition: var(--transition-header);
+        }
+
+        nav a:hover {
+        color: var(--primary-color);
+        }
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-content">
+    <header>
+        <div class="header-content container">
             <div class="logo-container">
-                <img src="webapp/static/logo.png" alt="Tech Mahindra Logo" class="logo">
+                <!-- <img src="https://www.techmahindra.com/themes/custom/techm/techm_logo.svg" alt="Tech Mahindra Logo" class="logo"> -->
+                <i class="fas fa-leaf logo-icon"></i>
                 <div class="header-titles">
-                    <h1 class="green">Green Code</h1>
-                    <h1 class="coderefiner">Emissions Report of Airbus</h1>
+                    <div class="title-row">
+                        <h1 class="green">Green</h1>
+                        <h1 class="coderefiner">CodeRefiner<sup>TM</sup></h1>
+                    </div>
+                    <p style="margin-top: -0.25rem; margin-bottom: 0; font-weight: normal; font-size: 1.25rem; color: var(--text-light);">Emissions Report for Airbus</p>
                 </div>
             </div>
-            <div class="header-right">
-                <div class="header-meta">
-                    <i class="fas fa-clock"></i>
-                    Last Run: {{ last_run_timestamp }}
-                </div>
-                <nav class="header-nav">
-                    <a href="details_report.html" class="nav-link">
-                        <i class="fas fa-chart-bar"></i>
-                        View Detailed Report
-                    </a>
-                </nav>
-            </div>
+            <nav>
+                <ul>
+                    <li><a href="details_report.html">View Detailed Report</a></li>
+                    <li><a href="server_report.html">View Detailed Server</a></li>
+                    <li>Last Run: {{ last_run_timestamp }}</li>
+                </ul>
+            </nav>
         </div>
     </header>
 
     <main class="dashboard">
         <div class="dashboard-grid">
-            <!-- Energy Consumption Section -->
-            <section class="dashboard-section" data-area="energy">
-                <div class="section-header">
-                    <h2><i class="fas fa-bolt"></i> Energy Consumption</h2>
-                </div>
-                <div class="metrics-grid">
-                    <!-- Server hosts card -->
-                    <div class="metric-card">
-                        <div class="metric-header">
-                            <div class="metric-icon">
-                                <i class="fas fa-server"></i>
-                            </div>
-                            <h3>Server Hosts</h3>
-                        </div>
-                        <div class="metric-value">{{ unique_hosts }}</div>
-                        <div class="metric-meta">Average Energy Consumption: {{ average_energy_consumption }} KWH</div>
-                    </div>
-                    
-                    <!-- Before refinement card -->
-                    <div class="metric-card-two">
-                        <div class="top-half">
-                            <div class="metric-header">
-                                <div class="metric-icon">
-                                    <i class="fas fa-bolt"></i>
-                                </div>
-                                <h3>Before Refinement</h3>
-                            </div>
-                            <div class="metric-value">{{ total_before }} Wh</div>
-                        </div>
-                    </div>
-                    
-                    <!-- After refinement card -->
-                    <div class="metric-card-two">
-                        <div class="top-half">
-                            <div class="metric-header">
-                                <div class="metric-icon">
-                                    <i class="fas fa-bolt"></i>
-                                </div>
-                                <h3>After Refinement</h3>
-                            </div>
-                            <div class="metric-value">{{ total_after }} Wh</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Improvement card -->
-                    <div class="improvement-card">
-                        <div class="improvement-label">Energy Efficiency Improvement</div>
-                        {% set energy_improvement = ((total_before|float - total_after|float) / total_before|float * 100) | round(2) %}
-                        <div class="improvement-value {{ 'positive' if energy_improvement > 0 else 'negative' }}">
-                            {{ energy_improvement }}%
-                            <i class="fas {{ 'fa-arrow-up' if energy_improvement > 0 else 'fa-arrow-down' }}"></i>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="chart-container">
-                    {{ div_bar_graph_before | safe }}
-                </div>
-                <div class="chart-container">
-                    {{ div_bar_graph_after | safe }}
-                </div>
-            </section>
-
-            <!-- Emissions Analysis Section -->
-            <section class="dashboard-section" data-area="emissions">
-                <div class="section-header">
-                    <h2><i class="fas fa-cloud"></i> Emissions Analysis</h2>
-                </div>
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-header">
-                            <div class="metric-icon">
-                                <i class="fas fa-server"></i>
-                            </div>
-                            <h3>Server Hosts</h3>
-                        </div>
-                        <div class="metric-value">{{ unique_hosts }}</div>
-                        <div class="metric-meta">Average CO₂ Emission: {{ average_co2_emission }} Metric Tons</div>
-                    </div>
-                    <div class="metric-card-two">
-                        <div class="top-half">
-                            <div class="metric-header">
-                                <div class="metric-icon">
-                                    <i class="fas fa-bolt"></i>
-                                </div>
-                                <h3>Before Refinement</h3>
-                            </div>
-                            <div class="metric-value">{{ total_emissions_before }} gCO2eq</div>
-                        </div>
-                    </div>      
-                    <div class="metric-card-two">
-                        <div class="top-half">
-                            <div class="metric-header">
-                                <div class="metric-icon">
-                                    <i class="fas fa-bolt"></i>
-                                </div>
-                                <h3>After Refinement</h3>
-                            </div>
-                            <div class="metric-value">{{ total_emissions_after }} gCO2eq</div>
-                        </div>
-                    </div>
-                    <div class="improvement-card">
-                        <div class="improvement-label">Emissions Reduction</div>
-                        {% set emissions_improvement = 0 %}
-                        {% if total_emissions_before|float > 0 %}
-                            {% set emissions_improvement = ((total_emissions_before|float - total_emissions_after|float) / total_emissions_before|float * 100) | round(2) %}
-                        {% endif %}
-                        <div class="improvement-value {{ 'positive' if emissions_improvement > 0 else 'negative' if emissions_improvement < 0 else 'neutral' }}">
-                            {{ emissions_improvement }}%
-                            {% if emissions_improvement > 0 %}
-                                <i class="fas fa-arrow-up"></i>
-                            {% elif emissions_improvement < 0 %}
-                                <i class="fas fa-arrow-down"></i>
-                            {% else %}
-                                <i class="fas fa-minus"></i>
-                            {% endif %}
-                        </div>
-                    </div>                 
-                </div>
-                
-                <div class="chart-container">
-                    {{ div_bar_graph_before_gco2eq | safe }}
-                </div>
-                <div class="chart-container">
-                    {{ div_bar_graph_after_gco2eq | safe }}
-                </div>
-            </section>
-
             <!-- Server Analysis Section -->
             <section class="dashboard-section" data-area="server">
                 <div class="section-header">
@@ -914,38 +1033,51 @@
                     <div class="server-graph-card">
                         {{ div_line_chart | safe }}
                     </div>
-                    <!-- Middle card for critical servers -->
-                    <div class="critical-servers-card">
-                        <div class="critical-servers-header">
-                            <div class="critical-servers-icon">
-                                <i class="fas fa-exclamation-triangle"></i>
+                        <!-- Middle column with stacked cards -->
+                    <div class="middle-column">
+                        <!-- Critical servers card -->
+                        <div class="critical-servers-card">
+                            <div class="critical-servers-header">
+                                <div class="critical-servers-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <h3>Critical Servers</h3>
                             </div>
-                            <h3>Critical Servers</h3>
-                        </div>
-                            <!-- Add header row for the list -->
-                        <div class="servers-list-header">
-                            <div class="header-cell">Server ID</div>
-                            <div class="header-cell">CO₂ Emission (Metric Tons)</div>
-                        </div>
-                        <div class="critical-servers-list">
-                            {% if critical_servers %}
-                                {% for server in critical_servers %}
-                                <div class="server-item">
-                                    <div class="server-name">
-                                        <i class="fas fa-server"></i>
-                                        {{ server['Host-name'] }}
+                            <div class="servers-list-header">
+                                <div class="header-cell">Hostname</div>
+                                <div class="header-cell">CO₂ Emission (Metric Tons)</div>
+                            </div>
+                            <div class="critical-servers-list">
+                                {% if critical_servers %}
+                                    {% for server in critical_servers %}
+                                    <div class="server-item">
+                                        <div class="server-name">
+                                            <i class="fas fa-server"></i>
+                                            {{ server['Host-name'] }}
+                                        </div>
+                                        <div class="server-emission">
+                                            {{ "%.2f"|format(server['CO2 emission (Metric Tons)']) }}
+                                            <span class="unit">MT</span>
+                                        </div>
                                     </div>
-                                    <div class="server-emission">
-                                        {{ "%.2f"|format(server['CO2 emission (Metric Tons)']) }}
-                                        <span class="unit">MT</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="no-servers">
+                                        No critical servers found
                                     </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Total servers card -->
+                        <div class="total-servers-card">
+                            <div class="total-servers-header">
+                                <div class="total-servers-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
                                 </div>
-                                {% endfor %}
-                            {% else %}
-                                <div class="no-servers">
-                                    No critical servers found
-                                </div>
-                            {% endif %}
+                                <h3>Total Critical Servers</h3>
+                            </div>
+                            <div class="total-servers-value">6</div>
                         </div>
                     </div>
                     
@@ -1046,21 +1178,209 @@
                                         {% set network_points = [] %}
                                         {% for value in network_usage_data[-10:] %}
                                             {% set x = (loop.index0 / 9) * 100 %}
-                                            {% set y = 30 - (value / max_network * 25) %}
+                                            {% if max_network > 0 %}
+                                                {% set y = 30 - (value / max_network * 25) %}
+                                            {% else %}
+                                                {% set y = 30 %}
+                                            {% endif %}
                                             {% set _ = network_points.append("%d %d"|format(x, y)) %}
                                         {% endfor %}
                                         <path d="M {{ network_points|join(' L ') }}" 
-                                            fill="none" 
-                                            stroke="#845EC2" 
-                                            stroke-width="2"/>
+                                              fill="none" 
+                                              stroke="#845EC2" 
+                                              stroke-width="2"/>
                                     </svg>
-                                </div>
+                                </div>                                
                                 <div class="metric-box-value">
                                     {{ average_network_usage }} bytes
                                 </div> 
                             </div>
+
+                            <!-- Disk Read -->
+                            <div class="metric-box">
+                                <div class="metric-box-header">
+                                    <div class="metric-box-icon">
+                                        <i class="fas fa-hard-drive"></i>
+                                    </div>
+                                    <h4>Disk Read</h4>
+                                </div>
+                                <div class="sparkline-container">
+                                    <svg class="sparkline" viewBox="0 0 100 30">
+                                        {% set network_points = [] %}
+                                        {% for value in network_usage_data[-10:] %}
+                                            {% set x = (loop.index0 / 9) * 100 %}
+                                            {% if max_network > 0 %}
+                                                {% set y = 30 - (value / max_network * 25) %}
+                                            {% else %}
+                                                {% set y = 30 %}
+                                            {% endif %}
+                                            {% set _ = network_points.append("%d %d"|format(x, y)) %}
+                                        {% endfor %}
+                                        <path d="M {{ network_points|join(' L ') }}" 
+                                              fill="none" 
+                                              stroke="#845EC2" 
+                                              stroke-width="2"/>
+                                    </svg>
+                                </div>                                
+                                <div class="metric-box-value">
+                                    {{ average_network_usage }} bytes
+                                </div> 
+                            </div>
+
+                            <!-- Disk Write -->
+                            <div class="metric-box">
+                                <div class="metric-box-header">
+                                    <div class="metric-box-icon">
+                                        <i class="fas fa-floppy-disk"></i>
+                                    </div>
+                                    <h4>Disk Write</h4>
+                                </div>
+                                <div class="sparkline-container">
+                                    <svg class="sparkline" viewBox="0 0 100 30">
+                                        {% set network_points = [] %}
+                                        {% for value in network_usage_data[-10:] %}
+                                            {% set x = (loop.index0 / 9) * 100 %}
+                                            {% if max_network > 0 %}
+                                                {% set y = 30 - (value / max_network * 25) %}
+                                            {% else %}
+                                                {% set y = 30 %}
+                                            {% endif %}
+                                            {% set _ = network_points.append("%d %d"|format(x, y)) %}
+                                        {% endfor %}
+                                        <path d="M {{ network_points|join(' L ') }}" 
+                                              fill="none" 
+                                              stroke="#845EC2" 
+                                              stroke-width="2"/>
+                                    </svg>
+                                </div>                                
+                                <div class="metric-box-value">
+                                    {{ average_network_usage }} bytes
+                                </div> 
+                            </div>
+
                         </div>
                     </div>
+                </div>
+            </section>
+            <!-- Energy Consumption Section -->
+            <section class="dashboard-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-bolt"></i> Energy Consumption</h2>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon">
+                                <i class="fas fa-server"></i>
+                            </div>
+                            <h3>Testcase Server</h3>
+                        </div>
+                        <div class="metric-value">{{ unique_hosts }}</div>
+                        <div class="metric-meta">Average Energy: {{ average_energy_consumption }} KWH</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon">
+                                <i class="fas fa-code"></i>
+                            </div>
+                            <h3>Before Refinement</h3>
+                        </div>
+                        <div class="metric-value">{{ total_before }} <span class="unit">Wh</span></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon">
+                                <i class="fas fa-code-branch"></i>
+                            </div>
+                            <h3>After Refinement</h3>
+                        </div>
+                        <div class="metric-value">{{ total_after }} <span class="unit">Wh</span></div>
+                    </div>
+                    <div class="improvement-card">
+                        <div class="improvement-label">
+                            Overall Energy Efficiency
+                            <div class="info-button">
+                                i
+                                <span class="tooltip-text">Testcases are generated & run on the testcase server. Results energy efficiency calculated.</span>
+                            </div>
+                        </div>
+                        {% set threshold = 1e-6 %}
+                        {% if total_before|float > threshold %}
+                            {% set energy_improvement = ((total_before|float - total_after|float) / total_before|float * 100) | round(2) %}
+                        {% else %}
+                            {% set energy_improvement = 0 %}
+                        {% endif %}
+                        <div class="improvement-value {{ 'positive' if energy_improvement > 0 else 'negative' }}">
+                            {{ energy_improvement }}%
+                            <i class="fas {{ 'fa-arrow-up' if energy_improvement > 0 else 'fa-arrow-down' }}"></i>
+                        </div>
+                    </div>                    
+                </div>
+                <div class="chart-container">
+                    {{ div_combined_graph | safe }}
+                </div>
+            </section>
+
+            <!-- Emissions Analysis Section -->
+            <section class="dashboard-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-cloud"></i> Emissions Analysis</h2>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon">
+                                <i class="fas fa-server"></i>
+                            </div>
+                            <h3>Testcase Server</h3>
+                        </div>
+                        <div class="metric-value">{{ unique_hosts }}</div>
+                        <div class="metric-meta">Average CO₂: {{ average_co2_emission }} Metric Tons</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon">
+                                <i class="fas fa-code"></i>
+                            </div>
+                            <h3>Before Refinement</h3>
+                        </div>
+                        <div class="metric-value">{{ total_emissions_before }} <span class="unit">gCO2eq</span></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon">
+                                <i class="fas fa-code-branch"></i>
+                            </div>
+                            <h3>After Refinement</h3>
+                        </div>
+                        <div class="metric-value">{{ total_emissions_after }} <span class="unit">gCO2eq</span></div>
+                    </div>
+                    <div class="improvement-card">
+                        <div class="improvement-label">
+                            Overall Emissions Reduction
+                            <div class="info-button">
+                                i
+                                <span class="tooltip-text">Testcases are generated & run on the testcase server. Results emissions calculated.</span>
+                            </div>
+                        </div>
+                        {% set emissions_improvement = 0 %}
+                        {% if total_emissions_before|float > 0 %}
+                            {% set emissions_improvement = ((total_emissions_before|float - total_emissions_after|float) / total_emissions_before|float * 100) | round(2) %}
+                        {% endif %}
+                        <div class="improvement-value {{ 'positive' if emissions_improvement > 0 else 'negative' if emissions_improvement < 0 else 'neutral' }}">
+                            {{ emissions_improvement }}%
+                            {% if emissions_improvement > 0 %}
+                                <i class="fas fa-arrow-up"></i>
+                            {% elif emissions_improvement < 0 %}
+                                <i class="fas fa-arrow-down"></i>
+                            {% else %}
+                                <i class="fas fa-minus"></i>
+                            {% endif %}
+                        </div>
+                    </div>                 
+                </div>
+                <div class="chart-container">
+                    {{ div_emissions_combined_graph | safe }}
                 </div>
             </section>
 
@@ -1071,10 +1391,18 @@
                 </div>
                 <div class="charts-row">
                     <div class="chart-container">
-                        {{ div_bar_graph_embedded | safe }}
+                        <div class="info-button">
+                            i
+                            <span class="tooltip-text">Embedded code refers to files or scripts that are typically used inside other software, webpages, or environments to define structure, style, or behavior.</span>
+                        </div>
+                        {{ div_pie_chart_embedded | safe }}
                     </div>
                     <div class="chart-container">
-                        {{ div_bar_graph_non_embedded | safe }}
+                        <div class="info-button">
+                            i
+                            <span class="tooltip-text">Non-embedded code refers to standalone programming files that run independently to create applications, perform tasks, or process data.</span>
+                        </div>
+                        {{ div_pie_chart_non_embedded | safe }}
                     </div>
                 </div>
             </section>   
