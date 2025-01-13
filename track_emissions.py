@@ -15,6 +15,7 @@ import plotly.io as pio
 from codecarbon import EmissionsTracker
 from dotenv import load_dotenv
 from jinja2 import Environment, FileSystemLoader
+from plotly.subplots import make_subplots
 
 
 # Load environment variables
@@ -418,6 +419,7 @@ def generate_html_report(result_dir):
     last_run_template_path = 'last_run_report_template.html'
     details_template_path = 'details_template.html'
     last_run_details_template_path = 'last_run_details_template.html'
+    details_server_template_path = 'details_server_template.html'
 
     # Prepare detailed data
     solution_dirs, detailed_data = prepare_detailed_data(result_dir)
@@ -442,6 +444,11 @@ def generate_html_report(result_dir):
         logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, last_run_template_path)}")
         return
 
+    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, details_server_template_path)):
+        logging.error(f"Detailed HTML template file not found: {details_server_template_path}")
+        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, details_server_template_path)}")
+        return
+    
     # Load the templates
     try:
         template = env.get_template(template_path)
@@ -472,10 +479,18 @@ def generate_html_report(result_dir):
         logging.error(f"Failed to load template {last_run_details_template_path}: {e}")
         return
 
+    try:
+        details_server_template = env.get_template(details_server_template_path)
+        logging.info(f"Loaded template: {details_server_template_path}")
+    except Exception as e:
+        logging.error(f"Failed to load template {details_server_template_path}: {e}")
+        return
+    
     before_csv = os.path.join(result_dir, 'main_before_emissions_data.csv')
     after_csv = os.path.join(result_dir, 'main_after_emissions_data.csv')
     comparison_csv = os.path.join(result_dir, 'comparison_results.csv')
     server_csv = os.path.join(result_dir, 'server_data.csv')
+    mul_server_csv = os.path.join(result_dir, 'multiple_server_data.csv')
 
     # Check if CSV files exist
     if not os.path.exists(before_csv):
@@ -493,6 +508,7 @@ def generate_html_report(result_dir):
     after_df = pd.read_csv(after_csv)
     comparison_df = pd.read_csv(comparison_csv)
     server_df = pd.read_csv(server_csv)
+    mul_server_df = pd.read_csv(mul_server_csv)
 
     # Calculate unique hosts and average CO2 emissions
     unique_hosts = server_df['Host-name'].nunique()  # Count of unique host names
@@ -522,59 +538,105 @@ def generate_html_report(result_dir):
     # Convert the DataFrame to a list of dictionaries for Jinja2
     critical_servers_list = critical_servers.to_dict(orient='records') if not critical_servers.empty else None
 
-    # Combine Date and Time into a single datetime column
-    server_df['Datetime'] = pd.to_datetime(server_df['Date'] + ' ' + server_df['Time'])
-
-    # Prepare the data for the line chart
-    fig = go.Figure()
-
-    # Add the energy consumption line
-    fig.add_trace(go.Scatter(
-        x=server_df['Datetime'], 
-        y=server_df['Energy consumption (KWH)'], 
-        mode='lines', 
-        name='Energy Consumption (KWH)'
-    ))
-
-    # Add the CO2 emission line
-    fig.add_trace(go.Scatter(
-        x=server_df['Datetime'], 
-        y=server_df['CO2 emission (Metric Tons)'], 
-        mode='lines', 
-        name='CO2 emission (Metric Tons)'
-    ))
-
-    # Update the layout
-    fig.update_layout(
-        title='Server Emissions and Energy Consumption Over Time',
-        xaxis_title='Datetime',
-        yaxis_title='Value',
-        xaxis=dict(type='date'),  # Ensure the x-axis is treated as dates
-        width=700,
-        height=380
+    # Create figure with secondary y-axis
+    fig = make_subplots(
+        rows=2, cols=1,
+        subplot_titles=('Energy Consumption Over Time', 'CO2 Emissions Over Time'),
+        vertical_spacing=0.30
     )
 
-    # Save the chart as a Plotly HTML div
-    div_line_chart = fig.to_html(full_html=False, include_plotlyjs='cdn')
+    # Add area plot for energy consumption
+    fig.add_trace(
+        go.Scatter(
+            x=server_df['Date'],
+            y=server_df['Energy consumption (KWH)'],
+            fill='tozeroy',
+            name='Energy Consumption (KWH)',
+            line=dict(color='#4A90E2'),  # Blue color
+            fillcolor='rgba(74, 144, 226, 0.3)',  # Transparent blue
+        ),
+        row=1, col=1
+    )
 
-    # # Add the energy consumption line
-    # fig.add_trace(go.Scatter(x=server_df['Date'], y=server_df['Energy consumption (KWH)'], mode='lines', name='Energy Consumption (KWH)'))
+    # Add area plot for CO2 emissions
+    fig.add_trace(
+        go.Scatter(
+            x=server_df['Date'],
+            y=server_df['CO2 emission (Metric Tons)'],
+            fill='tozeroy',
+            name='CO2 Emissions (Metric Tons)',
+            line=dict(color='#50C878'),  # Green color
+            fillcolor='rgba(80, 200, 120, 0.3)',  # Transparent green
+        ),
+        row=2, col=1
+    )
 
-    # # Add the CO2 emission line
-    # fig.add_trace(go.Scatter(x=server_df['Date'], y=server_df['CO2 emission (Metric Tons)'], mode='lines', name='CO2 emission (Metric Tons)'))
+    # Update layout with modern styling
+    fig.update_layout(
+        title=dict(
+            text='Server Analysis: Energy Consumption and CO2 Emissions',
+            y=1,
+            x=0.5,
+            xanchor='center',
+            yanchor='top',
+            font=dict(size=18)
+        ),
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.2,
+            xanchor="center",
+            x=0.5
+        ),
+        width=600,
+        height=500,
+        paper_bgcolor='white',
+        plot_bgcolor='rgba(240,240,240,0.3)',  # Light gray background
+    )
 
-    # # Update the layout
-    # fig.update_layout(
-    #     title='Date-wise Server Emissions and Energy Consumption',
-    #     xaxis_title='Date',
-    #     yaxis_title='Value',
-    #     xaxis_type='category',
-    #     width=700,
-    #     height=380
-    # )
+    # Update axes
+    fig.update_xaxes(
+        title_text="Date",
+        showgrid=True,
+        gridwidth=1,
+        gridcolor='rgba(128,128,128,0.2)',
+        row=1, col=1
+    )
 
-    # # Save the chart as a Plotly HTML div
-    # div_line_chart = fig.to_html(full_html=False, include_plotlyjs='cdn')
+    fig.update_xaxes(
+        title_text="Date",
+        showgrid=True,
+        gridwidth=1,
+        gridcolor='rgba(128,128,128,0.2)',
+        row=2, col=1
+    )
+
+    fig.update_yaxes(
+        title_text="Kilowatt-hour",
+        showgrid=True,
+        gridwidth=1,
+        gridcolor='rgba(128,128,128,0.2)',
+        row=1, col=1
+    )
+
+    fig.update_yaxes(
+        title_text="Metric Tons",
+        showgrid=True,
+        gridwidth=1,
+        gridcolor='rgba(128,128,128,0.2)',
+        row=2, col=1
+    )
+
+    # Convert to HTML
+    div_faceted_area_charts = pio.to_html(fig, include_plotlyjs=False, full_html=False)
+
+    # Multi-server data:
+    unique_servers = mul_server_df['hostname'].unique()  # Get unique host names
+
+    # Prepare lists for before and after details to pass to the template
+    server_details = mul_server_df[['os_version','storage_device_count','storage_devices','cpu_percent','ram_total','ram_used','ram_percent','disk_read_bytes','disk_write_bytes','timestamp','hostname','os_type','total_power','cpu_power','ram_power','disk_base_power','disk_io_power','total_co2','cpu_co2','ram_co2','disk_base_co2','disk_io_co2','co2_factor','region']].to_dict(orient='records')
+
     
     # Check if DataFrames are not empty before getting the latest record
     if not before_df.empty:
@@ -641,131 +703,91 @@ def generate_html_report(result_dir):
     # Determine unique solution dirs
     latest_unique_solution_dirs = sorted(set(latest_before_file_type_sorted['solution dir']).union(latest_after_file_type_sorted['solution dir']))
 
+    # Create a color palette with distinct colors
+    colors = px.colors.qualitative.Light24
 
-    # Assign colors to solution dirs
-    color_palette = px.colors.qualitative.Plotly  # Choose a qualitative color palette
-    color_mapping = {}
-    for i, solution_dir in enumerate(unique_solution_dirs):
-        color_mapping[solution_dir] = color_palette[i % len(color_palette)]  # Cycle through palette if needed
+    # Create a dictionary to store colors for each solution dir
+    color_mapping = {
+        solution_dir: colors[i % len(colors)]
+        for i, solution_dir in enumerate(before_file_type_sorted['solution dir'].unique())
+    }
 
-    # Create Plotly Horizontal Bar Graph for Before Emissions with consistent colors
-    bar_graph_before = go.Figure()
-    for _, row in before_file_type_sorted.iterrows():
-        bar_graph_before.add_trace(go.Bar(
-            x=[row['Energy Consumed (Wh)']],
-            y=[row['solution dir']],
-            orientation='h',
-            name=row['solution dir'],
-            marker=dict(color=color_mapping.get(row['solution dir'], 'blue'))
+    # Create figure
+    fig = go.Figure()
+
+    # Add traces for "Before" data
+    for i, (_, row) in enumerate(before_file_type_sorted.iterrows()):
+        fig.add_trace(go.Bar(
+            x=[row['solution dir']],
+            y=[row['Energy Consumed (Wh)']],
+            name='Before',  # Simplified name
+            marker=dict(
+                color=color_mapping[row['solution dir']],
+                opacity=0.9
+            ),
+            offsetgroup=0,
+            showlegend=True if i == 0 else False  # Show legend only for first "Before" bar
         ))
 
-    bar_graph_before.update_layout(
-        barmode='stack',
-        title='Before Optimizing code: Source Code Directory level Energy Consumption(Wh)',
-        xaxis_title='Energy Consumed (Wh)',
-        yaxis_title='Solution Dir',
-        xaxis=dict(
-            range=[0, before_file_type_sorted['Energy Consumed (Wh)'].max() * 1.1],
-            tickformat=".6f"  # Fixed decimal format
-        ),
-        margin=dict(l=120, r=50, t=50, b=50),
-        showlegend=False,
-        width=700,  # Set width
-        height=250  # Set height
-    )
-
-    # Create Plotly Horizontal Bar Graph for After Emissions with consistent colors
-    bar_graph_after = go.Figure()
-    for _, row in after_file_type_sorted.iterrows():
-        bar_graph_after.add_trace(go.Bar(
-            x=[row['Energy Consumed (Wh)']],
-            y=[row['solution dir']],
-            orientation='h',
-            name=row['solution dir'],
-            marker=dict(color=color_mapping.get(row['solution dir'], 'blue'))
+    # Add traces for "After" data
+    for i, (_, row) in enumerate(after_file_type_sorted.iterrows()):
+        fig.add_trace(go.Bar(
+            x=[row['solution dir']],
+            y=[row['Energy Consumed (Wh)']],
+            name='After',  # Simplified name
+            marker=dict(
+                color=color_mapping[row['solution dir']],
+                opacity=0.6,
+                pattern=dict(shape="/", solidity=0.7)
+            ),
+            offsetgroup=1,
+            showlegend=True if i == 0 else False  # Show legend only for first "After" bar
         ))
 
-    bar_graph_after.update_layout(
-        barmode='stack',
-        title='After Optimizing code: Source Code Directory level Energy Consumption(Wh)',
-        xaxis_title='Energy Consumed (Wh)',
-        yaxis_title='Solution Dir',
+    # Update layout
+    fig.update_layout(
+        title={
+            'text': 'Source Code Directory Level Energy Consumption (Wh) - Before vs After Optimization',
+            'y': 0.95,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'
+        },
+        xaxis_title='Solution Dir',
+        yaxis_title='Energy Consumed (Wh)',
+        barmode='group',
         xaxis=dict(
-            range=[0, after_file_type_sorted['Energy Consumed (Wh)'].max() * 1.1],
-            tickformat=".6f"  # Fixed decimal format
+            tickangle=45,
+            tickformat=".6f"
         ),
-        margin=dict(l=120, r=50, t=50, b=50),
-        showlegend=False,
-        width=700,  # Set width
-        height=250  # Set height
+        yaxis=dict(
+            range=[0, max(
+                before_file_type_sorted['Energy Consumed (Wh)'].max(),
+                after_file_type_sorted['Energy Consumed (Wh)'].max()
+            ) * 1.1],
+            tickformat=".6f"
+        ),
+        margin=dict(l=50, r=50, t=100, b=120),
+        showlegend=True,
+        width=700,
+        height=400,
+        legend=dict(
+            orientation="h",      # Horizontal orientation
+            yanchor="top",        # Anchor the legend at the top of its box
+            y=-0.5,               # Position it below the chart
+            xanchor="center",     # Center the legend horizontally
+            x=0.5, 
+            title=None
+        ),
+        plot_bgcolor='white',
+        paper_bgcolor='white'
     )
 
-    # --------------------------------------------------------------------------------------------
+    # Add grid lines for better readability
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGrey')
 
-    # Assign colors to solution dirs
-    color_palette = px.colors.qualitative.Plotly  # Choose a qualitative color palette
-    color_mapping = {}
-    for i, solution_dir in enumerate(latest_unique_solution_dirs):
-        color_mapping[solution_dir] = color_palette[i % len(color_palette)]  # Cycle through palette if needed
-
-    # Create Plotly Horizontal Bar Graph for Before Emissions with consistent colors
-    latest_bar_graph_before = go.Figure()
-    for _, row in latest_before_file_type_sorted.iterrows():
-        latest_bar_graph_before.add_trace(go.Bar(
-            x=[row['Energy Consumed (Wh)']],
-            y=[row['solution dir']],
-            orientation='h',
-            name=row['solution dir'],
-            marker=dict(color=color_mapping.get(row['solution dir'], 'blue'))
-        ))
-
-    latest_bar_graph_before.update_layout(
-        barmode='stack',
-        title='Before Optimizing code: Source Code Directory level Energy Consumption(Wh)',
-        xaxis_title='Energy Consumed (Wh)',
-        yaxis_title='solution dir',
-        xaxis=dict(
-            range=[0, latest_before_file_type_sorted['Energy Consumed (Wh)'].max() * 1.1],
-            tickformat=".6f"  # Fixed decimal format
-        ),
-        margin=dict(l=120, r=50, t=50, b=50),
-        showlegend=False,
-        width=700,  # Set width
-        height=250  # Set height
-    )
-
-    # Create Plotly Horizontal Bar Graph for After Emissions with consistent colors
-    latest_bar_graph_after = go.Figure()
-    for _, row in latest_after_file_type_sorted.iterrows():
-        latest_bar_graph_after.add_trace(go.Bar(
-            x=[row['Energy Consumed (Wh)']],
-            y=[row['solution dir']],
-            orientation='h',
-            name=row['solution dir'],
-            marker=dict(color=color_mapping.get(row['solution dir'], 'blue'))
-        ))
-
-    latest_bar_graph_after.update_layout(
-        barmode='stack',
-        title='Before Optimizing code: Source Code Directory level Energy Consumption(Wh)',
-        xaxis_title='Energy Consumed (Wh)',
-        yaxis_title='solution dir',
-        xaxis=dict(
-            range=[0, latest_after_file_type_sorted['Energy Consumed (Wh)'].max() * 1.1],
-            tickformat=".6f"  # Fixed decimal format
-        ),
-        margin=dict(l=120, r=50, t=50, b=50),
-        showlegend=False,
-        width=700,  # Set width
-        height=250  # Set height
-    )
-
-
-    div_bar_graph_before = pio.to_html(bar_graph_before, include_plotlyjs=False, full_html=False)
-    div_bar_graph_after = pio.to_html(bar_graph_after, include_plotlyjs=False, full_html=False)
-
-    latest_div_bar_graph_before = pio.to_html(latest_bar_graph_before, include_plotlyjs=False, full_html=False)
-    latest_div_bar_graph_after = pio.to_html(latest_bar_graph_after, include_plotlyjs=False, full_html=False)
+    # Convert to HTML
+    div_combined_graph = pio.to_html(fig, include_plotlyjs=False, full_html=False)
 
     # === Feature 1: Horizontal Bar Graphs for Emissions (gCO2eq) by Solution Dir ===
     # Group by 'solution dir' and sum 'Emissions (gCO2eq)'
@@ -787,130 +809,88 @@ def generate_html_report(result_dir):
 
     latest_unique_solution_dirs_gco2eq = sorted(set(latest_before_gco2eq_sorted['solution dir']).union(latest_after_gco2eq_sorted['solution dir']))
 
-    # Create a separate color mapping for gCO2eq graphs
-    color_palette_gco2eq = px.colors.qualitative.Plotly  # Or choose another palette if preferred
-    color_mapping_gco2eq = {}
-    for i, solution_dir in enumerate(unique_solution_dirs_gco2eq):
-        color_mapping_gco2eq[solution_dir] = color_palette_gco2eq[i % len(color_palette_gco2eq)]
+   # Create a dictionary to store colors for each solution dir
+    color_mapping = {
+        solution_dir: colors[i % len(colors)]
+        for i, solution_dir in enumerate(before_file_type_sorted['solution dir'].unique())
+    }
 
-    # Create Plotly Horizontal Bar Graph for Before Emissions (gCO2eq)
-    bar_graph_before_gco2eq = go.Figure()
-    for _, row in before_gco2eq_sorted.iterrows():
-        bar_graph_before_gco2eq.add_trace(go.Bar(
-            x=[row['Emissions (gCO2eq)']],
-            y=[row['solution dir']],
-            orientation='h',
-            name=row['solution dir'],
-            marker=dict(color=color_mapping_gco2eq.get(row['solution dir'], 'blue'))  # Use color_mapping_gco2eq
+    # Create figure
+    fig = go.Figure()
+
+    # Add traces for "Before" data
+    for i, (_, row) in enumerate(before_gco2eq_sorted.iterrows()):
+        fig.add_trace(go.Bar(
+            x=[row['solution dir']],
+            y=[row['Emissions (gCO2eq)']],
+            name='Before',  # Simplified name
+            marker=dict(
+                color=color_mapping[row['solution dir']],
+                opacity=0.9
+            ),
+            offsetgroup=0,
+            showlegend=True if i == 0 else False  # Show legend only for first "Before" bar
         ))
 
-    bar_graph_before_gco2eq.update_layout(
-        barmode='stack',
-        title='Before Optimizing code: Source Code Directory level Emissions(gCO2eq)',
-        xaxis_title='Emissions (gCO2eq)',
-        yaxis_title='Solution Directory',
-        xaxis=dict(
-            range=[0, before_gco2eq_sorted['Emissions (gCO2eq)'].max() * 1.1],
-            tickformat=".6f"  # Fixed decimal format
-        ),
-        margin=dict(l=120, r=50, t=50, b=50),
-        showlegend=False,
-        width=700,  # Set width
-        height=250  # Set height
-    )
-
-    # Create Plotly Horizontal Bar Graph for After Emissions (gCO2eq)
-    bar_graph_after_gco2eq = go.Figure()
-    for _, row in after_gco2eq_sorted.iterrows():
-        bar_graph_after_gco2eq.add_trace(go.Bar(
-            x=[row['Emissions (gCO2eq)']],
-            y=[row['solution dir']],
-            orientation='h',
-            name=row['solution dir'],
-            marker=dict(color=color_mapping_gco2eq.get(row['solution dir'], 'blue'))
+    # Add traces for "After" data
+    for i, (_, row) in enumerate(after_gco2eq_sorted.iterrows()):
+        fig.add_trace(go.Bar(
+            x=[row['solution dir']],
+            y=[row['Emissions (gCO2eq)']],
+            name='After',  # Simplified name
+            marker=dict(
+                color=color_mapping[row['solution dir']],
+                opacity=0.6,
+                pattern=dict(shape="/", solidity=0.7)
+            ),
+            offsetgroup=1,
+            showlegend=True if i == 0 else False  # Show legend only for first "After" bar
         ))
 
-    bar_graph_after_gco2eq.update_layout(
-        barmode='stack',
-        title='After Optimizing code: Source Code Directory level Emissions(gCO2eq)',
-        xaxis_title='Emissions (gCO2eq)',
-        yaxis_title='Solution Directory',
+    # Update layout
+    fig.update_layout(
+        title={
+            'text': 'Source Code Directory Level Emissions (gCO2eq) - Before vs After Optimization',
+            'y': 0.95,
+            'x': 0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'
+        },
+        xaxis_title='Solution Dir',
+        yaxis_title='Emissions (gCO2eq)',
+        barmode='group',
         xaxis=dict(
-            range=[0, after_gco2eq_sorted['Emissions (gCO2eq)'].max() * 1.1],
-            tickformat=".6f"  # Fixed decimal format
+            tickangle=45,
+            tickformat=".6f"
         ),
-        margin=dict(l=120, r=50, t=50, b=50),
-        showlegend=False,
-        width=700,  # Set width
-        height=250  # Set height
+        yaxis=dict(
+            range=[0, max(
+                before_gco2eq_sorted['Emissions (gCO2eq)'].max(),
+                after_gco2eq_sorted['Emissions (gCO2eq)'].max()
+            ) * 1.1],
+            tickformat=".6f"
+        ),
+        margin=dict(l=50, r=50, t=100, b=120),
+        showlegend=True,
+        width=700,
+        height=400,
+        legend=dict(
+            orientation="h",      # Horizontal orientation
+            yanchor="top",        # Anchor the legend at the top of its box
+            y=-0.5,               # Position it below the chart
+            xanchor="center",     # Center the legend horizontally
+            x=0.5,                # Place the legend at the center
+            title=None   
+        ),
+        plot_bgcolor='white',
+        paper_bgcolor='white'
     )
 
-    # --------------------------------------------------------------------------------------------
-    # Create a separate color mapping for gCO2eq graphs
-    color_palette_gco2eq = px.colors.qualitative.Plotly  # Or choose another palette if preferred
-    color_mapping_gco2eq = {}
-    for i, solution_dir in enumerate(latest_unique_solution_dirs_gco2eq):
-        color_mapping_gco2eq[solution_dir] = color_palette_gco2eq[i % len(color_palette_gco2eq)]
+    # Add grid lines for better readability
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGrey')
 
-    # Create Plotly Horizontal Bar Graph for Before Emissions (gCO2eq)
-    latest_bar_graph_before_gco2eq = go.Figure()
-    for _, row in latest_before_gco2eq_sorted.iterrows():
-        latest_bar_graph_before_gco2eq.add_trace(go.Bar(
-            x=[row['Emissions (gCO2eq)']],
-            y=[row['solution dir']],
-            orientation='h',
-            name=row['solution dir'],
-            marker=dict(color=color_mapping_gco2eq.get(row['solution dir'], 'blue'))
-        ))
-
-    latest_bar_graph_before_gco2eq.update_layout(
-        barmode='stack',
-        title='Before Optimizing code: Source Code Directory level Emissions(gCO2eq)',
-        xaxis_title='Emissions (gCO2eq)',
-        yaxis_title='Solution Directory',
-        xaxis=dict(
-            range=[0, latest_before_gco2eq_sorted['Emissions (gCO2eq)'].max() * 1.1],
-            tickformat=".6f"  # Fixed decimal format
-        ),
-        margin=dict(l=120, r=50, t=50, b=50),
-        showlegend=False,
-        width=700,  # Set width
-        height=250  # Set height
-    )
-
-    # Create Plotly Horizontal Bar Graph for After Emissions (gCO2eq)
-    latest_bar_graph_after_gco2eq = go.Figure()
-    for _, row in latest_after_gco2eq_sorted.iterrows():
-        latest_bar_graph_after_gco2eq.add_trace(go.Bar(
-            x=[row['Emissions (gCO2eq)']],
-            y=[row['solution dir']],
-            orientation='h',
-            name=row['solution dir'],
-            marker=dict(color=color_mapping_gco2eq.get(row['solution dir'], 'blue'))
-        ))
-
-    latest_bar_graph_after_gco2eq.update_layout(
-        barmode='stack',
-        title='After Optimizing code: Source Code Directory level Emissions(gCO2eq)',
-        xaxis_title='Emissions (gCO2eq)',
-        yaxis_title='Solution Directory',
-        xaxis=dict(
-            range=[0, latest_after_gco2eq_sorted['Emissions (gCO2eq)'].max() * 1.1],
-            tickformat=".6f"  # Fixed decimal format
-        ),
-        margin=dict(l=120, r=50, t=50, b=50),
-        showlegend=False,
-        width=700,  # Set width
-        height=250  # Set height
-    )
-
-    # Convert figures to HTML div
-    div_bar_graph_before_gco2eq = pio.to_html(bar_graph_before_gco2eq, include_plotlyjs=False, full_html=False)
-    div_bar_graph_after_gco2eq = pio.to_html(bar_graph_after_gco2eq, include_plotlyjs=False, full_html=False)
-    
-    # Convert figures to HTML div
-    latest_div_bar_graph_before_gco2eq = pio.to_html(latest_bar_graph_before_gco2eq, include_plotlyjs=False, full_html=False)
-    latest_div_bar_graph_after_gco2eq = pio.to_html(latest_bar_graph_after_gco2eq, include_plotlyjs=False, full_html=False)
+    # Convert to HTML
+    div_emissions_combined_graph = pio.to_html(fig, include_plotlyjs=False, full_html=False)
 
     # === Feature 2: Top Five Tables ===
     # Top Five Files Generating Most Energy (Before Refinement)
@@ -973,166 +953,132 @@ def generate_html_report(result_dir):
 
     # Check if there are any embedded code files
     if embedded_df.empty:
-        div_bar_graph_embedded = "<p>No embedded code files found: ['.html', '.css', '.xml', '.php', '.ts']</p>"
+        div_pie_chart_embedded = "<p>No embedded code files found: ['.html', '.css', '.xml', '.php', '.ts']</p>"
     else:
-        # Create Plotly Horizontal Bar Graph for Embedded Code Emissions
-        bar_graph_embedded = go.Figure()
+        # Create a single figure
+        fig = go.Figure()
 
-        bar_graph_embedded.add_trace(go.Bar(
-            x=[total_embedded_before],
-            y=['Embedded Code'],
-            orientation='h',
-            name='Before',
-            marker=dict(color='red')
-        ))
-
-        bar_graph_embedded.add_trace(go.Bar(
-            x=[total_embedded_after],
-            y=['Embedded Code'],
-            orientation='h',
-            name='After',
-            marker=dict(color='green')
-        ))
-
-        bar_graph_embedded.update_layout(
-            barmode='group',
-            title='Emissions for Embedded Code (gCO2eq)',
-            xaxis_title='Emissions (gCO2eq)',
-            yaxis_title='Code Type',
-            xaxis=dict(
-                range=[0, max(total_embedded_before, total_embedded_after) * 1.1],
-                tickformat=".6f"  # Fixed decimal format
-            ),
-            margin=dict(l=100, r=50, t=50, b=50),
-            showlegend=True,
-            width=700,  # Set width
-            height=250  # Set height
-
+        # Add a single pie chart with both values
+        fig.add_trace(
+            go.Pie(
+                values=[total_embedded_before, total_embedded_after],
+                labels=['Before', 'After'],
+                name="Emissions",
+                marker=dict(colors=['#FF6B6B', '#4ECDC4']),  # Red for before, Teal for after
+                textinfo='label+value',
+                textposition='outside',
+                texttemplate='%{label}<br>%{value:.6f} gCO2eq',
+                hovertemplate="<b>%{label}</b><br>Emissions: %{value:.6f} gCO2eq<br>%{percent}<extra></extra>",
+                hole=0.7,  # Large hole for the percentage
+                direction='clockwise',
+                showlegend=False
+            )
         )
 
-        # Convert embedded bar graph to HTML div
-        div_bar_graph_embedded = pio.to_html(bar_graph_embedded, include_plotlyjs=False, full_html=False)
+        # Calculate reduction percentage
+        reduction_percentage = ((total_embedded_before - total_embedded_after) / total_embedded_before * 100)
+
+        # Update layout with modern styling
+        fig.update_layout(
+            title=dict(
+                text='Embedded Code Emissions (gCO2eq)<br>[".html",".css",".xml",".php",".ts"]',
+                y=0.95,
+                x=0.5,
+                xanchor='center',
+                yanchor='top',
+                font=dict(size=18)
+            ),
+            annotations=[
+                # Add reduction percentage in the middle
+                dict(
+                    text=f"↓{reduction_percentage:.1f}%",
+                    x=0.5,
+                    y=0.5,
+                    font=dict(size=24, color='green'),
+                    showarrow=False
+                ),
+                # Add "Reduction" label below the percentage
+                dict(
+                    text="Reduction",
+                    x=0.5,
+                    y=0.42,
+                    font=dict(size=14, color='green'),
+                    showarrow=False
+                )
+            ],
+            width=600,
+            height=400,
+            paper_bgcolor='white',
+            plot_bgcolor='white',
+            showlegend=False,
+        )
+        # Convert to HTML
+        div_pie_chart_embedded = pio.to_html(fig, include_plotlyjs=False, full_html=False)
 
     # Check if there are any non-embedded code files
     if non_embedded_df.empty:
-        div_bar_graph_non_embedded = "<p>No non-embedded code files found: ['.py', '.java', '.cpp', '.rb']</p>"
+        div_pie_chart_non_embedded = "<p>No non-embedded code files found: ['.py', '.java', '.cpp', '.rb']</p>"
     else:
-        # Create Plotly Horizontal Bar Graph for Non-Embedded Code Emissions
-        bar_graph_non_embedded = go.Figure()
+        # Create a single figure
+        fig = go.Figure()
 
-        bar_graph_non_embedded.add_trace(go.Bar(
-            x=[total_non_embedded_before],
-            y=['Non-Embedded Code'],
-            orientation='h',
-            name='Before',
-            marker=dict(color='red')
-        ))
-
-        bar_graph_non_embedded.add_trace(go.Bar(
-            x=[total_non_embedded_after],
-            y=['Non-Embedded Code'],
-            orientation='h',
-            name='After',
-            marker=dict(color='green')
-        ))
-
-        bar_graph_non_embedded.update_layout(
-            barmode='group',
-            title='Emissions for Non-Embedded Code (gCO2eq): [".py", ".java", ".cpp", ".rb"]',
-            xaxis_title='Emissions (gCO2eq)',
-            yaxis_title='Code Type',
-            xaxis=dict(
-                range=[0, max(total_non_embedded_before, total_non_embedded_after) * 1.1],
-                tickformat=".6f"  # Fixed decimal format
-            ),
-            margin=dict(l=150, r=50, t=50, b=50),
-            showlegend=True,
-            width=700,  # Set width
-            height=250  # Set height
-
+        # Add a single pie chart with both values
+        fig.add_trace(
+            go.Pie(
+                values=[total_non_embedded_before, total_non_embedded_after],
+                labels=['Before', 'After'],
+                name="Emissions",
+                marker=dict(colors=['#FF6B6B', '#4ECDC4']),  # Red for before, Teal for after
+                textinfo='label+value',
+                textposition='outside',
+                texttemplate='%{label}<br>%{value:.6f} gCO2eq',
+                hovertemplate="<b>%{label}</b><br>Emissions: %{value:.6f} gCO2eq<br>%{percent}<extra></extra>",
+                hole=0.7,  # Large hole for the percentage
+                direction='clockwise',
+                showlegend=False
+            )
         )
 
-        # Convert non-embedded bar graph to HTML div
-        div_bar_graph_non_embedded = pio.to_html(bar_graph_non_embedded, include_plotlyjs=False, full_html=False)
+        # Calculate reduction percentage
+        reduction_percentage = ((total_non_embedded_before - total_non_embedded_after) / total_non_embedded_before * 100)
 
-# --------------------------------------------------------------------------------------------
-# Check if there are any embedded code files
-    if latest_emissions_df.empty:
-        latest_div_bar_graph_embedded = "<p>No embedded code files found: ['.html', '.css', '.xml', '.php', '.ts'] </p>"
-    else:
-        # Create Plotly Horizontal Bar Graph for Embedded Code Emissions
-        latest_bar_graph_embedded = go.Figure()
-
-        latest_bar_graph_embedded.add_trace(go.Bar(
-            x=[latest_total_embedded_before],
-            y=['Embedded Code'],
-            orientation='h',
-            name='Before',
-            marker=dict(color='red')
-        ))
-
-        latest_bar_graph_embedded.add_trace(go.Bar(
-            x=[latest_total_embedded_after],
-            y=['Embedded Code'],
-            orientation='h',
-            name='After',
-            marker=dict(color='green')
-        ))
-
-        latest_bar_graph_embedded.update_layout(
-            barmode='group',
-            title='Emissions for Embedded Code (gCO2eq)',
-            xaxis_title='Emissions (gCO2eq)',
-            yaxis_title='Code Type',
-            xaxis=dict(
-                range=[0, max(latest_total_embedded_before, latest_total_embedded_after) * 1.1],
-                tickformat=".6f"  # Fixed decimal format
+        # Update layout with modern styling
+        fig.update_layout(
+            title=dict(
+                text='Non-Embedded Code Emissions (gCO2eq)<br>[".py", ".java", ".cpp", ".rb"]',
+                y=0.95,
+                x=0.5,
+                xanchor='center',
+                yanchor='top',
+                font=dict(size=18)
             ),
-            margin=dict(l=100, r=50, t=50, b=50),
-            showlegend=True
+            annotations=[
+                # Add reduction percentage in the middle
+                dict(
+                    text=f"↓{reduction_percentage:.1f}%",
+                    x=0.5,
+                    y=0.5,
+                    font=dict(size=24, color='green'),
+                    showarrow=False
+                ),
+                # Add "Reduction" label below the percentage
+                dict(
+                    text="Reduction",
+                    x=0.5,
+                    y=0.38,
+                    font=dict(size=14, color='green'),
+                    showarrow=False
+                )
+            ],
+            width=600,
+            height=400,
+            paper_bgcolor='white',
+            plot_bgcolor='white',
+            showlegend=False,
         )
+        # Convert to HTML
+        div_pie_chart_non_embedded = pio.to_html(fig, include_plotlyjs=False, full_html=False)
 
-        # Convert embedded bar graph to HTML div
-        latest_div_bar_graph_embedded = pio.to_html(latest_bar_graph_embedded, include_plotlyjs=False, full_html=False)
-
-    # Check if there are any non-embedded code files
-    if latest_non_emissions_df.empty:
-        latest_div_bar_graph_non_embedded = "<p>No non-embedded code files found: ['.py', '.java', '.cpp', '.rb']</p>"
-    else:
-        # Create Plotly Horizontal Bar Graph for Non-Embedded Code Emissions
-        latest_bar_graph_non_embedded = go.Figure()
-
-        latest_bar_graph_non_embedded.add_trace(go.Bar(
-            x=[latest_total_non_embedded_before],
-            y=['Non-Embedded Code'],
-            orientation='h',
-            name='Before',
-            marker=dict(color='red')
-        ))
-
-        latest_bar_graph_non_embedded.add_trace(go.Bar(
-            x=[latest_total_non_embedded_after],
-            y=['Non-Embedded Code'],
-            orientation='h',
-            name='After',
-            marker=dict(color='green')
-        ))
-
-        latest_bar_graph_non_embedded.update_layout(
-            barmode='group',
-            title='Emissions for Non-Embedded Code (gCO2eq): [".py", ".java", ".cpp", ".rb"]',
-            xaxis_title='Emissions (gCO2eq)',
-            yaxis_title='Code Type',
-            xaxis=dict(
-                range=[0, max(latest_total_non_embedded_before, latest_total_non_embedded_after) * 1.1],
-                tickformat=".6f"  # Fixed decimal format
-            ),
-            margin=dict(l=150, r=50, t=50, b=50),
-            showlegend=True
-        )
-
-        # Convert non-embedded bar graph to HTML div
-        latest_div_bar_graph_non_embedded = pio.to_html(latest_bar_graph_non_embedded, include_plotlyjs=False, full_html=False)
 # --------------------------------------------------------------------------------------------
 
 
@@ -1142,16 +1088,12 @@ def generate_html_report(result_dir):
         total_after=f"{total_after:.6f}",
         energy_table_html=energy_table_html,
         emissions_table_html=emissions_table_html,
-        div_bar_graph_before=div_bar_graph_before,
-        div_bar_graph_after=div_bar_graph_after,
         total_emissions_before=f"{total_emissions_before:.6f}",
         total_emissions_after=f"{total_emissions_after:.6f}",
-        div_bar_graph_before_gco2eq=div_bar_graph_before_gco2eq,
-        div_bar_graph_after_gco2eq=div_bar_graph_after_gco2eq,
-        div_bar_graph_embedded=div_bar_graph_embedded,
-        div_bar_graph_non_embedded=div_bar_graph_non_embedded,
+        # div_bar_graph_embedded=div_bar_graph_embedded,
+        # div_bar_graph_non_embedded=div_bar_graph_non_embedded,
         last_run_timestamp=last_run_timestamp,  # Pass the timestamp
-        div_line_chart=div_line_chart,
+        div_line_chart=div_faceted_area_charts,
         unique_hosts=unique_hosts,
         average_co2_emission=round(average_co2_emission, 4),  # Round for better display
         average_energy_consumption=round(average_energy_consumption, 4),  # Round for better display
@@ -1165,6 +1107,11 @@ def generate_html_report(result_dir):
         network_usage_data=network_data,
         max_network=max_network,
         critical_servers=critical_servers_list,
+        div_combined_graph=div_combined_graph,
+        div_emissions_combined_graph=div_emissions_combined_graph,
+        div_pie_chart_non_embedded=div_pie_chart_non_embedded,
+        div_pie_chart_embedded=div_pie_chart_embedded,
+        unique_servers=unique_servers,
     )
 
     # Render the details template with detailed data
@@ -1180,19 +1127,13 @@ def generate_html_report(result_dir):
         latest_total_after=f"{latest_total_after:.2f}",
         latest_energy_table_html=latest_energy_table_html,
         latest_emissions_table_html=latest_emissions_table_html,
-        latest_div_bar_graph_before=latest_div_bar_graph_before,
-        latest_div_bar_graph_after=latest_div_bar_graph_after,
         latest_total_emissions_before=f"{latest_total_emissions_before:.2f}",
         latest_total_emissions_after=f"{latest_total_emissions_after:.2f}",
-        latest_div_bar_graph_before_gco2eq=latest_div_bar_graph_before_gco2eq,
-        latest_div_bar_graph_after_gco2eq=latest_div_bar_graph_after_gco2eq,
-        latest_div_bar_graph_embedded=latest_div_bar_graph_embedded,
-        latest_div_bar_graph_non_embedded=latest_div_bar_graph_non_embedded,
         last_run_timestamp=last_run_timestamp,  # Pass the timestamp
-        div_line_chart=div_line_chart,
+        div_line_chart=div_faceted_area_charts,
         unique_hosts=unique_hosts,
         average_co2_emission=round(average_co2_emission, 4),  # Round for better display
-        average_energy_consumption=round(average_energy_consumption, 4)  # Round for better display
+        average_energy_consumption=round(average_energy_consumption, 4),  # Round for better display
     )
 
         # Render the timestamp-based report template
@@ -1201,6 +1142,12 @@ def generate_html_report(result_dir):
         latest_before_details=latest_before_details,
         latest_after_details=latest_after_details
     )
+
+    server_details = details_server_template.render(
+        unique_servers=unique_servers,
+        server_details=server_details
+    )
+
 
     # === Finalizing the HTML Content ===
         # === Finalizing the HTML Content ===
@@ -1251,6 +1198,13 @@ def generate_html_report(result_dir):
         f.write(html_details_content)
     
     logging.info(f"Detailed HTML report generated at {detailed_report_path}")
+
+    # Save the server details HTML report
+    server_report_path = os.path.join(REPORT_DIR, 'server_report.html')
+    with open(server_report_path, 'w', encoding="utf-8") as f:
+        f.write(server_details)
+
+    logging.info(f"Server Details HTML report generated at {server_report_path}")
 
 # Generate HTML report
 generate_html_report(RESULT_DIR)
