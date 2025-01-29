@@ -433,7 +433,8 @@
             </div>
             <nav>
                 <ul>
-                    <li><a href="details_template.html">View Detailed Report</a></li>
+                    <li><a href="recommendations_report.html">View Recommendation Report</a></li>
+                    <li><a href="details_report.html">View Detailed Code Report</a></li>
                     <li><a href="emissions_report.html">Back to Main Report</a></li>
                 </ul>
             </nav>
@@ -452,10 +453,6 @@
                     <option value="{{ server }}">{{ server }}</option>
                 {% endfor %}
             </select>
-        </div>
-        <div style="background: #f0f0f0; padding: 10px; margin: 10px; display: none;" id="debugInfo">
-            <h3>Debug Information</h3>
-            <pre id="debugData"></pre>
         </div>
         
         <div id="serverDetails" style="display: none;">
@@ -587,13 +584,12 @@
             </div>
         </div>
     </div>
-
-    <script type="application/json" id="serverDetailsData">
-        {{ server_details | safe }}
+    <script type="text/template" id="serverData">
+        {{ server_details | tojson }}
     </script>
 
     <script>
-        // Helper function to format small numbers
+         // Helper function to format small numbers
         function formatSmallNumber(number) {
             if (number < 0.001) {
                 // Convert scientific notation to a fixed number of decimal places
@@ -606,59 +602,59 @@
                 return number.toFixed(4) + ' g';
             }
         }
+        // Parse the server details data passed from Python
+        const serverData = JSON.parse(document.getElementById('serverData').textContent);
 
-        let serverData;
-        serverData = JSON.parse(document.getElementById('serverDetailsData').textContent);
-        
         $(document).ready(function(){
-            $('#solutionDirSelect').on('change', function(){
-                const selectedHostname = $(this).val();
+        $('#solutionDirSelect').on('change', function(){
+            const selectedHostname = $(this).val();
+            
+            if(selectedHostname) {
+                const serverDetails = serverData.find(server => server.hostname === selectedHostname);
                 
-                if(selectedHostname) {
-                    const serverDetails = serverData.find(server => server.hostname === selectedHostname);
+                if(serverDetails) {
+                    // Update UI elements
+                    $('#selectedServerName').text(selectedHostname);
                     
-                    if(serverDetails) {
-                        // Update UI elements
-                        $('#selectedServerName').text(selectedHostname);
-                        
-                        // Operating System Section
-                        $('#osVersion').text(serverDetails.os_version);
-                        $('#osType').text(serverDetails.os_type);
-                        $('#region').text(serverDetails.region);
-                        
-                        // Server Information Section - Using the new formatting function
-                        $('#totalCO2').text(formatSmallNumber(serverDetails.total_co2));
-                        $('#cpuCO2').text(`CPU CO2: ${formatSmallNumber(serverDetails.cpu_co2)}`);
-                        $('#ramCO2').text(formatSmallNumber(serverDetails.ram_co2));
-                        $('#co2Factor').text(`CO2 Factor: ${serverDetails.co2_factor}`);
-                        
-                        // RAM Information
-                        $('#ramTotal').text(`${serverDetails.ram_total.toFixed(2)}GB`);
-                        $('#ramUsage').text(`Used: ${serverDetails.ram_used.toFixed(2)}GB (${serverDetails.ram_percent.toFixed(2)}%)`);
-                        
-                        // Power Information
-                        $('#totalPower').text(`${serverDetails.total_power.toFixed(2)}W`);
-                        $('#powerDetails').text(`CPU: ${serverDetails.cpu_power.toFixed(2)}W, RAM: ${serverDetails.ram_power.toFixed(2)}W`);
-                        
-                        // Disk Information
-                        $('#diskRead').text(`${(serverDetails.disk_read_bytes / (1024 * 1024)).toFixed(2)}MB/s`);
-                        $('#diskWrite').text(`${(serverDetails.disk_write_bytes / (1024 * 1024)).toFixed(2)}MB/s`);
-                        $('#diskBaseCO2').text(formatSmallNumber(serverDetails.disk_base_co2));
-                        $('#diskIOCO2').text(formatSmallNumber(serverDetails.disk_io_co2));
-                        
-                        // Storage Information
-                        $('#storageDeviceCount').text(serverDetails.storage_device_count);
-                        $('#storageDevices').text(`Devices: ${serverDetails.storage_devices}`);
-                        
-                        $('#serverDetails').show();
-                    } else {
-                        console.error('No server details found for hostname:', selectedHostname);
-                    }
+                    // Operating System Section
+                    $('#osVersion').text(serverDetails.os_version);
+                    $('#osType').text(serverDetails.os_type);
+                    $('#region').text(serverDetails.region);
+                    
+                    // Server Information Section - Using the new formatting function
+                    $('#totalCO2').text(formatSmallNumber(serverDetails.total_co2));
+                    $('#cpuCO2').text(`CPU CO2: ${formatSmallNumber(serverDetails.cpu_co2)}`);
+                    $('#ramCO2').text(formatSmallNumber(serverDetails.ram_co2));
+                    $('#co2Factor').text(`CO2 Factor: ${serverDetails.co2_factor}`);
+                    
+                    // RAM Information
+                    $('#ramTotal').text(`${serverDetails.ram_total.toFixed(2)}GB`);
+                    $('#ramUsage').text(`Used: ${serverDetails.ram_used.toFixed(2)}GB (${serverDetails.ram_percent.toFixed(2)}%)`);
+                    
+                    // Power Information
+                    $('#totalPower').text(`${serverDetails.total_power.toFixed(2)}W`);
+                    $('#powerDetails').text(`CPU: ${serverDetails.cpu_power.toFixed(2)}W, RAM: ${serverDetails.ram_power.toFixed(2)}W`);
+                    
+                    // Disk Information
+                    $('#diskRead').text(`${(serverDetails.disk_read_bytes / (1024 * 1024)).toFixed(2)}MB/s`);
+                    $('#diskWrite').text(`${(serverDetails.disk_write_bytes / (1024 * 1024)).toFixed(2)}MB/s`);
+                    $('#diskBaseCO2').text(formatSmallNumber(serverDetails.disk_base_co2));
+                    $('#diskIOCO2').text(formatSmallNumber(serverDetails.disk_io_co2));
+                    
+                    // Storage Information
+                    $('#storageDeviceCount').text(serverDetails.storage_device_count);
+                    $('#storageDevices').text(`Devices: ${serverDetails.storage_devices}`);
+                    
+                    $('#serverDetails').show();
                 } else {
-                    $('#serverDetails').hide();
+                    console.error('No server details found for hostname:', selectedHostname);
                 }
-            });
+            } else {
+                $('#serverDetails').hide();
+            }
         });
+    });
     </script>
+    
 </body>
 </html>
