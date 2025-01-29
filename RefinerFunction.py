@@ -105,93 +105,189 @@ def load_prompts_from_env():
                 logging.warning(f"Skipping prompt '{key}' as per .env configuration.")
     return prompts
 
-def create_unit_test_files(client, assistant, file_list, test_file_directory, green_test_file_directory=None):
-    prompt_testcase = get_env_variable('PROMPT_GENERATE_TESTCASES', is_required=False)
-    if prompt_testcase:
-        if ", " in prompt_testcase:
-            prompt, toggle = prompt_testcase.rsplit(", ", 1)
-            toggle = toggle.strip().lower()
+# Define base directories
+env_path = os.path.abspath(".env")
+load_dotenv(dotenv_path=env_path, verbose=True, override=True)
+BASE_DIR = os.path.dirname(env_path)
+RESULT_DIR = os.path.join(BASE_DIR, 'Result')
+
+def ensure_result_directory():
+    """Ensure the Result directory exists."""
+    if not os.path.exists(RESULT_DIR):
+        try:
+            os.makedirs(RESULT_DIR)
+            logging.info(f"Created Result directory at: {RESULT_DIR}")
+        except Exception as e:
+            logging.error(f"Failed to create Result directory: {e}")
+            raise
+
+def ensure_csv_exists():
+    """Ensure the CSV file exists and has the correct headers."""
+    ensure_result_directory()  # Make sure the Result directory exists
+    csv_path = os.path.join(RESULT_DIR, 'modification_overview.csv')
+    
+    if not os.path.exists(csv_path):
+        try:
+            with open(csv_path, 'w', newline='') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=['File Name', 'Modification Timestamp', 'Changes', 'Next Steps'])
+                writer.writeheader()
+            logging.info(f"Created modification_overview.csv at: {csv_path}")
+        except Exception as e:
+            logging.error(f"Failed to create CSV file: {e}")
+            raise
+
+def extract_section(content, start_marker, end_marker):
+    """Extract content between specific markers."""
+    try:
+        start_idx = content.find(start_marker)
+        if start_idx == -1:
+            return None
+        
+        start_idx += len(start_marker)
+        end_idx = content.find(end_marker, start_idx)
+        
+        if end_idx == -1:
+            # If no end marker, take till the end
+            section = content[start_idx:].strip()
         else:
-            logging.warning("PROMPT_GENERATE_TESTCASES format is incorrect in .env.")
-            return
-    else:
-        logging.warning("Unit test case prompt not found in .env.")
+            section = content[start_idx:end_idx].strip()
+        
+        # Extract the first meaningful line if multiple lines exist
+        lines = [line.strip('- *•').strip() for line in section.split('\n') 
+                 if line.strip('- *•').strip() and 
+                 not any(marker in line.lower() for marker in ['here is', 'summary', 'changes made'])]
+        
+        return lines[0] if lines else None
+    except Exception as e:
+        logging.warning(f"Error extracting section: {e}")
+        return None
+
+def log_modifications(file_name, changes, next_steps):
+    """Log modifications to the CSV file."""
+    csv_path = os.path.join(RESULT_DIR, 'modification_overview.csv')
+    ensure_csv_exists()
+    
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    try:
+        with open(csv_path, 'a', newline='') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=['File Name', 'Modification Timestamp', 'Changes', 'Next Steps'])
+            writer.writerow({
+                'File Name': file_name,
+                'Modification Timestamp': timestamp,
+                'Changes': changes,
+                'Next Steps': next_steps
+            })
+        logging.info(f"Logged modifications for file: {file_name}")
+    except Exception as e:
+        logging.error(f"Failed to log modifications: {e}")
+
+def extract_changes_summary(data):
+    """Extract changes summary from the assistant's response."""
+    try:
+        if not data['data'] or not data['data'][0]['content']:
+            return None, None
+            
+        content = data['data'][0]['content'][0]['text']['value']
+        
+        # Extract changes
+        changes = extract_section(content, 'CHANGES_START', 'CHANGES_END')
+        
+        # Extract next steps
+        next_steps = extract_section(content, 'NEXT_STEPS_START', 'NEXT_STEPS_END')
+        
+        return (changes or "No specific changes provided", 
+                next_steps or "No specific next steps identified")
+        
+    except Exception as e:
+        logging.warning(f"Error extracting changes summary: {e}")
+        return "Error extracting changes", "Error identifying next steps"
+
+def create_unit_test_files(client, assistant, file_list, test_file_directory):
+    prompt_testcase = get_env_variable('PROMPT_GENERATE_TESTCASES', is_required=False)
+    if not prompt_testcase or ", " not in prompt_testcase:
+        logging.warning("Unit test case prompt not found or incorrectly formatted in .env.")
         return
     
-    if toggle != 'y':
+    prompt, toggle = prompt_testcase.rsplit(", ", 1)
+    if toggle.strip().lower() != 'y':
         logging.info("Skipping unit test generation as per .env configuration.")
         return
-    
+
     for file_path in file_list:
-        # Determine the base directory for path calculation
-        base_directory = os.path.dirname(os.path.dirname(file_path)) if green_test_file_directory else os.path.dirname(os.path.abspath(".env"))
-        
-        # Get the relative path from the base directory
-        relative_path = os.path.relpath(file_path, base_directory)
-        
-        # Skip if the file is already a test file
         file_name = os.path.basename(file_path)
         base_name, ext = os.path.splitext(file_name)
+        
         if 'test' in base_name.lower():
             logging.info(f"Skipping test file: {file_path}")
             continue
+
+            # -----------------modefied code-----------------
+
+        # Get the relative path of the file from the source directory
+        relative_path = os.path.relpath(file_path, BASE_DIR)       #added
+            
+        # test_file_name = f"{base_name}Test{ext}"
+        # test_file_path = os.path.join(test_file_directory, test_file_name)
+
+        # Construct the test file path preserving the directory structure
+        test_file_name = f"{base_name}Test{ext}"    #replaced
+        test_file_path = os.path.join(test_file_directory, os.path.dirname(relative_path), test_file_name) #replaced
         
-        # Construct the test file name and path to maintain the same folder structure
-        test_file_name = f"{base_name}Test{ext}"
-        test_file_relative_path = os.path.join(os.path.dirname(relative_path), test_file_name)
-        
-        # Create test path
-        test_file_path = os.path.join(test_file_directory, test_file_relative_path)
-        
-        # Ensure the directory for the test file exists
-        os.makedirs(os.path.dirname(test_file_path), exist_ok=True)
-        
-        # Check if test file already exists
+        # Ensure the directory structure exists in the test directory
+        ensure_directory_structure(os.path.dirname(test_file_path)) #added
+
+            #-------------------------------------------------
+
         if os.path.exists(test_file_path):
             logging.info(f"Test file already exists: {test_file_path}")
             continue
-        
-        prompt_formatted = prompt.format(file_extension=ext, file_name=file_name)
-        with open(file_path, "rb") as file:
-            try:
+
+        try:
+            with open(file_path, "rb") as file:
                 uploaded_file = client.files.create(file=file, purpose='assistants')
                 logging.info(f"File uploaded for unit test creation: {file_name}")
-            except Exception as e:
-                logging.error(f"Error uploading file {file_name} for unit test: {e}")
-                continue
 
-        logging.info(f"Creating unit test file for: {file_name}")
-        thread = client.beta.threads.create(
-            messages=[{"role": "user", "content": prompt_formatted, "file_ids": [uploaded_file.id]}]
-        )
-        run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant.id)
-        
-        start_time = time.time()
-        while True:
-            run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id).status
-            if run_status == 'completed':
-                break
-            elif time.time() - start_time > 1200:
-                logging.warning(f"Unit test creation timed out for file: {file_name}")
-                break
-            else:
+            prompt_formatted = prompt.format(file_extension=ext, file_name=file_name)
+            thread = client.beta.threads.create(
+                messages=[{"role": "user", "content": prompt_formatted, "file_ids": [uploaded_file.id]}]
+            )
+            run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant.id)
+
+            # Wait for completion
+            start_time = time.time()
+            while True:
+                run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id).status
+                if run_status == 'completed':
+                    break
+                elif time.time() - start_time > 1200:
+                    logging.warning(f"Unit test creation timed out for file: {file_name}")
+                    break
                 time.sleep(5)
 
-        messages = client.beta.threads.messages.list(thread_id=thread.id)
-        data = json.loads(messages.model_dump_json(indent=2))
-        code = None
-        if data['data'] and data['data'][0]['content'] and data['data'][0]['content'][0]['text']['annotations']:
-            code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
-        
-        if code:
-            try:
+            messages = client.beta.threads.messages.list(thread_id=thread.id)
+            data = json.loads(messages.model_dump_json(indent=2))
+            
+            # Extract code and changes summary
+            code = None
+            if data['data'] and data['data'][0]['content'] and data['data'][0]['content'][0]['text']['annotations']:
+                code = data['data'][0]['content'][0]['text']['annotations'][0]['file_path']['file_id']
+
+            if code:
                 content = client.files.content(code)
                 content.write_to_file(test_file_path)
+                
+                # Log modifications to the central CSV file
+                changes_summary, next_steps = extract_changes_summary(data)
+                log_modifications(test_file_name, changes_summary, next_steps)
+                
                 logging.info(f"Unit test file created: {test_file_path}")
-            except Exception as e:
-                logging.error(f"Failed to write unit test file {test_file_path}: {e}")
-        else:
-            logging.error(f"Failed to create unit test for file: {file_path}")
+
+            else:
+                logging.error(f"Failed to create unit test for file: {file_path}")
+
+        except Exception as e:
+            logging.error(f"Error processing file {file_name} for unit test: {e}")
 
 def apply_green_prompts(client, assistant, file_id, prompt, refined_file_path):
     logging.info(f"Applying prompt: {prompt} to file {file_id}")
@@ -204,20 +300,15 @@ def apply_green_prompts(client, assistant, file_id, prompt, refined_file_path):
         start_time = time.time()
         while True:
             run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id).status
-            # logging.info(f"Processing status for file {file_id}: {run_status}")
             if run_status == 'completed':
                 break
             elif time.time() - start_time > 1200:
                 logging.warning(f"Processing timed out for file: {file_id}")
                 return False
-            else:
-                time.sleep(5)
+            time.sleep(5)
 
         messages = client.beta.threads.messages.list(thread_id=thread.id)
         data = json.loads(messages.model_dump_json(indent=2))
-
-        # Log the entire API response for debugging
-        # logging.info(f"API response for file {file_id}: {json.dumps(data, indent=2)}")
 
         code = None
         if data['data'] and data['data'][0]['content'] and data['data'][0]['content'][0]['text']['annotations']:
@@ -227,13 +318,18 @@ def apply_green_prompts(client, assistant, file_id, prompt, refined_file_path):
             try:
                 content = client.files.content(code)
                 content.write_to_file(refined_file_path)
+                
+                # Log modifications to the central CSV file
+                changes_summary, next_steps = extract_changes_summary(data)
+                log_modifications(os.path.basename(refined_file_path), changes_summary, next_steps)
+                
                 logging.info(f"File refined successfully with prompt: {prompt}")
                 return True
             except Exception as e:
                 logging.error(f"Error writing refined file for prompt {prompt}: {e}")
                 return False
         else:
-            logging.error(f"No code found or annotations list is empty for prompt: {prompt} and file {file_id}. Possible file-specific issue or API response problem.")
+            logging.error(f"No code found in response for prompt: {prompt} and file {file_id}")
             return False
 
     except Exception as e:
