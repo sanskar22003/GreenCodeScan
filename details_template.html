@@ -359,7 +359,8 @@
             </div>
             <nav>
                 <ul>
-                    <li><a href="server_report.html">View Server Report</a></li>
+                    <li><a href="server_report.html">View Detailed Server Report</a></li>
+                    <li><a href="recommendations_report.html">View Recommendation Report</a></li>
                     <li><a href="emissions_report.html">Back to Main Report</a></li>
                 </ul>
             </nav>
@@ -370,12 +371,12 @@
         <div class="dropdown-container">
             <label for="solutionDirSelect">
                 <i class="fas fa-folder-open"></i>
-                Select Server
+                Select solution directory
             </label>
             <select id="solutionDirSelect">
-                <option value="" disabled selected>-- Select Server --</option>
-                {% for ser in unique_servers %}
-                    <option value="{{ dir }}">{{ ser }}</option>
+                <option value="" disabled selected>-- Select solution dir --</option>
+                {% for dir in solution_dirs %}
+                    <option value="{{ dir }}">{{ dir }}</option>
                 {% endfor %}
             </select>
         </div>
