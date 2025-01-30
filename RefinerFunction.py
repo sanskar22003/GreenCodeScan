@@ -298,11 +298,41 @@ NEXT_STEPS_END
         except Exception as e:
             logging.error(f"Error processing file {file_name} for unit test: {e}")
             
-def apply_green_prompts(client, assistant, file_id, prompt, refined_file_path):
-    logging.info(f"Applying prompt: {prompt} to file {file_id}")
+def apply_green_prompts(client, assistant, file_id, refined_file_path):
+    """
+    Applies green prompts to refactor code with efficiency and readability improvements.
+    Gets prompt from environment variable with a default fallback.
+    """
+    # Get prompt from environment variable
+    green_prompt = get_env_variable('GREEN_PROMPT', is_required=False)
+    
+    # Default prompt if environment variable is not set
+    DEFAULT_GREEN_PROMPT = """ 
+Refactor this code to improve its efficiency, readability, and maintainability while keeping the functionality unchanged. 
+Ensure: 
+1. The refactored code is more efficient and optimized. 
+2. Add comments in the code where significant changes were made. 
+
+After the code, provide: 
+CHANGES_START 
+- [specific change description 1] 
+CHANGES_END  
+
+NEXT_STEPS_START 
+- [one concise recommendation for future improvement] 
+NEXT_STEPS_END 
+"""
+
+    # Use default prompt if environment variable is not set
+    if not green_prompt:
+        logging.warning("Green prompt not found in .env, using default prompt.")
+        green_prompt = DEFAULT_GREEN_PROMPT
+
+    logging.info(f"Applying green prompt to file {file_id}")
+    
     try:
         thread = client.beta.threads.create(
-            messages=[{"role": "user", "content": prompt, "file_ids": [file_id]}]
+            messages=[{"role": "user", "content": green_prompt, "file_ids": [file_id]}]
         )
         run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant.id)
 
@@ -311,7 +341,7 @@ def apply_green_prompts(client, assistant, file_id, prompt, refined_file_path):
             run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id).status
             if run_status == 'completed':
                 break
-            elif time.time() - start_time > 1200:
+            elif time.time() - start_time > 1200:  # 20 minutes timeout
                 logging.warning(f"Processing timed out for file: {file_id}")
                 return False
             time.sleep(5)
@@ -332,15 +362,14 @@ def apply_green_prompts(client, assistant, file_id, prompt, refined_file_path):
                 changes_summary, next_steps = extract_changes_summary(data)
                 log_modifications(os.path.basename(refined_file_path), changes_summary, next_steps)
                 
-                logging.info(f"File refined successfully with prompt: {prompt}")
+                logging.info("File refined successfully with green prompt")
                 return True
             except Exception as e:
-                logging.error(f"Error writing refined file for prompt {prompt}: {e}")
+                logging.error(f"Error writing refined file: {e}")
                 return False
         else:
-            logging.error(f"No code found in response for prompt: {prompt} and file {file_id}")
+            logging.error(f"No code found in response for file {file_id}")
             return False
-
     except Exception as e:
-        logging.error(f"Exception occurred while applying prompt '{prompt}' to file {file_id}: {e}")
+        logging.error(f"Exception occurred while applying green prompt to file {file_id}: {e}")
         return False
