@@ -204,49 +204,49 @@ def extract_changes_summary(data):
         return "Error extracting changes", "Error identifying next steps"
 
 def create_unit_test_files(client, assistant, file_list, test_file_directory):
+    """
+    Creates unit test files for all source files in the file_list.
+    Gets prompt from environment variable but test generation remains mandatory.
+    """
+    # Get prompt from environment variable
     prompt_testcase = get_env_variable('PROMPT_GENERATE_TESTCASES', is_required=False)
-    print(f"Prompt Test Case from .env: '{prompt_testcase}'")  # Check the raw value
-
-    if not prompt_testcase or ", " not in prompt_testcase:
-        logging.warning("Unit test case prompt not found or incorrectly formatted in .env.")
-        return
     
-    try:
-        prompt, toggle = prompt_testcase.rsplit(", ", 1)
-    except ValueError as ve:
-        logging.error(f"Error splitting the prompt: {ve}")
-        return
+    # Default prompt if environment variable is not set
+    DEFAULT_PROMPT = """
+Create a comprehensive unit test case for the provided code.
+Ensure:
+1. The tests cover all edge cases and core functionality.
 
-    print(f"Parsed Prompt: '{prompt}'")
-    print(f"Parsed Toggle: '{toggle}'")
+After the test code, provide:
+CHANGES_START
+- [test coverage description]
+CHANGES_END
 
-    if toggle.strip().lower() != 'y':
-        logging.info("Skipping unit test generation as per .env configuration.")
-        return
+NEXT_STEPS_START
+- [one concise recommendation for test improvement]
+NEXT_STEPS_END
+"""
 
-    # Rest of your code...
+    # Use default prompt if environment variable is not set
+    if not prompt_testcase:
+        logging.warning("Unit test case prompt not found in .env, using default prompt.")
+        prompt_testcase = DEFAULT_PROMPT
 
     for file_path in file_list:
         file_name = os.path.basename(file_path)
         base_name, ext = os.path.splitext(file_name)
-        
+
         if 'test' in base_name.lower():
             logging.info(f"Skipping test file: {file_path}")
             continue
 
-            # -----------------modified code-----------------
-
         # Get the relative path of the file from the source directory
-        relative_path = os.path.relpath(file_path, BASE_DIR)       # added
-            
-        # Construct the test file path preserving the directory structure
-        test_file_name = f"{base_name}Test{ext}"    # replaced
-        test_file_path = os.path.join(test_file_directory, os.path.dirname(relative_path), test_file_name) # replaced
-        
-        # Ensure the directory structure exists in the test directory
-        ensure_directory_structure(os.path.dirname(test_file_path)) # added
+        relative_path = os.path.relpath(file_path, BASE_DIR)
+        test_file_name = f"{base_name}Test{ext}"
+        test_file_path = os.path.join(test_file_directory, os.path.dirname(relative_path), test_file_name)
 
-            #-------------------------------------------------
+        # Ensure the directory structure exists in the test directory
+        ensure_directory_structure(os.path.dirname(test_file_path))
 
         if os.path.exists(test_file_path):
             logging.info(f"Test file already exists: {test_file_path}")
@@ -255,12 +255,12 @@ def create_unit_test_files(client, assistant, file_list, test_file_directory):
         try:
             with open(file_path, "rb") as file:
                 uploaded_file = client.files.create(file=file, purpose='assistants')
-                logging.info(f"File uploaded for unit test creation: {file_name}")
+            logging.info(f"File uploaded for unit test creation: {file_name}")
 
-            prompt_formatted = prompt.format(file_extension=ext, file_name=file_name)
             thread = client.beta.threads.create(
-                messages=[{"role": "user", "content": prompt_formatted, "file_ids": [uploaded_file.id]}]
+                messages=[{"role": "user", "content": prompt_testcase, "file_ids": [uploaded_file.id]}]
             )
+            
             run = client.beta.threads.runs.create(thread_id=thread.id, assistant_id=assistant.id)
 
             # Wait for completion
@@ -269,14 +269,14 @@ def create_unit_test_files(client, assistant, file_list, test_file_directory):
                 run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id).status
                 if run_status == 'completed':
                     break
-                elif time.time() - start_time > 1200:
+                elif time.time() - start_time > 1200:  # 20 minutes timeout
                     logging.warning(f"Unit test creation timed out for file: {file_name}")
                     break
                 time.sleep(5)
 
             messages = client.beta.threads.messages.list(thread_id=thread.id)
             data = json.loads(messages.model_dump_json(indent=2))
-            
+
             # Extract code and changes summary
             code = None
             if data['data'] and data['data'][0]['content'] and data['data'][0]['content'][0]['text']['annotations']:
@@ -285,19 +285,16 @@ def create_unit_test_files(client, assistant, file_list, test_file_directory):
             if code:
                 content = client.files.content(code)
                 content.write_to_file(test_file_path)
-                
                 # Log modifications to the central CSV file
                 changes_summary, next_steps = extract_changes_summary(data)
                 log_modifications(test_file_name, changes_summary, next_steps)
-                
                 logging.info(f"Unit test file created: {test_file_path}")
-
             else:
                 logging.error(f"Failed to create unit test for file: {file_path}")
 
         except Exception as e:
             logging.error(f"Error processing file {file_name} for unit test: {e}")
-
+            
 def apply_green_prompts(client, assistant, file_id, prompt, refined_file_path):
     logging.info(f"Applying prompt: {prompt} to file {file_id}")
     try:
