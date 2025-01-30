@@ -106,10 +106,10 @@ def load_prompts_from_env():
     return prompts
 
 # Define base directories
-# env_path = os.path.abspath(".env")
-# load_dotenv(dotenv_path=env_path, verbose=True, override=True)
-# BASE_DIR = os.path.dirname(env_path)
-# RESULT_DIR = os.path.join(BASE_DIR, 'Result')
+env_path = os.path.abspath(".env")
+load_dotenv(dotenv_path=env_path, verbose=True, override=True)
+source_directory  = os.path.dirname(env_path)
+RESULT_DIR = os.path.join(source_directory , 'Result')
 
 def ensure_result_directory():
     """Ensure the Result directory exists."""
@@ -225,7 +225,7 @@ def create_unit_test_files(client, assistant, file_list, test_file_directory):
             # -----------------modefied code-----------------
 
         # Get the relative path of the file from the source directory
-        relative_path = os.path.relpath(file_path, BASE_DIR)       #added
+        relative_path = os.path.relpath(file_path, source_directory )       #added
             
         # test_file_name = f"{base_name}Test{ext}"
         # test_file_path = os.path.join(test_file_directory, test_file_name)
