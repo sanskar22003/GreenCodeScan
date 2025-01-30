@@ -106,10 +106,10 @@ def load_prompts_from_env():
     return prompts
 
 # Define base directories
-env_path = os.path.abspath(".env")
-load_dotenv(dotenv_path=env_path, verbose=True, override=True)
-BASE_DIR = os.path.dirname(env_path)
-RESULT_DIR = os.path.join(BASE_DIR, 'Result')
+# env_path = os.path.abspath(".env")
+# load_dotenv(dotenv_path=env_path, verbose=True, override=True)
+# BASE_DIR = os.path.dirname(env_path)
+# RESULT_DIR = os.path.join(BASE_DIR, 'Result')
 
 def ensure_result_directory():
     """Ensure the Result directory exists."""
