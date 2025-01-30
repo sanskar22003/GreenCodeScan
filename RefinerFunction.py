@@ -205,18 +205,27 @@ def extract_changes_summary(data):
 
 def create_unit_test_files(client, assistant, file_list, test_file_directory):
     prompt_testcase = get_env_variable('PROMPT_GENERATE_TESTCASES', is_required=False)
-    print(f"Prompt Test Case from .env: {prompt_testcase}")  # Add this line to check the value
-    
+    print(f"Prompt Test Case from .env: '{prompt_testcase}'")  # Check the raw value
+
     if not prompt_testcase or ", " not in prompt_testcase:
         logging.warning("Unit test case prompt not found or incorrectly formatted in .env.")
         return
     
-    prompt, toggle = prompt_testcase.rsplit(", ", 1)
+    try:
+        prompt, toggle = prompt_testcase.rsplit(", ", 1)
+    except ValueError as ve:
+        logging.error(f"Error splitting the prompt: {ve}")
+        return
+
+    print(f"Parsed Prompt: '{prompt}'")
+    print(f"Parsed Toggle: '{toggle}'")
+
     if toggle.strip().lower() != 'y':
         logging.info("Skipping unit test generation as per .env configuration.")
         return
 
     # Rest of your code...
+
     for file_path in file_list:
         file_name = os.path.basename(file_path)
         base_name, ext = os.path.splitext(file_name)
