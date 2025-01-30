@@ -205,13 +205,8 @@ def extract_changes_summary(data):
 
 def create_unit_test_files(client, assistant, file_list, test_file_directory):
     prompt_testcase = get_env_variable('PROMPT_GENERATE_TESTCASES', is_required=False)
-    if not prompt_testcase or ", " not in prompt_testcase:
+    if not prompt_testcase:
         logging.warning("Unit test case prompt not found or incorrectly formatted in .env.")
-        return
-    
-    prompt, toggle = prompt_testcase.rsplit(", ", 1)
-    if toggle.strip().lower() != 'y':
-        logging.info("Skipping unit test generation as per .env configuration.")
         return
 
     for file_path in file_list:
@@ -222,20 +217,17 @@ def create_unit_test_files(client, assistant, file_list, test_file_directory):
             logging.info(f"Skipping test file: {file_path}")
             continue
 
-            # -----------------modefied code-----------------
+            # -----------------modified code-----------------
 
         # Get the relative path of the file from the source directory
-        relative_path = os.path.relpath(file_path, source_directory )       #added
+        relative_path = os.path.relpath(file_path, BASE_DIR)       # added
             
-        # test_file_name = f"{base_name}Test{ext}"
-        # test_file_path = os.path.join(test_file_directory, test_file_name)
-
         # Construct the test file path preserving the directory structure
-        test_file_name = f"{base_name}Test{ext}"    #replaced
-        test_file_path = os.path.join(test_file_directory, os.path.dirname(relative_path), test_file_name) #replaced
+        test_file_name = f"{base_name}Test{ext}"    # replaced
+        test_file_path = os.path.join(test_file_directory, os.path.dirname(relative_path), test_file_name) # replaced
         
         # Ensure the directory structure exists in the test directory
-        ensure_directory_structure(os.path.dirname(test_file_path)) #added
+        ensure_directory_structure(os.path.dirname(test_file_path)) # added
 
             #-------------------------------------------------
 
