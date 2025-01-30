@@ -129,18 +129,29 @@ for file_path in file_list:
         ensure_directory_structure(os.path.dirname(refined_temp_file_path))
         
         # Apply prompts
-        refined_success = False
-        for prompt in prompts:
-            if apply_green_prompts(client, assistant, uploaded_file.id, prompt, refined_temp_file_path):
-                refined_success = True
-                logging.info(f"Successfully applied prompt: '{prompt}' to {file_name}")
-            else:
-                logging.warning(f"Failed to apply prompt: '{prompt}' to {file_name}")
+        # refined_success = False
         
-        # If refinement failed, copy original file
-        if not refined_success:
+        # Apply green prompts - now just calling once since prompt is handled internally
+        refined_success = apply_green_prompts(client, assistant, uploaded_file.id, refined_temp_file_path)
+        
+        if refined_success:
+            logging.info(f"Successfully applied green prompts to {file_name}")
+        else:
+            logging.warning(f"Failed to apply green prompts to {file_name}")
+            # Copy original file as fallback
             shutil.copy2(file_path, refined_temp_file_path)
             logging.warning(f"Using original file as fallback for: {file_name}")
+        # for prompt in prompts:
+        #     if apply_green_prompts(client, assistant, uploaded_file.id, prompt, refined_temp_file_path):
+        #         refined_success = True
+        #         logging.info(f"Successfully applied prompt: '{prompt}' to {file_name}")
+        #     else:
+        #         logging.warning(f"Failed to apply prompt: '{prompt}' to {file_name}")
+        
+        # If refinement failed, copy original file
+        # if not refined_success:
+        #     shutil.copy2(file_path, refined_temp_file_path)
+        #     logging.warning(f"Using original file as fallback for: {file_name}")
         
         # Move file to final location
         final_file_path = os.path.join(green_code_directory, relative_path)
