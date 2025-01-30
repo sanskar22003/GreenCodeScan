@@ -108,7 +108,7 @@ def load_prompts_from_env():
 # Define base directories
 # env_path = os.path.abspath(".env")
 # load_dotenv(dotenv_path=env_path, verbose=True, override=True)
-source_directory  = 'C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline'
+source_directory = r'C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline'
 RESULT_DIR = os.path.join(source_directory , 'Result')
 
 def ensure_result_directory():
