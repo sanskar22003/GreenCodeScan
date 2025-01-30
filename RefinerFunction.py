@@ -106,9 +106,9 @@ def load_prompts_from_env():
     return prompts
 
 # Define base directories
-# env_path = os.path.abspath(".env")
-# load_dotenv(dotenv_path=env_path, verbose=True, override=True)
-source_directory = r'C:\ProgramData\Jenkins\.jenkins\workspace\GreenCodeScanPipeline'
+env_path = os.path.abspath(".env")
+load_dotenv(dotenv_path=env_path, verbose=True, override=True)
+source_directory = os.path.dirname(env_path)
 RESULT_DIR = os.path.join(source_directory , 'Result')
 
 def ensure_result_directory():
@@ -241,7 +241,7 @@ NEXT_STEPS_END
             continue
 
         # Get the relative path of the file from the source directory
-        relative_path = os.path.relpath(file_path, BASE_DIR)
+        relative_path = os.path.relpath(file_path, source_directory)
         test_file_name = f"{base_name}Test{ext}"
         test_file_path = os.path.join(test_file_directory, os.path.dirname(relative_path), test_file_name)
 
