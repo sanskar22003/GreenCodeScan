@@ -5,10 +5,6 @@ pipeline {
         PATH = "C:\\Users\\sansk\\Downloads\\apache-maven-3.9.6\\bin;$PATH"
         REPO_PATH = "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline"
         PYTHON_PATH = "C:\\Users\\sansk\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
-        CAST_HIGHLIGHT_PATH = "C:\\Users\\sansk\\Downloads\\Highlight-Automation-Command"
-        PYTEST_PATH = "C:\\Users\\sansk\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\pytest.exe"
-        SHAREPOINT_PS_SCRIPT_PATH = 'C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\GreenCodeScanPipeline\\upload_to_sharepoint.ps1'
-        CLIENT_NAME = "ZF"
     }
     
     stages {
@@ -29,7 +25,16 @@ pipeline {
                 }
             }
         }
-        stage('Stage 3: Green Code Refiner') {
+        stage('Stage 3: Track Multiple Server Emissions') {
+            steps {
+                dir("${env.REPO_PATH}") {
+                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                        bat "${env.PYTHON_PATH} mul_server_emissions.py"
+                    }
+                }
+            }
+        }
+        stage('Stage 4: Green Code Refiner') {
             steps {
                 dir("${env.REPO_PATH}") {
                     catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
@@ -38,29 +43,7 @@ pipeline {
                 }
             }
         }
-        // stage('Stage 3: Green Code Refiner') {
-        //     steps {
-        //         dir("${env.REPO_PATH}") {
-        //             catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-        //                 script {
-        //                     def result = ''
-        //                     while (true) {
-        //                         result = bat(script: "${env.PYTHON_PATH} GreenCodeRefiner.py", returnStdout: true).trim()
-        //                         if (result.contains('Script-Has-Uploaded-All-Files')) {
-        //                             break
-        //                         } else if (result.contains('Script-Has-Remain-Some-Files-To-Uploaded')) {
-        //                             echo "Rerunning GreenCodeRefiner.py due to pending tasks..."
-        //                         } else {
-        //                             error "Unexpected result from GreenCodeRefiner.py: ${result}"
-        //                         }
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-        //}
-
-        stage('Stage 4: Dynamic Code Analysis') {
+        stage('Stage 5: Dynamic Code Analysis') {
             steps {
                 dir("${env.REPO_PATH}") {
                     withEnv(["PYTEST=${env.PYTEST_PATH}"]) {
@@ -71,23 +54,5 @@ pipeline {
                 }
             }
         }
-        stage('Stage 5: Compare emission') {
-            steps {
-                dir("${env.REPO_PATH}") {
-                    withEnv(["PYTEST=${env.PYTEST_PATH}"]) {
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            bat "${env.PYTHON_PATH} compare_emissions.py"
-                        }
-                    }
-                }
-            }
-        }
-        // stage('Stage 6: Update Dashboard') {
-        //     steps {
-        //         powershell """
-        //         & '${env.SHAREPOINT_PS_SCRIPT_PATH}'
-        //         """
-        //     }
-        // }
     }
 }
