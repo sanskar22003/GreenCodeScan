@@ -365,28 +365,29 @@ class RemoteSystemMonitor:
         return pd.DataFrame(all_measurements)
 
 
-def read_server_credentials(csv_file):
-    """Read server credentials from CSV file."""
+def read_server_credentials(excel_file):
+    """Read server credentials from Excel file."""
     try:
-        df = pd.read_csv(csv_file)
+        df = pd.read_excel(excel_file)
         required_columns = ['ip', 'username', 'password']
         if not all(col in df.columns for col in required_columns):
-            raise ValueError("CSV file must contain columns: ip, username, password")
+            raise ValueError("Excel file must contain columns: ip, username, password")
 
         return df.to_dict('records')
     except Exception as e:
-        logging.error(f"Error reading CSV file: {e}")
+        logging.error(f"Error reading Excel file: {e}")
         return None
 
-def main():
-    # CSV file path
-    csv_file = "server_credentials.csv"
 
-    if not os.path.exists(csv_file):
-        logging.error(f"Error: {csv_file} not found!")
+def main():
+    # Excel file path
+    excel_file = "server_credentials.xlsx"
+
+    if not os.path.exists(excel_file):
+        logging.error(f"Error: {excel_file} not found!")
         return
 
-    server_list = read_server_credentials(csv_file)
+    server_list = read_server_credentials(excel_file)
     if not server_list:
         return
 
@@ -439,7 +440,7 @@ def main():
         print(f"Disk CO2 Emissions: {(server_df['disk_base_co2'] + server_df['disk_io_co2']).sum():.6f} kg CO2e")
 
     # Save results to CSV
-    filename = os.path.join(RESULT_DIR, "multiple_server_data.csv")
+    filename = os.path.join(RESULT_DIR, "multi_server_metrics.csv")
     df.to_csv(filename, index=False)
     print(f"\nDetailed metrics saved to {filename}")
 
