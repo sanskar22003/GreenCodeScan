@@ -440,7 +440,7 @@ def main():
         print(f"Disk CO2 Emissions: {(server_df['disk_base_co2'] + server_df['disk_io_co2']).sum():.6f} kg CO2e")
 
     # Save results to CSV
-    filename = os.path.join(RESULT_DIR, "multi_server_metrics.csv")
+    filename = os.path.join(RESULT_DIR, "multiple_server_data.csv")
     df.to_csv(filename, index=False)
     print(f"\nDetailed metrics saved to {filename}")
 
