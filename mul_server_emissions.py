@@ -365,29 +365,28 @@ class RemoteSystemMonitor:
         return pd.DataFrame(all_measurements)
 
 
-def read_server_credentials(excel_file):
-    """Read server credentials from Excel file."""
+def read_server_credentials(csv_file):
+    """Read server credentials from CSV file."""
     try:
-        df = pd.read_excel(excel_file)
+        df = pd.read_csv(csv_file)
         required_columns = ['ip', 'username', 'password']
         if not all(col in df.columns for col in required_columns):
-            raise ValueError("Excel file must contain columns: ip, username, password")
+            raise ValueError("CSV file must contain columns: ip, username, password")
 
         return df.to_dict('records')
     except Exception as e:
-        logging.error(f"Error reading Excel file: {e}")
+        logging.error(f"Error reading CSV file: {e}")
         return None
 
-
 def main():
-    # Excel file path
-    excel_file = "server_credentials.xlsx"
+    # CSV file path
+    csv_file = "server_credentials.csv"
 
-    if not os.path.exists(excel_file):
-        logging.error(f"Error: {excel_file} not found!")
+    if not os.path.exists(csv_file):
+        logging.error(f"Error: {csv_file} not found!")
         return
 
-    server_list = read_server_credentials(excel_file)
+    server_list = read_server_credentials(csv_file)
     if not server_list:
         return
 
