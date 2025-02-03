@@ -574,1023 +574,420 @@ def generate_html_report(result_dir):
     details_server_template_path = 'details_server_template.html'
     recommendations_template_path = 'recommendations_template.html'
 
-    # Prepare detailed data
-    solution_dirs, detailed_data = prepare_detailed_data(result_dir)
-    
     # Check if the templates exist
-    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, details_template_path)):
-        logging.error(f"Detailed HTML template file not found: {details_template_path}")
-        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, details_template_path)}")
-        return 
-    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, template_path)):
-        logging.error(f"HTML template file not found: {template_path}")
-        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, template_path)}")
-        return
-    
-    # Check if the last run templates exist
-    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, last_run_details_template_path)):
-        logging.error(f"Last Run Detailed HTML template file not found: {last_run_details_template_path}")
-        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, last_run_details_template_path)}")
-        return 
-    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, last_run_template_path)):
-        logging.error(f"Last Run HTML template file not found: {last_run_template_path}")
-        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, last_run_template_path)}")
-        return
+    for path in [details_template_path, template_path, last_run_details_template_path, 
+                 last_run_template_path, details_server_template_path, recommendations_template_path]:
+        if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, path)):
+            logging.error(f"Template file not found: {path}")
+            return
 
-    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, details_server_template_path)):
-        logging.error(f"Detailed server template file not found: {details_server_template_path}")
-        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, details_server_template_path)}")
-        return
-    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, recommendations_template_path)):
-        logging.error(f"Recommendations template file not found: {recommendations_template_path}")
-        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, recommendations_template_path)}")
-        return
-
-    
     # Load the templates
     try:
         template = env.get_template(template_path)
-        logging.info(f"Loaded template: {template_path}")
-    except Exception as e:
-        logging.error(f"Failed to load template {template_path}: {e}")
-        return
-    
-    try:
         details_template = env.get_template(details_template_path)
-        logging.info(f"Loaded template: {details_template_path}")
-    except Exception as e:
-        logging.error(f"Failed to load template {details_template_path}: {e}")
-        return
-    
-    # Load the last run templates
-    try:
         lastrun_template = env.get_template(last_run_template_path)
-        logging.info(f"Loaded template: {last_run_template_path}")
-    except Exception as e:
-        logging.error(f"Failed to load template {last_run_template_path}: {e}")
-        return
-    
-    try:
         lastrun_details_template = env.get_template(last_run_details_template_path)
-        logging.info(f"Loaded template: {last_run_details_template_path}")
-    except Exception as e:
-        logging.error(f"Failed to load template {last_run_details_template_path}: {e}")
-        return
-
-    try:
         details_server_template = env.get_template(details_server_template_path)
-        logging.info(f"Loaded template: {details_server_template_path}")
-    except Exception as e:
-        logging.error(f"Failed to load template {details_server_template_path}: {e}")
-        return
-    
-    try:
         recommendations_template = env.get_template(recommendations_template_path)
-        logging.info(f"Loaded template: {recommendations_template_path}")
     except Exception as e:
-        logging.error(f"Failed to load template {recommendations_template_path}: {e}")
-        return
-    
-    before_csv = os.path.join(result_dir, 'main_before_emissions_data.csv')
-    after_csv = os.path.join(result_dir, 'main_after_emissions_data.csv')
-    comparison_csv = os.path.join(result_dir, 'comparison_results.csv')
-    server_csv = os.path.join(result_dir, 'server_data.csv')
-    mul_server_csv = os.path.join(result_dir, 'multiple_server_data.csv')
-    recommendations_csv = os.path.join(result_dir, 'modification_overview.csv')
-
-    # Check if CSV files exist
-    if not os.path.exists(before_csv):
-        logging.error(f"Before emissions data file not found: {before_csv}")
-        return
-    if not os.path.exists(after_csv):
-        logging.error(f"After emissions data file not found: {after_csv}")
-        return
-    if not os.path.exists(comparison_csv):
-        logging.error(f"Comparison results file not found: {comparison_csv}")
-        return
-    if not os.path.exists(server_csv):
-        logging.error(f"Server data file not found: {server_csv}")
-        return
-    if not os.path.exists(mul_server_csv):
-        logging.error(f"Multiple server data file not found: {mul_server_csv}")
-        return
-    if not os.path.exists(recommendations_csv):
-        logging.error(f"Recommendations data file not found: {recommendations_csv}")
+        logging.error(f"Failed to load templates: {e}")
         return
 
-    # Read CSVs
-    before_df = pd.read_csv(before_csv)
-    after_df = pd.read_csv(after_csv)
-    comparison_df = pd.read_csv(comparison_csv)
-    server_df = pd.read_csv(server_csv)
-    mul_server_df = pd.read_csv(mul_server_csv)
-    recommendations_df = pd.read_csv(recommendations_csv)
+    # CSV paths
+    csv_files = {
+        'before': os.path.join(result_dir, 'main_before_emissions_data.csv'),
+        'after': os.path.join(result_dir, 'main_after_emissions_data.csv'),
+        'comparison': os.path.join(result_dir, 'comparison_results.csv'),
+        'server': os.path.join(result_dir, 'server_data.csv'),
+        'mul_server': os.path.join(result_dir, 'multiple_server_data.csv'),
+        'recommendations': os.path.join(result_dir, 'modification_overview.csv')
+    }
 
-    # -----------------Componentes for server details report -----------------
+    # Load available CSVs
+    dfs = {}
+    for name, path in csv_files.items():
+        if os.path.exists(path):
+            try:
+                dfs[name] = pd.read_csv(path)
+                logging.info(f"Loaded CSV: {path}")
+            except Exception as e:
+                logging.error(f"Error reading {path}: {e}")
+                dfs[name] = None
+        else:
+            logging.warning(f"CSV not found: {path}")
+            dfs[name] = None
 
-    # Calculate unique hosts and average CO2 emissions
-    unique_hosts = server_df['Host-name'].nunique()  # Count of unique host names
-    average_co2_emission = server_df['CO2 emission (Metric Tons)'].sum() / unique_hosts  # Average CO2 emissions
-    average_energy_consumption = server_df['Energy consumption (KWH)'].sum() / unique_hosts  # Average Energy consumption
+    # Extract DataFrames
+    before_df = dfs.get('before')
+    after_df = dfs.get('after')
+    comparison_df = dfs.get('comparison')
+    server_df = dfs.get('server')
+    mul_server_df = dfs.get('mul_server')
+    recommendations_df = dfs.get('recommendations')
 
-    # Calculate averages for additional metrics
-    average_cpu_usage = server_df['CPU usage (%)'].mean()
-    average_ram_usage = server_df['RAM usage (%)'].mean()
-    average_disk_usage = server_df['Disk usage (%)'].mean()
-    average_network_usage = server_df['Network usage (bytes)'].mean()
-    average_disk_write = mul_server_df['disk_write_bytes'].mean()
-    average_disk_read = mul_server_df['disk_read_bytes'].mean()
+    # Initialize default values for template variables
+    template_vars = {
+        'total_before': 0.0,
+        'total_after': 0.0,
+        'energy_table_html': "<p>Data unavailable</p>",
+        'emissions_table_html': "<p>Data unavailable</p>",
+        'total_emissions_before': 0.0,
+        'total_emissions_after': 0.0,
+        'last_run_timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'server_os_type_fig': "<p>OS type data unavailable</p>",
+        'server_os_version_fig': "<p>OS version data unavailable</p>",
+        'unique_hosts': 0,
+        'average_co2_emission': 0.0,
+        'average_energy_consumption': 0.0,
+        'average_cpu_usage': 0.0,
+        'average_ram_usage': 0.0,
+        'average_disk_usage': 0.0,
+        'average_network_usage': 0.0,
+        'average_disk_read': 0.0,
+        'average_disk_write': 0.0,
+        'cpu_usage_data': [],
+        'ram_usage_data': [],
+        'disk_usage_data': [],
+        'network_usage_data': [],
+        'disk_read_data': [],
+        'disk_write_data': [],
+        'max_network': 0.0,
+        'critical_servers': None,
+        'div_combined_graph': "<p>Energy consumption data unavailable</p>",
+        'div_emissions_combined_graph': "<p>Emissions data unavailable</p>",
+        'div_pie_chart_non_embedded': "<p>Non-embedded code data unavailable</p>",
+        'div_pie_chart_embedded': "<p>Embedded code data unavailable</p>",
+        'unique_servers': [],
+        'critical_server_count': 0,
+        'total_last_run_co2': 0.0,
+        'total_last_run_power': 0.0,
+        'formatted_timestamp': "No data"
+    }
 
-    cpu_data = server_df['CPU usage (%)'].tail(10).tolist()
-    ram_data = server_df['RAM usage (%)'].tail(10).tolist()
-    disk_data = server_df['Disk usage (%)'].tail(10).tolist()
-    network_data = server_df['Network usage (bytes)'].tail(10).tolist()
-    disk_write = mul_server_df['disk_write_bytes'].tail(10).tolist()
-    disk_read = mul_server_df['disk_read_bytes'].tail(10).tolist()
+    # Process server data if available
+    if server_df is not None:
+        try:
+            unique_hosts = server_df['IP address'].nunique()
+            template_vars['unique_hosts'] = unique_hosts
+            template_vars['average_co2_emission'] = round(server_df['CO2 emission (Metric Tons)'].sum() / unique_hosts, 2)
+            template_vars['average_energy_consumption'] = round(server_df['Energy consumption (KWH)'].sum() / unique_hosts, 2)
+            template_vars['average_cpu_usage'] = round(server_df['CPU usage (%)'].mean(), 2)
+            template_vars['average_ram_usage'] = round(server_df['RAM usage (%)'].mean(), 2)
+            template_vars['average_disk_usage'] = round(server_df['Disk usage (%)'].mean(), 2)
+            template_vars['average_network_usage'] = round(server_df['Network usage (bytes)'].mean(), 2)
+            template_vars['cpu_usage_data'] = server_df['CPU usage (%)'].tail(10).tolist()
+            template_vars['ram_usage_data'] = server_df['RAM usage (%)'].tail(10).tolist()
+            template_vars['disk_usage_data'] = server_df['Disk usage (%)'].tail(10).tolist()
+            template_vars['network_usage_data'] = server_df['Network usage (bytes)'].tail(10).tolist()
+        except KeyError as e:
+            logging.error(f"Missing column in server data: {e}")
 
-    # Calculate max network value for scaling
-    max_network = max(network_data)
+    # Process multi-server data if available
+    if mul_server_df is not None:
+        try:
+            template_vars['average_disk_read'] = round(mul_server_df['disk_read_bytes'].mean(), 2)
+            template_vars['average_disk_write'] = round(mul_server_df['disk_write_bytes'].mean(), 2)
+            template_vars['disk_read_data'] = mul_server_df['disk_read_bytes'].tail(10).tolist()
+            template_vars['disk_write_data'] = mul_server_df['disk_write_bytes'].tail(10).tolist()
+            template_vars['max_network'] = max(template_vars['network_usage_data'])
 
-    # ---------------- Prepare the data for critical server lists -------------
+            critical_servers = mul_server_df[mul_server_df['total_co2'] > 0.000001][['hostname', 'total_co2']]
+            critical_servers = critical_servers.sort_values(by='total_co2', ascending=False).drop_duplicates(subset='hostname')
+            template_vars['critical_server_count'] = len(critical_servers)
+            template_vars['critical_servers'] = critical_servers.to_dict(orient='records') if not critical_servers.empty else None
 
-    # Filter servers with CO2 emissions > 50 metric tons
-    # critical_servers = server_df[server_df['CO2 emission (Metric Tons)'] > 50][['Host-name', 'CO2 emission (Metric Tons)']]
+            mul_server_df['timestamp'] = pd.to_datetime(mul_server_df['timestamp'], format='%Y-%m-%d %H:%M:%S.%f', errors='coerce')
+            mul_server_df = mul_server_df.dropna(subset=['timestamp'])
+            latest_timestamp = mul_server_df['timestamp'].max()
+            last_run_records = mul_server_df[mul_server_df['timestamp'] == latest_timestamp]
+            
+            # Format the total_last_run_co2 to avoid scientific notation
+            total_last_run_co2 = last_run_records['total_co2'].sum()
+            template_vars['total_last_run_co2'] = f"{total_last_run_co2:.6f}"  # Format to 6 decimal places
+            template_vars['total_last_run_power'] = last_run_records['total_power'].sum()
+            template_vars['formatted_timestamp'] = latest_timestamp.strftime('%d-%m-%Y %H:%M:%S')
 
-    critical_servers = mul_server_df[mul_server_df['total_co2'] > 0.000001][['hostname', 'total_co2']]
+            # Count of unique servers by 'os_type' and 'os_version'
+            os_type_counts = mul_server_df.groupby(['os_type', 'hostname']).size().reset_index(name='count').groupby('os_type').agg({'hostname': 'count'}).rename(columns={'hostname': 'count'})
+            os_version_counts = mul_server_df.groupby(['os_type', 'os_version', 'hostname']).size().reset_index(name='count').groupby(['os_type', 'os_version']).agg({'hostname': 'count'}).reset_index().rename(columns={'hostname': 'count'})
+            color_palette = px.colors.qualitative.Light24
 
-    # Sort by emission value in descending order
-    critical_servers = critical_servers.sort_values(by='total_co2', ascending=False)
+            # Plot 1: Bar graph for 'os_type'
+            fig1 = go.Figure(data=[go.Bar(x=os_type_counts.index, y=os_type_counts['count'], text=os_type_counts['count'], textposition='inside', textfont=dict(size=16), marker=dict(color=color_palette[:len(os_type_counts)]))])
+            fig1.update_layout(title="Count of Unique Servers by OS Type", xaxis_title="OS Type", yaxis_title="Count of Unique Servers", template="plotly_white", width=600, height=300)
+            template_vars['server_os_type_fig'] = pio.to_html(fig1, include_plotlyjs=False, full_html=False)
 
-    # Remove duplicate hostnames, keeping the first occurrence
-    critical_servers = critical_servers.drop_duplicates(subset='hostname')
+            # Plot 2: Bar graph for 'os_version' grouped by 'os_type'
+            fig2 = go.Figure()
+            for i, os_type in enumerate(os_version_counts['os_type'].unique()): os_data = os_version_counts[os_version_counts['os_type'] == os_type]; fig2.add_trace(go.Bar(x=os_data['os_version'], y=os_data['count'], name=os_type, text=os_data['count'], textposition='inside', textfont=dict(size=16), marker=dict(color=color_palette[i])))
+            fig2.update_layout(title="Count of Unique Servers by OS Version (Grouped by OS Type)", xaxis_title="OS Version", yaxis_title="Count of Unique Servers", barmode='stack', template="plotly_white", width=600, height=400, xaxis_tickangle=-45, xaxis=dict(tickvals=os_version_counts['os_version'], ticktext=[os.replace(' ', '<br>') for os in os_version_counts['os_version']]), legend=dict(orientation="h", yanchor="top", y=1.20, xanchor="center", x=0.5, font=dict(size=12)), margin=dict(b=100))
+            template_vars['server_os_version_fig'] = pio.to_html(fig2, include_plotlyjs=False, full_html=False)
 
-    # Store the count of critical servers after removing duplicates
-    critical_server_count = len(critical_servers)
+            df = mul_server_df.copy()
+            numeric_columns = ['cpu_percent', 'ram_total', 'ram_used', 'ram_percent', 'disk_read_bytes', 
+                              'disk_write_bytes', 'total_power', 'cpu_power', 'ram_power', 'disk_base_power', 
+                              'disk_io_power', 'total_co2', 'cpu_co2', 'ram_co2', 'disk_base_co2', 
+                              'disk_io_co2', 'co2_factor', 'storage_device_count']
+            string_columns = ['hostname', 'os_version', 'os_type', 'region', 'storage_devices', 'timestamp']
+            for col in numeric_columns:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+            for col in string_columns:
+                if col in df.columns:
+                    df[col] = df[col].astype(str)
+            for col in numeric_columns + string_columns:
+                if col not in df.columns:
+                    df[col] = 0 if col in numeric_columns else 'N/A'
+            template_vars['server_details'] = df.to_dict(orient='records')
+            template_vars['unique_servers'] = df['hostname'].unique().tolist()
+        except KeyError as e:
+            logging.error(f"Missing column in multi-server data: {e}")
 
-    # Convert the DataFrame to a list of dictionaries for Jinja2
-    critical_servers_list = critical_servers.to_dict(orient='records') if not critical_servers.empty else None
+    # Process recommendations data if available
+    if recommendations_df is not None:
+        try:
+            recommendations_df['Modification Timestamp'] = pd.to_datetime(recommendations_df['Modification Timestamp'], errors='coerce')
+            recommendations_df = recommendations_df.dropna(subset=['Modification Timestamp'])
+            unique_dates = recommendations_df['Modification Timestamp'].dt.date.unique().tolist()
+            recommendations_details = {}
+            for date in unique_dates:
+                date_records = recommendations_df[recommendations_df['Modification Timestamp'].dt.date == date]
+                recommendations_details[str(date)] = date_records.assign(
+                    **{"Modification Timestamp": date_records['Modification Timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')}
+                ).to_dict(orient='records')
+            template_vars['recommendations_details'] = recommendations_details
+            template_vars['unique_dates'] = unique_dates
+        except KeyError as e:
+            logging.error(f"Missing column in recommendations data: {e}")
 
-    # ------------------- Prepare data for the last run report -------------------
+    # Process before and after data if available
+    if before_df is not None and after_df is not None:
+        try:
+            def is_test_application(app_name):
+                return 'test' in str(app_name).lower()
 
-    # Convert the 'timestamp' column to datetime for accurate sorting
-    # Handle the correct format and microseconds in the timestamp
-    mul_server_df['timestamp'] = pd.to_datetime(
-        mul_server_df['timestamp'], 
-        format='%Y-%m-%d %H:%M:%S.%f',  # Matches "2025-01-08 10:22:29.187180"
-        errors='coerce'  # Gracefully handle invalid or mismatched formats
-    )
+            template_vars['total_before'] = before_df[before_df['Application name'].apply(is_test_application)]['Energy Consumed (Wh)'].astype(float).sum()
+            template_vars['total_after'] = after_df[after_df['Application name'].apply(is_test_application)]['Energy Consumed (Wh)'].astype(float).sum()
 
-    # Drop rows with invalid or missing timestamps after conversion
-    mul_server_df = mul_server_df.dropna(subset=['timestamp'])
-
-    # Find the maximum timestamp in the DataFrame
-    latest_timestamp = mul_server_df['timestamp'].max()
-
-    # Filter the DataFrame to include only records from the last run
-    last_run_records = mul_server_df[mul_server_df['timestamp'] == latest_timestamp]
-
-    # Calculate the total CO2 and total power for the last run
-    total_last_run_co2 = last_run_records['total_co2'].sum()
-    total_last_run_power = last_run_records['total_power'].sum()
-
-    # Optional: Format the timestamp as a string for easier display
-    formatted_timestamp = latest_timestamp.strftime('%d-%m-%Y %H:%M:%S')
-
-    # ------------------- Prepare data for the server details report -------------------
-
-    # Count of servers by 'os_type'
-    os_type_counts = mul_server_df['os_type'].value_counts()
-
-    # Count of servers by 'os_type' and 'os_version'
-    os_version_counts = mul_server_df.groupby(['os_type', 'os_version']).size().reset_index(name='count')
-
-    # Define color palette
-    color_palette = px.colors.qualitative.Light24
-
-    # Plot 1: Bar graph for 'os_type'
-    fig1 = go.Figure(data=[
-        go.Bar(
-            x=os_type_counts.index,
-            y=os_type_counts.values,
-            text=os_type_counts.values,
-            textposition='inside',  # Place text inside the bar
-            textfont=dict(size=16),  # Slightly larger font size
-            marker=dict(color=color_palette[:len(os_type_counts)])  # Use color palette
-        )
-    ])
-    fig1.update_layout(
-        title="Count of Servers by OS Type",
-        xaxis_title="OS Type",
-        yaxis_title="Count of Servers",
-        template="plotly_white",
-        width=600,  # Set combined width
-        height=300  # Set combined height
-    )
-
-    # Plot 2: Bar graph for 'os_version' grouped by 'os_type'
-    fig2 = go.Figure()
-    for i, os_type in enumerate(os_version_counts['os_type'].unique()):
-        os_data = os_version_counts[os_version_counts['os_type'] == os_type]
-        fig2.add_trace(
-            go.Bar(
-                x=os_data['os_version'],
-                y=os_data['count'],
-                name=os_type,
-                text=os_data['count'],
-                textposition='inside',  # Place text inside the bar
-                textfont=dict(size=16),  # Slightly larger font size
-                marker=dict(color=color_palette[i])  # Use color palette for each OS type
-            )
-        )
-    # Update layout
-    fig2.update_layout(
-        title="Count of Servers by OS Version (Grouped by OS Type)",
-        xaxis_title="OS Version",
-        yaxis_title="Count of Servers",
-        barmode='stack',  # Stacked bar chart to represent subtypes clearly
-        template="plotly_white",
-        width=650,  # Set combined width
-        height=400,  # Set combined height
-        xaxis_tickangle=-45,  # Rotate x-axis labels for better fit
-        xaxis=dict(tickvals=os_version_counts['os_version'],
-                ticktext=[os.replace(' ', '<br>') for os in os_version_counts['os_version']])
-    )
-    server_os_type_fig = pio.to_html(fig1, include_plotlyjs=False, full_html=False)
-    server_os_version_fig = pio.to_html(fig2, include_plotlyjs=False, full_html=False)
-    
-    # Create figure with secondary y-axis
-    # fig = make_subplots(
-    #     rows=2, cols=1,
-    #     subplot_titles=('Energy Consumption Over Time', 'CO2 Emissions Over Time'),
-    #     vertical_spacing=0.30
-    # )
-
-    # # Add area plot for energy consumption
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=server_df['Date'],
-    #         y=server_df['Energy consumption (KWH)'],
-    #         fill='tozeroy',
-    #         name='Energy Consumption (KWH)',
-    #         line=dict(color='#4A90E2'),  # Blue color
-    #         fillcolor='rgba(74, 144, 226, 0.3)',  # Transparent blue
-    #     ),
-    #     row=1, col=1
-    # )
-
-    # # Add area plot for CO2 emissions
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=server_df['Date'],
-    #         y=server_df['CO2 emission (Metric Tons)'],
-    #         fill='tozeroy',
-    #         name='CO2 Emissions (Metric Tons)',
-    #         line=dict(color='#50C878'),  # Green color
-    #         fillcolor='rgba(80, 200, 120, 0.3)',  # Transparent green
-    #     ),
-    #     row=2, col=1
-    # )
-
-    # # Update layout with modern styling
-    # fig.update_layout(
-    #     title=dict(
-    #         text='Server Analysis: Energy Consumption and CO2 Emissions',
-    #         y=1,
-    #         x=0.5,
-    #         xanchor='center',
-    #         yanchor='top',
-    #         font=dict(size=18)
-    #     ),
-    #     showlegend=True,
-    #     legend=dict(
-    #         orientation="h",
-    #         yanchor="top",
-    #         y=-0.2,
-    #         xanchor="center",
-    #         x=0.5
-    #     ),
-    #     width=600,
-    #     height=500,
-    #     paper_bgcolor='white',
-    #     plot_bgcolor='rgba(240,240,240,0.3)',  # Light gray background
-    # )
-
-    # # Update axes
-    # fig.update_xaxes(
-    #     title_text="Date",
-    #     showgrid=True,
-    #     gridwidth=1,
-    #     gridcolor='rgba(128,128,128,0.2)',
-    #     row=1, col=1
-    # )
-
-    # fig.update_xaxes(
-    #     title_text="Date",
-    #     showgrid=True,
-    #     gridwidth=1,
-    #     gridcolor='rgba(128,128,128,0.2)',
-    #     row=2, col=1
-    # )
-
-    # fig.update_yaxes(
-    #     title_text="Kilowatt-hour",
-    #     showgrid=True,
-    #     gridwidth=1,
-    #     gridcolor='rgba(128,128,128,0.2)',
-    #     row=1, col=1
-    # )
-
-    # fig.update_yaxes(
-    #     title_text="Metric Tons",
-    #     showgrid=True,
-    #     gridwidth=1,
-    #     gridcolor='rgba(128,128,128,0.2)',
-    #     row=2, col=1
-    # )
-
-    # # Convert to HTML
-    # div_faceted_area_charts = pio.to_html(fig, include_plotlyjs=False, full_html=False)
-
-
-    # ------------------- Prepare data for the detailed server report -------------------
-
-    # Multi-server data:
-    # unique_servers = mul_server_df['hostname'].unique()  # Get unique host names
-    # Get unique hostnames
-    unique_servers = mul_server_df['hostname'].unique().tolist()
-
-    # # Convert DataFrame to list of dictionaries with explicit type conversion and sanitization
-    # server_details = []
-    # for _, row in mul_server_df.iterrows():
-    #     server_dict = {
-    #         'hostname': str(row['hostname']),
-    #         'os_version': str(row.get('os_version', 'N/A')).replace('\n', ' ').replace('\r', ''),
-    #         'os_type': str(row.get('os_type', 'N/A')).replace('\n', ' ').replace('\r', ''),
-    #         'region': str(row.get('region', 'N/A')).replace('\n', ' ').replace('\r', ''),
-    #         'total_co2': float(row.get('total_co2', 0)),
-    #         'cpu_co2': float(row.get('cpu_co2', 0)),
-    #         'ram_co2': float(row.get('ram_co2', 0)),
-    #         'ram_total': float(row.get('ram_total', 0)),
-    #         'ram_used': float(row.get('ram_used', 0)),
-    #         'ram_percent': float(row.get('ram_percent', 0)),
-    #         'total_power': float(row.get('total_power', 0)),
-    #         'cpu_power': float(row.get('cpu_power', 0)),
-    #         'ram_power': float(row.get('ram_power', 0)),
-    #         'disk_read_bytes': float(row.get('disk_read_bytes', 0)),
-    #         'disk_write_bytes': float(row.get('disk_write_bytes', 0)),
-    #         'disk_base_co2': float(row.get('disk_base_co2', 0)),
-    #         'disk_io_co2': float(row.get('disk_io_co2', 0)),
-    #         'storage_device_count': int(row.get('storage_device_count', 0)),
-    #         'storage_devices': str(row.get('storage_devices', '')).replace('\n', ' ').replace('\r', ''),
-    #         'co2_factor': float(row.get('co2_factor', 0))
-    #     }
-    #     server_details.append(server_dict)
-
-    # # Safely convert to JSON string
-    # server_details_json = json.dumps(server_details, ensure_ascii=True)
-
-    # --------------------- Try 1 ---------------------
-
-    # Prepare lists for before and after details to pass to the template
-    # server_details = mul_server_df[['os_version','storage_device_count','storage_devices','cpu_percent','ram_total','ram_used','ram_percent','disk_read_bytes','disk_write_bytes','timestamp','hostname','os_type','total_power','cpu_power','ram_power','disk_base_power','disk_io_power','total_co2','cpu_co2','ram_co2','disk_base_co2','disk_io_co2','co2_factor','region']].to_dict(orient='records')
-    
-    # --------------------- Try 2 ---------------------
-    # Convert DataFrame to list of dictionaries
-    # Create a copy of the DataFrame to avoid modifying the original
-    df = mul_server_df.copy()
-    
-    # Define columns by type
-    numeric_columns = [
-        'cpu_percent', 'ram_total', 'ram_used', 'ram_percent', 
-        'disk_read_bytes', 'disk_write_bytes', 'total_power', 
-        'cpu_power', 'ram_power', 'disk_base_power', 'disk_io_power',
-        'total_co2', 'cpu_co2', 'ram_co2', 'disk_base_co2', 
-        'disk_io_co2', 'co2_factor', 'storage_device_count'
-    ]
-    
-    string_columns = [
-        'hostname', 'os_version', 'os_type', 'region', 
-        'storage_devices', 'timestamp'
-    ]
-    
-    # Convert numeric columns to float
-    for col in numeric_columns:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-    
-    # Ensure string columns are properly formatted
-    for col in string_columns:
-        if col in df.columns:
-            df[col] = df[col].astype(str)
-    
-    # Handle any missing columns
-    required_columns = numeric_columns + string_columns
-    for col in required_columns:
-        if col not in df.columns:
-            if col in numeric_columns:
-                df[col] = 0
+            if not before_df.empty:
+                latest_before_df = before_df.loc[[before_df['Timestamp'].idxmax()]]
+                template_vars['latest_before_details'] = [latest_before_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict()]
+                template_vars['latest_total_before'] = latest_before_df[latest_before_df['Application name'].apply(is_test_application)]['Energy Consumed (Wh)'].astype(float).sum()
             else:
-                df[col] = 'N/A'
-    
-    # Convert DataFrame to list of dictionaries
-    server_details = df.to_dict(orient='records')
+                template_vars['latest_before_details'] = []
+                template_vars['latest_total_before'] = 0.0
 
-    # --------------------- Prepare data for Recommendations ---------------------
+            if not after_df.empty:
+                latest_after_df = after_df.loc[[after_df['Timestamp'].idxmax()]]
+                template_vars['latest_after_details'] = [latest_after_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict()]
+                template_vars['latest_total_after'] = latest_after_df[latest_after_df['Application name'].apply(is_test_application)]['Energy Consumed (Wh)'].astype(float).sum()
+            else:
+                template_vars['latest_after_details'] = []
+                template_vars['latest_total_after'] = 0.0
 
-    # Ensure Modification Timestamp is in datetime format
-    recommendations_df['Modification Timestamp'] = pd.to_datetime(recommendations_df['Modification Timestamp'], errors='coerce')
+            template_vars['before_details'] = before_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict(orient='records')
+            template_vars['after_details'] = after_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict(orient='records')
 
-    # Drop rows where the timestamp could not be parsed
-    recommendations_df = recommendations_df.dropna(subset=['Modification Timestamp'])
+            if comparison_df is not None:
+                template_vars['total_emissions_before'] = comparison_df[comparison_df['Application name'].apply(is_test_application)]['Before'].astype(float).sum()
+                template_vars['total_emissions_after'] = comparison_df[comparison_df['Application name'].apply(is_test_application)]['After'].astype(float).sum()
+                template_vars['latest_total_emissions_before'] = latest_before_df[latest_before_df['Application name'].apply(is_test_application)]['Emissions (gCO2eq)'].astype(float).sum()
+                template_vars['latest_total_emissions_after'] = latest_after_df[latest_after_df['Application name'].apply(is_test_application)]['Emissions (gCO2eq)'].astype(float).sum()
 
-    # Extract unique dates
-    unique_dates = recommendations_df['Modification Timestamp'].dt.date.unique().tolist()
+            # Generate energy consumption graph
+            before_file_type = before_df.groupby('solution dir')['Energy Consumed (Wh)'].sum().reset_index()
+            after_file_type = after_df.groupby('solution dir')['Energy Consumed (Wh)'].sum().reset_index()
+            before_file_type_sorted = before_file_type.sort_values('Energy Consumed (Wh)', ascending=False)
+            after_file_type_sorted = after_file_type.sort_values('Energy Consumed (Wh)', ascending=False)
+            unique_solution_dirs = sorted(set(before_file_type_sorted['solution dir']).union(after_file_type_sorted['solution dir']))
+            colors = px.colors.qualitative.Light24
+            color_mapping = {solution_dir: colors[i % len(colors)] for i, solution_dir in enumerate(before_file_type_sorted['solution dir'].unique())}
 
-    # Prepare recommendations details grouped by date
-    recommendations_details = {}
-    for date in unique_dates:
-        date_records = recommendations_df[recommendations_df['Modification Timestamp'].dt.date == date]
-        # Convert the DataFrame to a dictionary and ensure timestamps are strings
-        recommendations_details[str(date)] = date_records.assign(
-            **{"Modification Timestamp": date_records['Modification Timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')}
-        ).to_dict(orient='records')
+            fig = go.Figure()
+            for i, (_, row) in enumerate(before_file_type_sorted.iterrows()):
+                fig.add_trace(go.Bar(x=[row['solution dir']], y=[row['Energy Consumed (Wh)']], name='Before', 
+                                     marker=dict(color=color_mapping.get(row['solution dir'], 'grey'), opacity=0.9), 
+                                     offsetgroup=0, showlegend=True if i == 0 else False))
+            for i, (_, row) in enumerate(after_file_type_sorted.iterrows()):
+                fig.add_trace(go.Bar(x=[row['solution dir']], y=[row['Energy Consumed (Wh)']], name='After', 
+                                     marker=dict(color=color_mapping.get(row['solution dir'], 'grey'), opacity=0.6, 
+                                                 pattern=dict(shape="/", solidity=0.7)), offsetgroup=1, 
+                                     showlegend=True if i == 0 else False))
+            fig.update_layout(title={'text': 'Source Code Directory Level Energy Consumption (Wh) - Before vs After Optimization', 
+                                    'y': 0.95, 'x': 0.5, 'xanchor': 'center', 'yanchor': 'top'}, 
+                             xaxis_title='Solution Dir', yaxis_title='Energy Consumed (Wh)', barmode='group', 
+                             xaxis=dict(tickangle=45, tickformat=".6f"), yaxis=dict(range=[0, max(
+                                 before_file_type_sorted['Energy Consumed (Wh)'].max(), 
+                                 after_file_type_sorted['Energy Consumed (Wh)'].max()) * 1.1], tickformat=".6f"), 
+                             margin=dict(l=50, r=50, t=100, b=120), showlegend=False, width=700, height=400, 
+                             plot_bgcolor='white', paper_bgcolor='white')
+            fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGrey')
+            template_vars['div_combined_graph'] = pio.to_html(fig, include_plotlyjs=False, full_html=False)
 
-    # Before rendering, add these debug print statements
-    print("Total Rows:", len(recommendations_df))
-    print("Unique Dates Found:", unique_dates)
-    print("Recommendations Details Keys:", recommendations_details.keys())
-    for date, recs in recommendations_details.items():
-        print(f"Date {date} has {len(recs)} records")
-    
-    # Check if DataFrames are not empty before getting the latest record
-    if not before_df.empty:
-        latest_before_df = before_df.loc[[before_df['Timestamp'].idxmax()]]
-    else:
-        latest_before_df = pd.DataFrame()  # Create an empty DataFrame
+            # Generate emissions graph
+            before_gco2eq = before_df.groupby('solution dir')['Emissions (gCO2eq)'].sum().reset_index()
+            after_gco2eq = after_df.groupby('solution dir')['Emissions (gCO2eq)'].sum().reset_index()
+            before_gco2eq_sorted = before_gco2eq.sort_values('Emissions (gCO2eq)', ascending=False)
+            after_gco2eq_sorted = after_gco2eq.sort_values('Emissions (gCO2eq)', ascending=False)
 
-    if not after_df.empty:
-        latest_after_df = after_df.loc[[after_df['Timestamp'].idxmax()]]
-    else:
-        latest_after_df = pd.DataFrame()  # Create an empty DataFrame
+            fig = go.Figure()
+            for i, (_, row) in enumerate(before_gco2eq_sorted.iterrows()):
+                fig.add_trace(go.Bar(x=[row['solution dir']], y=[row['Emissions (gCO2eq)']], name='Before',
+                                     marker=dict(color=color_mapping.get(row['solution dir'], 'grey'), opacity=0.9),
+                                     offsetgroup=0, showlegend=True if i == 0 else False))
+            for i, (_, row) in enumerate(after_gco2eq_sorted.iterrows()):
+                fig.add_trace(go.Bar(x=[row['solution dir']], y=[row['Emissions (gCO2eq)']], name='After',
+                                     marker=dict(color=color_mapping.get(row['solution dir'], 'grey'), opacity=0.6,
+                                                 pattern=dict(shape="/", solidity=0.7)), offsetgroup=1,
+                                     showlegend=True if i == 0 else False))
+            fig.update_layout(title={'text': 'Source Code Directory Level Emissions (gCO2eq) - Before vs After Optimization',
+                                    'y': 0.95, 'x': 0.5, 'xanchor': 'center', 'yanchor': 'top'},
+                             xaxis_title='Solution Dir', yaxis_title='Emissions (gCO2eq)', barmode='group',
+                             xaxis=dict(tickangle=45, tickformat=".6f"), yaxis=dict(range=[0, max(
+                                 before_gco2eq_sorted['Emissions (gCO2eq)'].max(),
+                                 after_gco2eq_sorted['Emissions (gCO2eq)'].max()) * 1.1], tickformat=".6f"),
+                             margin=dict(l=50, r=50, t=100, b=120), showlegend=False, width=700, height=400,
+                             plot_bgcolor='white', paper_bgcolor='white')
+            fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGrey')
+            template_vars['div_emissions_combined_graph'] = pio.to_html(fig, include_plotlyjs=False, full_html=False)
 
+            # Generate top five tables
+            top_five_energy_before = before_df.sort_values('Energy Consumed (Wh)', ascending=False).head(5)[
+                ['Application name', 'Timestamp', 'Energy Consumed (Wh)']]
+            top_five_energy_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp',
+                                                  'Energy Consumed (Wh)': 'Energy Consumed (Wh)'}, inplace=True)
+            template_vars['energy_table_html'] = top_five_energy_before.to_html(index=False, classes='table', border=0,
+                                                                               float_format=lambda x: f"{x:.6f}")
 
-    # Prepare lists for before and after details to pass to the template
-    latest_before_details = [latest_before_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict()]
-    latest_after_details = [latest_after_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict()]
+            top_five_emissions_before = before_df.sort_values('Emissions (gCO2eq)', ascending=False).head(5)[
+                ['Application name', 'Timestamp', 'Emissions (gCO2eq)']]
+            top_five_emissions_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp',
+                                                     'Emissions (gCO2eq)': 'Emissions (gCO2eq)'}, inplace=True)
+            template_vars['emissions_table_html'] = top_five_emissions_before.to_html(index=False, classes='table',
+                                                                                     border=0, float_format=lambda x: f"{x:.6f}")
 
-    # Function to filter for test applications
-    def is_test_application(app_name):
-        return 'test' in str(app_name).lower()
+            # Generate pie charts for embedded and non-embedded code
+            embedded_types = ['.html', '.css', '.xml', '.php', '.ts']
+            non_embedded_types = ['.py', '.java', '.cpp', '.rb']
+            embedded_df = comparison_df[comparison_df['File Type'].isin(embedded_types)]
+            non_embedded_df = comparison_df[comparison_df['File Type'].isin(non_embedded_types)]
 
-    # Sum 'Energy Consumed (Wh)' for before and after, including ONLY test applications
-    total_before = before_df[before_df['Application name'].apply(is_test_application)]['Energy Consumed (Wh)'].astype(float).sum()
-    total_after = after_df[after_df['Application name'].apply(is_test_application)]['Energy Consumed (Wh)'].astype(float).sum()
+            if not embedded_df.empty:
+                total_embedded_before = embedded_df['Before'].astype(float).sum()
+                total_embedded_after = embedded_df['After'].astype(float).sum()
+                reduction_percentage = ((total_embedded_before - total_embedded_after) / total_embedded_before * 100)
+                fig = go.Figure(data=[go.Pie(values=[total_embedded_before, total_embedded_after],
+                                             labels=['Before', 'After'], marker=dict(colors=['#FF6B6B', '#4ECDC4']),
+                                             textinfo='label+value', textposition='outside',
+                                             texttemplate='%{label}<br>%{value:.6f} gCO2eq', hole=0.7,
+                                             direction='clockwise', showlegend=False)])
+                fig.update_layout(title=dict(text='Embedded Code Emissions (gCO2eq)<br>[".html",".css",".xml",".php",".ts"]',
+                                             y=0.95, x=0.5, xanchor='center', yanchor='top', font=dict(size=18)),
+                                 annotations=[dict(text=f"↓{reduction_percentage:.1f}%", x=0.5, y=0.5,
+                                                   font=dict(size=24, color='green'), showarrow=False),
+                                             dict(text="Reduction", x=0.5, y=0.42, font=dict(size=14, color='green'),
+                                                  showarrow=False)], width=600, height=400, paper_bgcolor='white',
+                                 plot_bgcolor='white', showlegend=False)
+                template_vars['div_pie_chart_embedded'] = pio.to_html(fig, include_plotlyjs=False, full_html=False)
 
-    # Sum 'Energy Consumed (Wh)' for latest records, including ONLY test applications
-    latest_total_before = latest_before_df[latest_before_df['Application name'].apply(is_test_application)]['Energy Consumed (Wh)'].astype(float).sum()
-    latest_total_after = latest_after_df[latest_after_df['Application name'].apply(is_test_application)]['Energy Consumed (Wh)'].astype(float).sum()
+            if not non_embedded_df.empty:
+                total_non_embedded_before = non_embedded_df['Before'].astype(float).sum()
+                total_non_embedded_after = non_embedded_df['After'].astype(float).sum()
+                reduction_percentage = ((total_non_embedded_before - total_non_embedded_after) / total_non_embedded_before * 100)
+                fig = go.Figure(data=[go.Pie(values=[total_non_embedded_before, total_non_embedded_after],
+                                             labels=['Before', 'After'], marker=dict(colors=['#FF6B6B', '#4ECDC4']),
+                                             textinfo='label+value', textposition='outside',
+                                             texttemplate='%{label}<br>%{value:.6f} gCO2eq', hole=0.7,
+                                             direction='clockwise', showlegend=False)])
+                fig.update_layout(title=dict(text='Non-Embedded Code Emissions (gCO2eq)<br>[".py", ".java", ".cpp", ".rb"]',
+                                             y=0.95, x=0.5, xanchor='center', yanchor='top', font=dict(size=18)),
+                                 annotations=[dict(text=f"↓{reduction_percentage:.1f}%", x=0.5, y=0.5,
+                                                   font=dict(size=24, color='green'), showarrow=False),
+                                             dict(text="Reduction", x=0.5, y=0.38, font=dict(size=14, color='green'),
+                                                  showarrow=False)], width=600, height=400, paper_bgcolor='white',
+                                 plot_bgcolor='white', showlegend=False)
+                template_vars['div_pie_chart_non_embedded'] = pio.to_html(fig, include_plotlyjs=False, full_html=False)
 
-    # Prepare lists for before and after details to pass to the template
-    before_details = before_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict(orient='records')
-    after_details = after_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict(orient='records')
-    
-    # Capture the current timestamp for the report
-    last_run_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        except Exception as e:
+            logging.error(f"Error processing before/after data: {e}")
 
-    # Read comparison_results.csv to get total 'Before' and 'After', only for test applications
-    total_emissions_before = comparison_df[comparison_df['Application name'].apply(is_test_application)]['Before'].astype(float).sum()
-    total_emissions_after = comparison_df[comparison_df['Application name'].apply(is_test_application)]['After'].astype(float).sum()
-
-    # Read comparison_results.csv to get total 'Before' and 'After' for latest records, only for test applications
-    latest_total_emissions_before = latest_before_df[latest_before_df['Application name'].apply(is_test_application)]['Emissions (gCO2eq)'].astype(float).sum()
-    latest_total_emissions_after = latest_after_df[latest_after_df['Application name'].apply(is_test_application)]['Emissions (gCO2eq)'].astype(float).sum()
-
-    # Read CSVs and group by 'solution dir'
-    before_file_type = before_df.groupby('solution dir')['Energy Consumed (Wh)'].sum().reset_index()
-    after_file_type = after_df.groupby('solution dir')['Energy Consumed (Wh)'].sum().reset_index()
-    
-    # Group by 'solution dir' and calculate sum of 'Energy Consumed (Wh)'
-    latest_before_file_type = latest_before_df.groupby('solution dir')['Energy Consumed (Wh)'].sum().reset_index()
-    latest_after_file_type = latest_after_df.groupby('solution dir')['Energy Consumed (Wh)'].sum().reset_index()
-
-    # Sort the data by energy consumed (descending for top 5)
-    before_file_type_sorted = before_file_type.sort_values('Energy Consumed (Wh)', ascending=False)
-    after_file_type_sorted = after_file_type.sort_values('Energy Consumed (Wh)', ascending=False)
-
-    # Sort the data by energy consumed (descending for top 5)
-    latest_before_file_type_sorted = latest_before_file_type.sort_values('Energy Consumed (Wh)', ascending=False)
-    latest_after_file_type_sorted = latest_after_file_type.sort_values('Energy Consumed (Wh)', ascending=False)
-
-    # Determine unique solution dirs
-    unique_solution_dirs = sorted(set(before_file_type_sorted['solution dir']).union(after_file_type_sorted['solution dir']))
-
-    # Determine unique solution dirs
-    latest_unique_solution_dirs = sorted(set(latest_before_file_type_sorted['solution dir']).union(latest_after_file_type_sorted['solution dir']))
-
-    # Create a color palette with distinct colors
-    colors = px.colors.qualitative.Light24
-
-    # Create a dictionary to store colors for each solution dir
-    color_mapping = {
-        solution_dir: colors[i % len(colors)]
-        for i, solution_dir in enumerate(before_file_type_sorted['solution dir'].unique())
-    }
-
-    # Create figure
-    fig = go.Figure()
-
-    # Add traces for "Before" data
-    for i, (_, row) in enumerate(before_file_type_sorted.iterrows()):
-        fig.add_trace(go.Bar(
-            x=[row['solution dir']],
-            y=[row['Energy Consumed (Wh)']],
-            name='Before',  # Simplified name
-            marker=dict(
-                color=color_mapping.get(row['solution dir'], 'grey'),  # Safe lookup
-                opacity=0.9
-            ),
-
-            offsetgroup=0,
-            showlegend=True if i == 0 else False  # Show legend only for first "Before" bar
-        ))
-
-    # Add traces for "After" data
-    for i, (_, row) in enumerate(after_file_type_sorted.iterrows()):
-        fig.add_trace(go.Bar(
-            x=[row['solution dir']],
-            y=[row['Energy Consumed (Wh)']],
-            name='After',  # Simplified name
-            marker=dict(
-                color=color_mapping.get(row['solution dir'], 'grey'),  # Safe lookup
-                opacity=0.6,
-                pattern=dict(shape="/", solidity=0.7)
-            ),
-            offsetgroup=1,
-            showlegend=True if i == 0 else False  # Show legend only for first "After" bar
-        ))
-
-    # Update layout
-    fig.update_layout(
-        title={
-            'text': 'Source Code Directory Level Energy Consumption (Wh) - Before vs After Optimization',
-            'y': 0.95,
-            'x': 0.5,
-            'xanchor': 'center',
-            'yanchor': 'top'
-        },
-        xaxis_title='Solution Dir',
-        yaxis_title='Energy Consumed (Wh)',
-        barmode='group',
-        xaxis=dict(
-            tickangle=45,
-            tickformat=".6f"
-        ),
-        yaxis=dict(
-            range=[0, max(
-                before_file_type_sorted['Energy Consumed (Wh)'].max(),
-                after_file_type_sorted['Energy Consumed (Wh)'].max()
-            ) * 1.1],
-            tickformat=".6f"
-        ),
-        margin=dict(l=50, r=50, t=100, b=120),
-        showlegend=False,  # Disable the legend
-        width=700,
-        height=400,
-        plot_bgcolor='white',
-        paper_bgcolor='white'
-    )
-
-
-    # Add grid lines for better readability
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGrey')
-
-    # Convert to HTML
-    div_combined_graph = pio.to_html(fig, include_plotlyjs=False, full_html=False)
-
-    # === Feature 1: Horizontal Bar Graphs for Emissions (gCO2eq) by Solution Dir ===
-    # Group by 'solution dir' and sum 'Emissions (gCO2eq)'
-    before_gco2eq = before_df.groupby('solution dir')['Emissions (gCO2eq)'].sum().reset_index()
-    after_gco2eq = after_df.groupby('solution dir')['Emissions (gCO2eq)'].sum().reset_index()
-
-    latest_before_gco2eq = latest_before_df.groupby('solution dir')['Emissions (gCO2eq)'].sum().reset_index()
-    latest_after_gco2eq = latest_after_df.groupby('solution dir')['Emissions (gCO2eq)'].sum().reset_index()
-
-    # Sort the data by emissions (descending for top 5)
-    before_gco2eq_sorted = before_gco2eq.sort_values('Emissions (gCO2eq)', ascending=False)
-    after_gco2eq_sorted = after_gco2eq.sort_values('Emissions (gCO2eq)', ascending=False)
-
-    # Sort the data by emissions (descending for top 5)
-    latest_before_gco2eq_sorted = latest_before_gco2eq.sort_values('Emissions (gCO2eq)', ascending=False)
-    latest_after_gco2eq_sorted = latest_after_gco2eq.sort_values('Emissions (gCO2eq)', ascending=False)
-
-    unique_solution_dirs_gco2eq = sorted(set(before_gco2eq_sorted['solution dir']).union(after_gco2eq_sorted['solution dir']))
-
-    latest_unique_solution_dirs_gco2eq = sorted(set(latest_before_gco2eq_sorted['solution dir']).union(latest_after_gco2eq_sorted['solution dir']))
-
-   # Create a dictionary to store colors for each solution dir
-    color_mapping = {
-        solution_dir: colors[i % len(colors)]
-        for i, solution_dir in enumerate(before_file_type_sorted['solution dir'].unique())
-    }
-
-    # Create figure
-    fig = go.Figure()
-
-    # Add traces for "Before" data
-    for i, (_, row) in enumerate(before_gco2eq_sorted.iterrows()):
-        fig.add_trace(go.Bar(
-            x=[row['solution dir']],
-            y=[row['Emissions (gCO2eq)']],
-            name='Before',  # Simplified name
-            marker=dict(
-                color=color_mapping.get(row['solution dir'], 'grey'),  # Safe lookup
-                opacity=0.9
-            ),
-            offsetgroup=0,
-            showlegend=True if i == 0 else False  # Show legend only for first "Before" bar
-        ))
-
-    # Add traces for "After" data
-    for i, (_, row) in enumerate(after_gco2eq_sorted.iterrows()):
-        fig.add_trace(go.Bar(
-            x=[row['solution dir']],
-            y=[row['Emissions (gCO2eq)']],
-            name='After',  # Simplified name
-            marker=dict(
-                color=color_mapping.get(row['solution dir'], 'grey'),  # Safe lookup
-                opacity=0.6,
-                pattern=dict(shape="/", solidity=0.7)
-            ),
-            offsetgroup=1,
-            showlegend=True if i == 0 else False  # Show legend only for first "After" bar
-        ))
-
-    # Update layout
-    fig.update_layout(
-        title={
-            'text': 'Source Code Directory Level Emissions (gCO2eq) - Before vs After Optimization',
-            'y': 0.95,
-            'x': 0.5,
-            'xanchor': 'center',
-            'yanchor': 'top'
-        },
-        xaxis_title='Solution Dir',
-        yaxis_title='Emissions (gCO2eq)',
-        barmode='group',
-        xaxis=dict(
-            tickangle=45,
-            tickformat=".6f"
-        ),
-        yaxis=dict(
-            range=[0, max(
-                before_gco2eq_sorted['Emissions (gCO2eq)'].max(),
-                after_gco2eq_sorted['Emissions (gCO2eq)'].max()
-            ) * 1.1],
-            tickformat=".6f"
-        ),
-        margin=dict(l=50, r=50, t=100, b=120),
-        showlegend=False,
-        width=700,
-        height=400,
-        plot_bgcolor='white',
-        paper_bgcolor='white'
-    )
-
-    # Add grid lines for better readability
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGrey')
-
-    # Convert to HTML
-    div_emissions_combined_graph = pio.to_html(fig, include_plotlyjs=False, full_html=False)
-
-    # === Feature 2: Top Five Tables ===
-    # Top Five Files Generating Most Energy (Before Refinement)
-    top_five_energy_before = before_df.sort_values('Energy Consumed (Wh)', ascending=False).head(5)[['Application name', 'Timestamp', 'Energy Consumed (Wh)']]
-    top_five_energy_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp', 'Energy Consumed (Wh)': 'Energy Consumed (Wh)'}, inplace=True)
-    energy_table_html = top_five_energy_before.to_html(index=False, classes='table', border=0, float_format=lambda x: f"{x:.6f}")
-
-    # Top Five Files Generating Most Emissions (Before Refinement)
-    top_five_emissions_before = before_df.sort_values('Emissions (gCO2eq)', ascending=False).head(5)[['Application name', 'Timestamp', 'Emissions (gCO2eq)']]
-    top_five_emissions_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp', 'Emissions (gCO2eq)': 'Emissions (gCO2eq)'}, inplace=True)
-    emissions_table_html = top_five_emissions_before.to_html(index=False, classes='table', border=0, float_format=lambda x: f"{x:.6f}")
-
-# --------------------------------------------------------------------------------------------
-
-    latest_top_five_energy_before = latest_before_df.sort_values('Energy Consumed (Wh)', ascending=False).head(5)[['Application name', 'Timestamp', 'Energy Consumed (Wh)']]
-    latest_top_five_energy_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp', 'Energy Consumed (Wh)': 'Energy Consumed (Wh)'}, inplace=True)
-    latest_energy_table_html = latest_top_five_energy_before.to_html(index=False, classes='table', border=0, float_format=lambda x: f"{x:.6f}")
-
-    # Top Five Files Generating Most Emissions (Before Refinement)
-    latest_top_five_emissions_before = latest_before_df.sort_values('Emissions (gCO2eq)', ascending=False).head(5)[['Application name', 'Timestamp', 'Emissions (gCO2eq)']]
-    latest_top_five_emissions_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp', 'Emissions (gCO2eq)': 'Emissions (gCO2eq)'}, inplace=True)
-    latest_emissions_table_html = latest_top_five_emissions_before.to_html(index=False, classes='table', border=0, float_format=lambda x: f"{x:.6f}")
-
-    # === Feature 3: Emissions for Embedded and Non-Embedded Code ===
-    # Define embedded and non-embedded file extensions
-    embedded_types = ['.html', '.css', '.xml', '.php', '.ts']
-    non_embedded_types = ['.py', '.java', '.cpp', '.rb']
-
-    # Filter comparison_df for embedded and non-embedded types
-    # Assuming comparison_results.csv has columns: 'File Type', 'Before', 'After'
-    embedded_df = comparison_df[comparison_df['File Type'].isin(embedded_types)]
-    non_embedded_df = comparison_df[comparison_df['File Type'].isin(non_embedded_types)]
-
-    # Sum 'Before' and 'After' emissions for embedded and non-embedded
-    total_embedded_before = embedded_df['Before'].astype(float).sum()
-    total_embedded_after = embedded_df['After'].astype(float).sum()
-
-    total_non_embedded_before = non_embedded_df['Before'].astype(float).sum()
-    total_non_embedded_after = non_embedded_df['After'].astype(float).sum()
-
-    # --------------------------------------------------------------------------------------------
-
-    before_embedded_df = latest_before_df[latest_before_df['File Type'].isin(embedded_types)]
-    before_non_embedded_df = latest_before_df[latest_before_df['File Type'].isin(non_embedded_types)]
-
-    after_embedded_df = latest_after_df[latest_after_df['File Type'].isin(embedded_types)]
-    after_non_embedded_df = latest_after_df[latest_after_df['File Type'].isin(non_embedded_types)]
-
-    # Combine the two filtered DataFrames into a single DataFrame
-    latest_emissions_df = pd.concat([before_embedded_df, after_embedded_df], ignore_index=True)
-    latest_non_emissions_df = pd.concat([before_non_embedded_df, after_non_embedded_df], ignore_index=True)
-
-    # Sum 'Before' and 'After' emissions for embedded and non-embedded
-    latest_total_embedded_before = before_embedded_df['Emissions (gCO2eq)'].astype(float).sum()
-    latest_total_embedded_after = after_embedded_df['Emissions (gCO2eq)'].astype(float).sum()
-
-    latest_total_non_embedded_before = before_non_embedded_df['Emissions (gCO2eq)'].astype(float).sum()
-    latest_total_non_embedded_after = after_non_embedded_df['Emissions (gCO2eq)'].astype(float).sum()
-# --------------------------------------------------------------------------------------------
-
-    # Check if there are any embedded code files
-    if embedded_df.empty:
-        div_pie_chart_embedded = "<p>No embedded code files found: ['.html', '.css', '.xml', '.php', '.ts']</p>"
-    else:
-        # Create a single figure
-        fig = go.Figure()
-
-        # Add a single pie chart with both values
-        fig.add_trace(
-            go.Pie(
-                values=[total_embedded_before, total_embedded_after],
-                labels=['Before', 'After'],
-                name="Emissions",
-                marker=dict(colors=['#FF6B6B', '#4ECDC4']),  # Red for before, Teal for after
-                textinfo='label+value',
-                textposition='outside',
-                texttemplate='%{label}<br>%{value:.6f} gCO2eq',
-                hovertemplate="<b>%{label}</b><br>Emissions: %{value:.6f} gCO2eq<br>%{percent}<extra></extra>",
-                hole=0.7,  # Large hole for the percentage
-                direction='clockwise',
-                showlegend=False
-            )
+    # Render the templates with dynamic data
+    try:
+        html_content = template.render(**template_vars)
+        html_details_content = details_template.render(
+            solution_dirs=template_vars.get('solution_dirs', []),
+            before_details=template_vars.get('before_details', []),
+            after_details=template_vars.get('after_details', [])
         )
-
-        # Calculate reduction percentage
-        reduction_percentage = ((total_embedded_before - total_embedded_after) / total_embedded_before * 100)
-
-        # Update layout with modern styling
-        fig.update_layout(
-            title=dict(
-                text='Embedded Code Emissions (gCO2eq)<br>[".html",".css",".xml",".php",".ts"]',
-                y=0.95,
-                x=0.5,
-                xanchor='center',
-                yanchor='top',
-                font=dict(size=18)
-            ),
-            annotations=[
-                # Add reduction percentage in the middle
-                dict(
-                    text=f"↓{reduction_percentage:.1f}%",
-                    x=0.5,
-                    y=0.5,
-                    font=dict(size=24, color='green'),
-                    showarrow=False
-                ),
-                # Add "Reduction" label below the percentage
-                dict(
-                    text="Reduction",
-                    x=0.5,
-                    y=0.42,
-                    font=dict(size=14, color='green'),
-                    showarrow=False
-                )
-            ],
-            width=600,
-            height=400,
-            paper_bgcolor='white',
-            plot_bgcolor='white',
-            showlegend=False,
+        timestamp_html_content = lastrun_template.render(
+            latest_total_before=f"{template_vars.get('latest_total_before', 0.0):.2f}",
+            latest_total_after=f"{template_vars.get('latest_total_after', 0.0):.2f}",
+            latest_energy_table_html=template_vars.get('latest_energy_table_html', "<p>Data unavailable</p>"),
+            latest_emissions_table_html=template_vars.get('latest_emissions_table_html', "<p>Data unavailable</p>"),
+            latest_total_emissions_before=f"{template_vars.get('latest_total_emissions_before', 0.0):.2f}",
+            latest_total_emissions_after=f"{template_vars.get('latest_total_emissions_after', 0.0):.2f}",
+            last_run_timestamp=template_vars.get('last_run_timestamp', "No data"),
+            unique_hosts=template_vars.get('unique_hosts', 0),
+            average_co2_emission=round(template_vars.get('average_co2_emission', 0.0), 4),
+            average_energy_consumption=round(template_vars.get('average_energy_consumption', 0.0), 4)
         )
-        # Convert to HTML
-        div_pie_chart_embedded = pio.to_html(fig, include_plotlyjs=False, full_html=False)
-
-    # Check if there are any non-embedded code files
-    if non_embedded_df.empty:
-        div_pie_chart_non_embedded = "<p>No non-embedded code files found: ['.py', '.java', '.cpp', '.rb']</p>"
-    else:
-        # Create a single figure
-        fig = go.Figure()
-
-        # Add a single pie chart with both values
-        fig.add_trace(
-            go.Pie(
-                values=[total_non_embedded_before, total_non_embedded_after],
-                labels=['Before', 'After'],
-                name="Emissions",
-                marker=dict(colors=['#FF6B6B', '#4ECDC4']),  # Red for before, Teal for after
-                textinfo='label+value',
-                textposition='outside',
-                texttemplate='%{label}<br>%{value:.6f} gCO2eq',
-                hovertemplate="<b>%{label}</b><br>Emissions: %{value:.6f} gCO2eq<br>%{percent}<extra></extra>",
-                hole=0.7,  # Large hole for the percentage
-                direction='clockwise',
-                showlegend=False
-            )
+        timestamp_html_details_content = lastrun_details_template.render(
+            solution_dirs=template_vars.get('solution_dirs', []),
+            latest_before_details=template_vars.get('latest_before_details', []),
+            latest_after_details=template_vars.get('latest_after_details', [])
         )
-
-        # Calculate reduction percentage
-        reduction_percentage = ((total_non_embedded_before - total_non_embedded_after) / total_non_embedded_before * 100)
-
-        # Update layout with modern styling
-        fig.update_layout(
-            title=dict(
-                text='Non-Embedded Code Emissions (gCO2eq)<br>[".py", ".java", ".cpp", ".rb"]',
-                y=0.95,
-                x=0.5,
-                xanchor='center',
-                yanchor='top',
-                font=dict(size=18)
-            ),
-            annotations=[
-                # Add reduction percentage in the middle
-                dict(
-                    text=f"↓{reduction_percentage:.1f}%",
-                    x=0.5,
-                    y=0.5,
-                    font=dict(size=24, color='green'),
-                    showarrow=False
-                ),
-                # Add "Reduction" label below the percentage
-                dict(
-                    text="Reduction",
-                    x=0.5,
-                    y=0.38,
-                    font=dict(size=14, color='green'),
-                    showarrow=False
-                )
-            ],
-            width=600,
-            height=400,
-            paper_bgcolor='white',
-            plot_bgcolor='white',
-            showlegend=False,
+        server_details = details_server_template.render(
+            unique_servers=template_vars.get('unique_servers', []),
+            server_details=template_vars.get('server_details', [])
         )
-        # Convert to HTML
-        div_pie_chart_non_embedded = pio.to_html(fig, include_plotlyjs=False, full_html=False)
+        recommendations_detalis = recommendations_template.render(
+            unique_dates=template_vars.get('unique_dates', []),
+            recommendations_details=template_vars.get('recommendations_details', {})
+        )
+    except Exception as e:
+        logging.error(f"Template rendering failed: {e}")
+        return
 
-# --------------------------------------------------------------------------------------------
-
-
-    # Render the template with dynamic data
-    html_content = template.render(
-        total_before=f"{total_before:.6f}",
-        total_after=f"{total_after:.6f}",
-        energy_table_html=energy_table_html,
-        emissions_table_html=emissions_table_html,
-        total_emissions_before=f"{total_emissions_before:.6f}",
-        total_emissions_after=f"{total_emissions_after:.6f}",
-        # div_bar_graph_embedded=div_bar_graph_embedded,
-        # div_bar_graph_non_embedded=div_bar_graph_non_embedded,
-        last_run_timestamp=last_run_timestamp,  # Pass the timestamp
-        # div_line_chart=div_faceted_area_charts,
-        server_os_type_fig=server_os_type_fig,
-        server_os_version_fig=server_os_version_fig,
-        unique_hosts=unique_hosts,
-        average_co2_emission=round(average_co2_emission, 4),  # Round for better display
-        average_energy_consumption=round(average_energy_consumption, 4),  # Round for better display
-        average_cpu_usage=round(average_cpu_usage, 2),
-        average_ram_usage=round(average_ram_usage, 2),
-        average_disk_usage=round(average_disk_usage, 2),
-        average_network_usage=round(average_network_usage, 2),
-        average_disk_read=round(average_disk_read, 2),
-        average_disk_write=round(average_disk_write, 2),
-        cpu_usage_data=cpu_data,
-        ram_usage_data=ram_data,
-        disk_usage_data=disk_data,
-        network_usage_data=network_data,
-        disk_read_data=disk_read,
-        disk_write_data=disk_write,
-        max_network=max_network,
-        critical_servers=critical_servers_list,
-        div_combined_graph=div_combined_graph,
-        div_emissions_combined_graph=div_emissions_combined_graph,
-        div_pie_chart_non_embedded=div_pie_chart_non_embedded,
-        div_pie_chart_embedded=div_pie_chart_embedded,
-        unique_servers=unique_servers,
-        critical_server_count=critical_server_count,
-        total_last_run_co2=f"{total_last_run_co2:.6f}",
-        total_last_run_power=f"{total_last_run_power:.6f}",
-        formatted_timestamp=formatted_timestamp,
-    )
-
-    # Render the details template with detailed data
-    html_details_content = details_template.render(
-        solution_dirs=solution_dirs,
-        before_details=before_details,
-        after_details=after_details
-    )
-
-        # Render the template with dynamic data
-    timestamp_html_content = lastrun_template.render(
-        latest_total_before=f"{latest_total_before:.2f}",
-        latest_total_after=f"{latest_total_after:.2f}",
-        latest_energy_table_html=latest_energy_table_html,
-        latest_emissions_table_html=latest_emissions_table_html,
-        latest_total_emissions_before=f"{latest_total_emissions_before:.2f}",
-        latest_total_emissions_after=f"{latest_total_emissions_after:.2f}",
-        last_run_timestamp=last_run_timestamp,  # Pass the timestamp
-        # div_line_chart=div_faceted_area_charts,
-        unique_hosts=unique_hosts,
-        average_co2_emission=round(average_co2_emission, 4),  # Round for better display
-        average_energy_consumption=round(average_energy_consumption, 4),  # Round for better display
-    )
-
-        # Render the timestamp-based report template
-    timestamp_html_details_content = lastrun_details_template.render(
-        solution_dirs=solution_dirs,
-        latest_before_details=latest_before_details,
-        latest_after_details=latest_after_details
-    )
-
-    server_details = details_server_template.render(
-        unique_servers=unique_servers,
-        server_details=server_details
-    )
-
-    recommendations_detalis = recommendations_template.render(
-            unique_dates=unique_dates,
-            recommendations_details=recommendations_details
-    )
-
-
-    # === Finalizing the HTML Content ===
+    # Save the reports
     current_date = datetime.now().strftime('%Y-%m-%d')
     current_time = datetime.now().strftime('%H-%M')
     date_folder_path = os.path.join(REPORT_DIR, current_date)
     time_folder_path = os.path.join(date_folder_path, current_time)
-
-    # Create both date and time folders if they don't exist
     os.makedirs(time_folder_path, exist_ok=True)
-    logging.info(f"Directory '{time_folder_path}' is ready for use!")
 
-    # Save the timestamp-based HTML report
-    details_report_path = os.path.join(time_folder_path, 'details_report.html')
-    with open(details_report_path, 'w', encoding="utf-8") as f:
-        f.write(timestamp_html_details_content)
-    logging.info(f"Last Run Detailed HTML report generated at {details_report_path}")
+    report_paths = {
+        'details_report': os.path.join(time_folder_path, 'details_report.html'),
+        'emissions_report': os.path.join(time_folder_path, 'emissions_report.html'),
+        'server_report': os.path.join(time_folder_path, 'server_report.html'),
+        'recommendations_report': os.path.join(time_folder_path, 'recommendations_report.html'),
+        'main_report': os.path.join(REPORT_DIR, 'emissions_report.html'),
+        'detailed_report': os.path.join(REPORT_DIR, 'details_report.html'),
+        'server_main_report': os.path.join(REPORT_DIR, 'server_report.html'),
+        'recommendations_main_report': os.path.join(REPORT_DIR, 'recommendations_report.html')
+    }
 
-    emissions_report_path = os.path.join(time_folder_path, 'emissions_report.html')
-    with open(emissions_report_path, 'w', encoding="utf-8") as f:
-        f.write(timestamp_html_content)
-    logging.info(f"Last Run Emissions HTML report generated at {emissions_report_path}")
-
-    servers_report_path = os.path.join(time_folder_path, 'server_report.html')
-    with open(servers_report_path, 'w', encoding="utf-8") as f:
-        f.write(server_details)
-    logging.info(f"Server Details HTML report generated at {servers_report_path}")
-
-    recommendations_report_path = os.path.join(time_folder_path, 'recommendations_report.html')
-    with open(recommendations_report_path, 'w', encoding="utf-8") as f:
-        f.write(recommendations_detalis)
-    logging.info(f"Recommendations HTML report generated at {recommendations_report_path}") 
-
-    # Create the report directory if it doesn't exist
-    os.makedirs(REPORT_DIR, exist_ok=True)
-    logging.info(f"Directory '{REPORT_DIR}' is ready for use!")
-
-    # Save the main HTML report
-    report_path = os.path.join(REPORT_DIR, 'emissions_report.html')
-    with open(report_path, 'w', encoding="utf-8") as f:
-        f.write(html_content)
-    logging.info(f"HTML report generated at {report_path}")
-
-    # Save the detailed HTML report
-    detailed_report_path = os.path.join(REPORT_DIR, 'details_report.html')
-    with open(detailed_report_path, 'w', encoding="utf-8") as f:
-        f.write(html_details_content)
-    logging.info(f"Detailed HTML report generated at {detailed_report_path}")
-
-    server_report_path = os.path.join(REPORT_DIR, 'server_report.html')
-    with open(server_report_path, 'w', encoding="utf-8") as f:
-        f.write(server_details)
-    logging.info(f"Server Details HTML report generated at {server_report_path}")
-
-    recommendations_report_path = os.path.join(REPORT_DIR, 'recommendations_report.html')
-    with open(recommendations_report_path, 'w', encoding="utf-8") as f:
-        f.write(recommendations_detalis)
-    logging.info(f"Recommendations HTML report generated at {recommendations_report_path}")
-
+    for name, path in report_paths.items():
+        try:
+            with open(path, 'w', encoding="utf-8") as f:
+                if name == 'details_report':
+                    f.write(timestamp_html_details_content)
+                elif name == 'emissions_report':
+                    f.write(timestamp_html_content)
+                elif name == 'server_report':
+                    f.write(server_details)
+                elif name == 'recommendations_report':
+                    f.write(recommendations_detalis)
+                elif name == 'main_report':
+                    f.write(html_content)
+                elif name == 'detailed_report':
+                    f.write(html_details_content)
+                elif name == 'server_main_report':
+                    f.write(server_details)
+                elif name == 'recommendations_main_report':
+                    f.write(recommendations_detalis)
+            logging.info(f"Report generated at {path}")
+        except Exception as e:
+            logging.error(f"Failed to save report {name}: {e}")
 
 # Generate HTML report
 generate_html_report(RESULT_DIR)
