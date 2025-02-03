@@ -94,8 +94,8 @@ function run_python_script() {
 }
 
 # Run Python scripts sequentially after .env is updated
-# run_python_script "server_emissions.py"
-# run_python_script "GreenCodeRefiner.py"
+run_python_script "server_emissions.py"
+run_python_script "GreenCodeRefiner.py"
 run_python_script "track_emissions.py"
 
 info "All scripts executed successfully."
