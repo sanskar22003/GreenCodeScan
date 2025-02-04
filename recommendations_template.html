@@ -242,6 +242,14 @@
             border-color: transparent var(--text) transparent transparent;
         }
 
+        .filter-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-lg);
+            align-items: start;
+        }
+        
+
 
         /* Dropdown Styles */
         .select-wrapper {
@@ -414,6 +422,105 @@
             line-height: 1.5;
         }
 
+        /* Overview section */
+
+        .overview-section {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow);
+        }
+
+        .overview-section h3 {
+            color: var(--text);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .overview-section h3 i {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .overview-data {
+            display: grid;
+            gap: var(--spacing-sm);
+        }
+
+        .data-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-sm);
+            background: var(--background);
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+        }
+
+        .data-item:hover {
+            background: var(--primary-light);
+        }
+
+        .data-label {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .data-value {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .overview-divider {
+            height: 1px;
+            background: var(--border);
+            margin: var(--spacing-lg) 0;
+        }
+
+        .dashboard-section {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .section-header {
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-lg);
+        }
+
+        .overview-card {
+            background: var(--background);
+            border-radius: var(--radius);
+            padding: var(--spacing-lg);
+        }
+
+
         /* Animations */
         @keyframes slideDown {
             from {
@@ -440,6 +547,15 @@
         }
 
         /* Responsive Design */
+        @media (max-width: 992px) {
+            .filter-layout {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-md);
+            }
+            .overview-grid {
+                grid-template-columns: 1fr;
+            }
+        }
         @media (max-width: 768px) {
             .container {
                 padding: var(--spacing-md);
@@ -510,43 +626,117 @@
     </header>
     <div class="wrapper">
         <div class="container">
-            <div class="filter-section">
-                <div class="filter-header">
-                    <h2 class="filter-title">
-                        <i class="fas fa-calendar-alt"></i>
-                        Select Run Date
+            <!-- Code Overview Section -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-line"></i>
+                        Code Analysis Overview
                         <div class="info-tooltip">
                             <i class="fas fa-info"></i>
                             <div class="tooltip-content">
-                                Select a date to view recommendations and changes from specific analysis runs, which provide insights on code and server improvements.
+                                Comprehensive overview of code analysis metrics, including both recent and historical data.
                             </div>
                         </div>
                     </h2>
                 </div>
-                <div class="select-wrapper">
-                    <select id="dateSelect">
-                        <option value="" disabled selected>-- Select Date --</option>
-                        {% for date in unique_dates %}
-                            <option value="{{ date }}">{{ date }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="search-container" id="searchContainer">
-                    <div class="search-wrapper">
-                        <input type="text" id="searchBox" class="search-box" placeholder="Search for filename, changes made in file, next steps...">
-                        <i class="fas fa-search"></i>
+                <div class="overview-grid">
+                    <!-- Fresh Details Card -->
+                    <div class="overview-card">
+                        <h3><i class="fas fa-clock"></i> Fresh Details (Last Run)</h3>
+                        <div class="overview-data">
+                            <div class="data-item">
+                                <span class="data-label">Total Files Modified</span>
+                                <span class="data-value">{{ final_overview_data.fresh_details.total_files_modified_last_run }}</span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-label">Total LOC Converted</span>
+                                <span class="data-value">{{ final_overview_data.fresh_details.total_loc_converted_last_run }}</span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-label">Total Time (minutes)</span>
+                                <span class="data-value">{{ final_overview_data.fresh_details.total_time_minutes_last_run }}</span>
+                            </div>
+                            {% if final_overview_data.fresh_details.file_types_last_run %}
+                                {% for file_type, count in final_overview_data.fresh_details.file_types_last_run.items() %}
+                                <div class="data-item">
+                                    <span class="data-label">{{ file_type }} Files</span>
+                                    <span class="data-value">{{ count }}</span>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Historical Overview Card -->
+                    <div class="overview-card">
+                        <h3><i class="fas fa-history"></i> Historical Overview</h3>
+                        <div class="overview-data">
+                            <div class="data-item">
+                                <span class="data-label">Total Files Modified</span>
+                                <span class="data-value">{{ final_overview_data.historical_overview.total_files_modified }}</span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-label">Total LOC Converted</span>
+                                <span class="data-value">{{ final_overview_data.historical_overview.total_loc_converted }}</span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-label">Total Time (minutes)</span>
+                                <span class="data-value">{{ final_overview_data.historical_overview.total_time_minutes }}</span>
+                            </div>
+                            {% if final_overview_data.historical_overview.file_types %}
+                                {% for file_type, count in final_overview_data.historical_overview.file_types.items() %}
+                                <div class="data-item">
+                                    <span class="data-label">{{ file_type }} Files</span>
+                                    <span class="data-value">{{ count }}</span>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <div id="recommendationsContainer">
-                <!-- Empty state -->
-                <div class="empty-state">
-                    <i class="fas fa-clipboard-list"></i>
-                    <p>Select a date to view recommendations</p>
+        
+            <!-- Analysis History Section -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-history"></i>
+                        Analysis History
+                        <div class="info-tooltip">
+                            <i class="fas fa-info"></i>
+                            <div class="tooltip-content">
+                                View and search through historical analysis runs and their recommendations.
+                            </div>
+                        </div>
+                    </h2>
+                </div>
+                <div class="filter-controls">
+                    <div class="select-wrapper">
+                        <select id="dateSelect">
+                            <option value="" disabled selected>-- Select Date --</option>
+                            {% for date in unique_dates %}
+                                <option value="{{ date }}">{{ date }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="search-container" id="searchContainer">
+                        <div class="search-wrapper">
+                            <input type="text" id="searchBox" class="search-box" placeholder="Search for filename, changes made in file, next steps...">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                </div>
+                <div id="recommendationsContainer">
+                    <!-- Empty state -->
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard-list"></i>
+                        <p>Select a date to view next steps and modification analysis</p>
+                    </div>
                 </div>
             </div>
         </div>
+        
     </div>
 
     <script type="text/template" id="recommendationsData">
