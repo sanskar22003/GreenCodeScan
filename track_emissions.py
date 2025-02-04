@@ -373,91 +373,6 @@ process_folder(
 )
 logging.info("Emissions data processed successfully.")
 
-def generate_file_overview():
-    """
-    Generate an overview of files in GREEN_REFINED_DIRECTORY including file counts by type
-    and extract 'overview' comments from each file.
-    """
-    # Ensure the result directory exists
-    if not os.path.exists(RESULT_DIR):
-        os.makedirs(RESULT_DIR)
-
-    # Initialize dictionary to store file type counts
-    file_type_counts = {}
-    overview_data = []
-
-    # Walk through all files in GREEN_REFINED_DIRECTORY
-    for root, _, files in os.walk(GREEN_REFINED_DIRECTORY):
-        for file in files:
-            file_path = os.path.join(root, file)
-            
-            # Get file extension
-            _, extension = os.path.splitext(file)
-            if extension:  # Only count files with extensions
-                extension = extension.lower()
-                file_type_counts[extension] = file_type_counts.get(extension, 0) + 1
-
-            # Read file content and look for overview comment
-            try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    lines = content.split('\n')
-                    overview_comment = None
-                    
-                    # Look for the overview comment in the last few lines
-                    for line in reversed(lines):
-                        line = line.strip()
-                        # Check for different comment styles
-                        if 'overview:' in line.lower():
-                            # Remove common comment markers
-                            overview_comment = line.replace('//', '').replace('#', '').replace('/*', '').replace('*/', '').strip()
-                            # Extract the part after 'overview:'
-                            overview_comment = overview_comment[overview_comment.lower().index('overview:') + 9:].strip()
-                            break
-                    
-                    if overview_comment:
-                        relative_path = os.path.relpath(file_path, GREEN_REFINED_DIRECTORY)
-                        overview_data.append({
-                            'file_path': relative_path,
-                            'file_type': extension,
-                            'overview_comment': overview_comment
-                        })
-            except Exception as e:
-                logging.error(f"Error processing file {file_path}: {e}")
-
-    # Write results to CSV
-    csv_path = os.path.join(RESULT_DIR, 'final_overview.csv')
-    
-    # Write the data to CSV
-    with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
-        
-        # Write header
-        writer.writerow(['Section', 'Information'])
-        
-        # Write file type counts
-        writer.writerow(['File Type Statistics', ''])
-        for ext, count in file_type_counts.items():
-            writer.writerow(['', f'{ext}: {count} files'])
-        
-        # Add a blank row for separation
-        writer.writerow(['', ''])
-        
-        # Write file overviews
-        writer.writerow(['File Overview Comments', ''])
-        writer.writerow(['File Path', 'File Type', 'Overview Comment'])
-        for data in overview_data:
-            writer.writerow([
-                data['file_path'],
-                data['file_type'],
-                data['overview_comment']
-            ])
-
-    logging.info(f"File overview report generated at {csv_path}")
-
-# Call the function at the end of the script
-generate_file_overview()
-
 # Compare emissions logic
 def compare_emissions():
     # Load environment variables again (if needed)
@@ -566,7 +481,7 @@ def prepare_detailed_data(result_dir):
 
 def generate_html_report(result_dir):
     # Initialize Jinja2 environment
-    env = Environment(loader=FileSystemLoader(SOURCE_DIRECTORY))
+    env = Environment(loader=FileSystemLoader(TEMP_DIR))
     template_path = 'report_template.html'
     last_run_template_path = 'last_run_report_template.html'
     details_template_path = 'details_template.html'
@@ -577,7 +492,7 @@ def generate_html_report(result_dir):
     # Check if the templates exist
     for path in [details_template_path, template_path, last_run_details_template_path, 
                  last_run_template_path, details_server_template_path, recommendations_template_path]:
-        if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, path)):
+        if not os.path.isfile(os.path.join(TEMP_DIR, path)):
             logging.error(f"Template file not found: {path}")
             return
 
@@ -600,7 +515,8 @@ def generate_html_report(result_dir):
         'comparison': os.path.join(result_dir, 'comparison_results.csv'),
         'server': os.path.join(result_dir, 'server_data.csv'),
         'mul_server': os.path.join(result_dir, 'multiple_server_data.csv'),
-        'recommendations': os.path.join(result_dir, 'modification_overview.csv')
+        'recommendations': os.path.join(result_dir, 'modification_overview.csv'),
+        'final_overview': os.path.join(result_dir, 'final_overview.csv')
     }
 
     # Load available CSVs
@@ -624,6 +540,7 @@ def generate_html_report(result_dir):
     server_df = dfs.get('server')
     mul_server_df = dfs.get('mul_server')
     recommendations_df = dfs.get('recommendations')
+    final_overview_df = dfs.get('final_overview')
 
     # Initialize default values for template variables
     template_vars = {
@@ -661,7 +578,8 @@ def generate_html_report(result_dir):
         'critical_server_count': 0,
         'total_last_run_co2': 0.0,
         'total_last_run_power': 0.0,
-        'formatted_timestamp': "No data"
+        'formatted_timestamp': "No data",
+        'final_overview_data': None
     }
 
     # Process server data if available
@@ -710,7 +628,7 @@ def generate_html_report(result_dir):
             # Count of unique servers by 'os_type' and 'os_version'
             os_type_counts = mul_server_df.groupby(['os_type', 'hostname']).size().reset_index(name='count').groupby('os_type').agg({'hostname': 'count'}).rename(columns={'hostname': 'count'})
             os_version_counts = mul_server_df.groupby(['os_type', 'os_version', 'hostname']).size().reset_index(name='count').groupby(['os_type', 'os_version']).agg({'hostname': 'count'}).reset_index().rename(columns={'hostname': 'count'})
-            color_palette = px.colors.qualitative.Light24
+            color_palette = px.colors.qualitative.Pastel
 
             # Plot 1: Bar graph for 'os_type'
             fig1 = go.Figure(data=[go.Bar(x=os_type_counts.index, y=os_type_counts['count'], text=os_type_counts['count'], textposition='inside', textfont=dict(size=16), marker=dict(color=color_palette[:len(os_type_counts)]))])
@@ -760,6 +678,48 @@ def generate_html_report(result_dir):
         except KeyError as e:
             logging.error(f"Missing column in recommendations data: {e}")
 
+    # Process final_overview data if available
+    if final_overview_df is not None:
+        try:
+            # Extract data from final_overview.csv
+            final_overview_data = {
+                'fresh_details': {
+                    'total_files_modified_last_run': final_overview_df.loc[
+                        final_overview_df['Metric'] == 'Total Files Modified (Last run)', 'Value'].values[0],
+                    'total_loc_converted_last_run': final_overview_df.loc[
+                        final_overview_df['Metric'] == 'Total LOC Converted (Last run)', 'Value'].values[0],
+                    'total_time_minutes_last_run': final_overview_df.loc[
+                        final_overview_df['Metric'] == 'Total Time (minutes) (Last run)', 'Value'].values[0],
+                },
+                'historical_overview': {
+                    'total_files_modified': final_overview_df.loc[
+                        final_overview_df['Metric'] == 'Total Files Modified', 'Value'].values[0],
+                    'total_loc_converted': final_overview_df.loc[
+                        final_overview_df['Metric'] == 'Total LOC Converted', 'Value'].values[0],
+                    'total_time_minutes': final_overview_df.loc[
+                        final_overview_df['Metric'] == 'Total Time (minutes)', 'Value'].values[0],
+                }
+            }
+            
+            # Dynamically add file type information
+            file_type_last_run = final_overview_df[final_overview_df['Metric'].str.contains(r'\.\w+ Files \(Last run\)')]
+            if not file_type_last_run.empty:
+                final_overview_data['fresh_details']['file_types_last_run'] = {
+                    row['Metric'].split()[0]: row['Value'] 
+                    for _, row in file_type_last_run.iterrows()
+                }
+            
+            file_types = final_overview_df[final_overview_df['Metric'].str.contains(r'\.\w+ Files$')]
+            if not file_types.empty:
+                final_overview_data['historical_overview']['file_types'] = {
+                    row['Metric'].split()[0]: row['Value'] 
+                    for _, row in file_types.iterrows()
+                }
+            
+            template_vars['final_overview_data'] = final_overview_data
+        except Exception as e:
+            logging.error(f"Error processing final_overview.csv: {e}")
+
     # Process before and after data if available
     if before_df is not None and after_df is not None:
         try:
@@ -800,7 +760,7 @@ def generate_html_report(result_dir):
             before_file_type_sorted = before_file_type.sort_values('Energy Consumed (Wh)', ascending=False)
             after_file_type_sorted = after_file_type.sort_values('Energy Consumed (Wh)', ascending=False)
             unique_solution_dirs = sorted(set(before_file_type_sorted['solution dir']).union(after_file_type_sorted['solution dir']))
-            colors = px.colors.qualitative.Light24
+            colors = px.colors.qualitative.Pastel
             color_mapping = {solution_dir: colors[i % len(colors)] for i, solution_dir in enumerate(before_file_type_sorted['solution dir'].unique())}
 
             fig = go.Figure()
@@ -942,7 +902,8 @@ def generate_html_report(result_dir):
         )
         recommendations_detalis = recommendations_template.render(
             unique_dates=template_vars.get('unique_dates', []),
-            recommendations_details=template_vars.get('recommendations_details', {})
+            recommendations_details=template_vars.get('recommendations_details', {}),
+            final_overview_data=template_vars.get('final_overview_data', {})
         )
     except Exception as e:
         logging.error(f"Template rendering failed: {e}")
