@@ -114,6 +114,8 @@ load_dotenv(dotenv_path=env_path, verbose=True, override=True)
 source_directory = os.path.dirname(env_path)
 RESULT_DIR = os.path.join(source_directory , 'Result')
 
+# Existing logging configuration remains the same...
+
 def ensure_result_directory():
     """Ensure the Result directory exists."""
     if not os.path.exists(RESULT_DIR):
@@ -205,6 +207,147 @@ def extract_changes_summary(data):
     except Exception as e:
         logging.warning(f"Error extracting changes summary: {e}")
         return "Error extracting changes", "Error identifying next steps"
+    
+class MetricsTracker:
+    def __init__(self):
+        self.start_time = time.time()
+        self.files_modified = 0
+        self.loc_by_extension = defaultdict(int)
+        
+    def count_loc(self, file_path):
+        """Count lines of code in a file."""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return sum(1 for line in f if line.strip())
+        except Exception as e:
+            logging.error(f"Error counting LOC for {file_path}: {e}")
+            return 0
+            
+    def get_extension(self, file_path):
+        """Get file extension without the dot."""
+        return os.path.splitext(file_path)[1][1:].lower()
+        
+    def track_file(self, file_path):
+        """Track metrics for a single file."""
+        self.files_modified += 1
+        loc = self.count_loc(file_path)
+        ext = self.get_extension(file_path)
+        self.loc_by_extension[ext] += loc
+        
+    def get_processing_time(self):
+        """Get processing time in minutes."""
+        return (time.time() - self.start_time) / 60
+
+def update_final_overview():
+    """Update the final overview CSV with fresh and historical data."""
+    csv_path = os.path.join(RESULT_DIR, 'final_overview.csv')
+    historical_data = load_historical_data(csv_path)
+    current_metrics = get_current_run_metrics()
+    
+    try:
+        with open(csv_path, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            
+            # Write headers
+            writer.writerow(['Metric', 'Value'])
+            writer.writerow([])  # Empty row for separation
+            
+            # Fresh Details Section
+            writer.writerow(['=== Fresh Details (Last Run) ==='])
+            for metric, value in current_metrics.items():
+                writer.writerow([metric, value])
+            
+            writer.writerow([])  # Empty row for separation
+            
+            # Historical Overview Section
+            writer.writerow(['=== Historical Overview ==='])
+            historical_metrics = combine_metrics(historical_data, current_metrics)
+            for metric, value in historical_metrics.items():
+                writer.writerow([metric, value])
+                
+        logging.info(f"Updated final overview at: {csv_path}")
+    except Exception as e:
+        logging.error(f"Failed to update final overview: {e}")
+
+def load_historical_data(csv_path):
+    """Load historical data from existing CSV file."""
+    historical_data = {}
+    if os.path.exists(csv_path):
+        try:
+            with open(csv_path, 'r', newline='') as csvfile:
+                reader = csv.reader(csvfile)
+                historical_section = False
+                for row in reader:
+                    if not row:
+                        continue
+                    if row[0] == '=== Historical Overview ===':
+                        historical_section = True
+                        continue
+                    if historical_section and len(row) == 2:
+                        metric, value = row[0], row[1]
+                        # Handle different value formats
+                        if 'LOC' in value:
+                            # Extract numeric value before 'LOC'
+                            historical_data[metric] = int(value.split()[0])
+                        elif '.' in value:
+                            # Handle floating point values
+                            historical_data[metric] = float(value)
+                        else:
+                            # Handle integer values
+                            historical_data[metric] = int(value)
+        except Exception as e:
+            logging.warning(f"Error loading historical data: {e}")
+    return historical_data
+
+def get_current_run_metrics():
+    """Get metrics for the current run."""
+    metrics = {
+        'Total Files Modified (Last run)': metrics_tracker.files_modified,
+        'Total LOC Converted (Last run)': sum(metrics_tracker.loc_by_extension.values()),
+        'Total Time (minutes) (Last run)': round(metrics_tracker.get_processing_time(), 2)
+    }
+    
+    # Add per-extension metrics
+    for ext, loc in metrics_tracker.loc_by_extension.items():
+        metrics[f'.{ext} Files (Last run)'] = f"{loc} LOC"
+    
+    return metrics
+
+def combine_metrics(historical, current):
+    """Combine historical and current metrics."""
+    combined = {}
+    
+    # Base metrics
+    combined['Total Files Modified'] = (
+        historical.get('Total Files Modified', 0) +
+        current['Total Files Modified (Last run)']
+    )
+    
+    combined['Total LOC Converted'] = (
+        historical.get('Total LOC Converted', 0) +
+        sum(metrics_tracker.loc_by_extension.values())
+    )
+    
+    combined['Total Time (minutes)'] = round(
+        historical.get('Total Time (minutes)', 0) +
+        current['Total Time (minutes) (Last run)'],
+        2
+    )
+    
+    # Combine extension-specific metrics
+    for ext, loc in metrics_tracker.loc_by_extension.items():
+        hist_key = f'.{ext} Files'
+        # Get historical LOC value, assuming 0 if not present
+        hist_loc = historical.get(hist_key, 0)
+        # If historical value is still in "X LOC" format, extract the number
+        if isinstance(hist_loc, str) and 'LOC' in hist_loc:
+            hist_loc = int(hist_loc.split()[0])
+        combined[hist_key] = f"{hist_loc + loc} LOC"
+    
+    return combined
+
+# Initialize global metrics tracker
+metrics_tracker = MetricsTracker()
 
 def create_unit_test_files(client, assistant, file_list, test_file_directory):
     """
@@ -288,6 +431,10 @@ NEXT_STEPS_END
             if code:
                 content = client.files.content(code)
                 content.write_to_file(test_file_path)
+
+                # Track metrics for the new test file
+                metrics_tracker.track_file(test_file_path)
+                
                 # Log modifications to the central CSV file
                 changes_summary, next_steps = extract_changes_summary(data)
                 log_modifications(test_file_name, changes_summary, next_steps)
@@ -357,6 +504,8 @@ NEXT_STEPS_END
             try:
                 content = client.files.content(code)
                 content.write_to_file(refined_file_path)
+
+                metrics_tracker.track_file(refined_file_path)
                 
                 # Log modifications to the central CSV file
                 changes_summary, next_steps = extract_changes_summary(data)
@@ -373,3 +522,7 @@ NEXT_STEPS_END
     except Exception as e:
         logging.error(f"Exception occurred while applying green prompt to file {file_id}: {e}")
         return False
+
+def finalize_processing():
+    """Call this function at the end of the main processing loop."""
+    update_final_overview()
