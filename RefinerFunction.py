@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import csv
 from datetime import datetime
 import sys
+from collections import defaultdict
 
 def get_env_variable(var_name, is_required=True):
     value = os.getenv(var_name)
