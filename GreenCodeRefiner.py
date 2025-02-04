@@ -9,6 +9,7 @@ import requests
 from dotenv import load_dotenv
 from openai import AzureOpenAI
 import ast
+import sys
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -25,7 +26,9 @@ from RefinerFunction import (
     identify_source_files,
     load_prompts_from_env,
     create_unit_test_files,
-    apply_green_prompts
+    apply_green_prompts,
+    MetricsTracker,
+    finalize_processing
 )
 
 # Initialize AzureOpenAI client using environment variables
@@ -99,6 +102,10 @@ except Exception as e:
 # Load prompts
 prompts = load_prompts_from_env()
 
+# Initialize metrics tracker at the start
+metrics_tracker = MetricsTracker()
+processing_start_time = time.time()
+
 # Step 1: Create unit test files
 file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
 create_unit_test_files(client, assistant, file_list, test_file_directory)
@@ -141,17 +148,6 @@ for file_path in file_list:
             # Copy original file as fallback
             shutil.copy2(file_path, refined_temp_file_path)
             logging.warning(f"Using original file as fallback for: {file_name}")
-        # for prompt in prompts:
-        #     if apply_green_prompts(client, assistant, uploaded_file.id, prompt, refined_temp_file_path):
-        #         refined_success = True
-        #         logging.info(f"Successfully applied prompt: '{prompt}' to {file_name}")
-        #     else:
-        #         logging.warning(f"Failed to apply prompt: '{prompt}' to {file_name}")
-        
-        # If refinement failed, copy original file
-        # if not refined_success:
-        #     shutil.copy2(file_path, refined_temp_file_path)
-        #     logging.warning(f"Using original file as fallback for: {file_name}")
         
         # Move file to final location
         final_file_path = os.path.join(green_code_directory, relative_path)
@@ -176,3 +172,8 @@ for file_path in file_list:
 # Step 3: Create test cases for refined files
 green_file_list = list(identify_source_files(green_code_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
 create_unit_test_files(client, assistant, green_file_list, green_test_file_directory)
+
+# Generate final overview after all processing is complete
+finalize_processing()
+
+logging.info("Code refinement process completed successfully!")
