@@ -10,10 +10,12 @@
         :root {
             --primary: #10b981;
             --primary-dark: #059669;
+            --primary-light: #d1fae5;
             --secondary: #3b82f6;
             --text: #1f2937;
             --text-light: #6b7280;
             --background: #f3f4f6;
+            --overview-background: #f9fafb;
             --card-bg: #ffffff;
             --success: #22c55e;
             --danger: #ef4444;
@@ -405,6 +407,7 @@
         .dashboard-grid {
             grid-template-areas: 
                 "server server"
+                "code-overview code-overview"
                 "energy emissions"
                 "code code";
             max-width: var(--container-width);
@@ -432,6 +435,10 @@
 
         .dashboard-section[data-area="code"] { 
             grid-area: code;
+        }
+
+        .dashboard-section[data-area="code-overview"] { 
+            grid-area: code-overview;
         }
 
         .dashboard-section {
@@ -471,12 +478,76 @@
             }
         }
 
-        .dashboard-section {
-            animation: slideUp 0.5s ease-out forwards;
+        /* Overview section */
+
+        .overview-tabs {
+            display: flex;
+            background-color: var(--overview-background);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: var(--spacing-lg);
         }
 
-        .metric-card {
-            animation: fadeIn 0.5s ease-out forwards;
+        .overview-tab {
+            flex: 1;
+            padding: var(--spacing-sm) var(--spacing);
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .overview-tab.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .overview-content {
+            display: none;
+        }
+
+        .overview-content.active {
+            display: block;
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing);
+        }
+
+        .overview-item {
+            background-color: var(--overview-background);
+            border-radius: var(--radius);
+            padding: var(--spacing);
+            text-align: center;
+        }
+
+        .overview-item-label {
+            font-size: var(--text-sm);
+            color: var(--text-light);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .overview-item-value {
+            font-size: var(--text-xl);
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .file-types {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-xs);
+            margin-top: var(--spacing-sm);
+        }
+
+        .file-type {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+            font-size: var(--text-xs);
+            padding: 2px 8px;
+            border-radius: 12px;
         }
         /* Responsive Styles */
         @media (max-width: 1200px) {
@@ -1573,6 +1644,72 @@
                 </div>
             </section>
 
+            <!-- Code Analysis Overview Section -->
+            <section class="dashboard-section" data-area="code-overview">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-line"></i> 
+                        Code Analysis Overview
+                    </h2>
+                </div>
+                <div class="overview-tabs">
+                    <div class="overview-tab active" data-tab="fresh">Fresh Details (Last Run)</div>
+                    <div class="overview-tab" data-tab="historical">Historical Overview (Overall)</div>
+                </div>
+                <div class="overview-content active" data-content="fresh">
+                    <div class="overview-grid">
+                        <div class="overview-item">
+                            <div class="overview-item-label">Total Files Modified</div>
+                            <div class="overview-item-value">{{ final_overview_data.fresh_details.total_files_modified_last_run }}</div>
+                        </div>
+                        <div class="overview-item">
+                            <div class="overview-item-label">Total LOC Converted</div>
+                            <div class="overview-item-value">{{ final_overview_data.fresh_details.total_loc_converted_last_run }}</div>
+                        </div>
+                        <div class="overview-item">
+                            <div class="overview-item-label">Total Time (minutes)</div>
+                            <div class="overview-item-value">{{ final_overview_data.fresh_details.total_time_minutes_last_run }}</div>
+                        </div>
+                        <div class="overview-item">
+                            <div class="overview-item-label">File Types</div>
+                            <div class="file-types">
+                                {% if final_overview_data.fresh_details.file_types_last_run %}
+                                    {% for file_type, count in final_overview_data.fresh_details.file_types_last_run.items() %}
+                                    <span class="file-type">{{ file_type }}: {{ count }}</span>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="overview-content" data-content="historical">
+                    <div class="overview-grid">
+                        <div class="overview-item">
+                            <div class="overview-item-label">Total Files Modified</div>
+                            <div class="overview-item-value">{{ final_overview_data.historical_overview.total_files_modified }}</div>
+                        </div>
+                        <div class="overview-item">
+                            <div class="overview-item-label">Total LOC Converted</div>
+                            <div class="overview-item-value">{{ final_overview_data.historical_overview.total_loc_converted }}</div>
+                        </div>
+                        <div class="overview-item">
+                            <div class="overview-item-label">Total Time (minutes)</div>
+                            <div class="overview-item-value">{{ final_overview_data.historical_overview.total_time_minutes }}</div>
+                        </div>
+                        <div class="overview-item">
+                            <div class="overview-item-label">File Types</div>
+                            <div class="file-types">
+                                {% if final_overview_data.historical_overview.file_types %}
+                                    {% for file_type, count in final_overview_data.historical_overview.file_types.items() %}
+                                    <span class="file-type">{{ file_type }}: {{ count }}</span>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Emissions Analysis Section -->
             <section class="dashboard-section">
                 <div class="section-header">
@@ -1681,6 +1818,23 @@
     </main>
 
     <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+                    const tabs = document.querySelectorAll('.overview-tab');
+                    const contents = document.querySelectorAll('.overview-content');
+
+                    tabs.forEach(tab => {
+                        tab.addEventListener('click', () => {
+                            const tabName = tab.getAttribute('data-tab');
+                            
+                            tabs.forEach(t => t.classList.remove('active'));
+                            contents.forEach(c => c.classList.remove('active'));
+
+                            tab.classList.add('active');
+                            document.querySelector(`.overview-content[data-content="${tabName}"]`).classList.add('active');
+                        });
+                    });
+                });
         // Dashboard functionality
         document.addEventListener('DOMContentLoaded', () => {
             // Enhanced graph resizing function with smaller margins
