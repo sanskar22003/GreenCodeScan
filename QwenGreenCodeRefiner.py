@@ -205,8 +205,10 @@ class CodeRefiner:
     def load_environment(self) -> None:
         """Load and validate environment variables."""
         try:
-            BASE_DIR = '/app/project'
-            env_path = '/app/.env'
+            # Load environment variables
+            env_path = os.path.abspath(".env")
+            load_dotenv(dotenv_path=env_path, verbose=True, override=True)
+            BASE_DIR = os.path.dirname(env_path)
 
             # Load environment variables
             # env_path = os.path.join(BASE_DIR, ".env")
