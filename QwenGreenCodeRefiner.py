@@ -205,40 +205,67 @@ class CodeRefiner:
     def load_environment(self) -> None:
         """Load and validate environment variables."""
         try:
-            # Load environment variables
             env_path = os.path.abspath(".env")
             BASE_DIR = os.path.dirname(env_path)
 
-            # Custom function to parse environment variables with quote handling
-            def parse_env_value(value: str) -> str:
-                if value is None:
-                    return None
-                # Remove surrounding quotes (single, double, or triple)
-                value = value.strip()
-                if (value.startswith('"""') and value.endswith('"""')) or \
-                (value.startswith("'''") and value.endswith("'''")):
-                    value = value[3:-3]
-                elif (value.startswith('"') and value.endswith('"')) or \
-                    (value.startswith("'") and value.endswith("'")):
-                    value = value[1:-1]
-                return value
+            def parse_env_file(file_path: str) -> dict:
+                env_vars = {}
+                current_key = None
+                current_value = []
+                
+                with open(file_path) as f:
+                    lines = f.readlines()
+                    
+                i = 0
+                while i < len(lines):
+                    line = lines[i].strip()
+                    
+                    # Skip empty lines and comments
+                    if not line or line.startswith('#'):
+                        i += 1
+                        continue
+                    
+                    # Check for new variable definition
+                    if '=' in line and not current_key:
+                        key, value = line.split('=', 1)
+                        key = key.strip()
+                        value = value.strip()
+                        
+                        # Check if this is the start of a multi-line string
+                        if value.startswith('"""') and not value.endswith('"""'):
+                            current_key = key
+                            current_value = [value.lstrip('"')]
+                        else:
+                            # Single line value - remove quotes if present
+                            if (value.startswith('"""') and value.endswith('"""')):
+                                value = value[3:-3]
+                            elif (value.startswith('"') and value.endswith('"')):
+                                value = value[1:-1]
+                            env_vars[key] = value
+                    
+                    # Continue collecting multi-line value
+                    elif current_key:
+                        if line.endswith('"""'):
+                            current_value.append(line.rstrip('"'))
+                            env_vars[current_key] = '\n'.join(current_value)
+                            current_key = None
+                            current_value = []
+                        else:
+                            current_value.append(line)
+                    
+                    i += 1
+                
+                return env_vars
 
-            # Load and parse environment file manually
+            # Load and parse environment file
             if os.path.exists(env_path):
-                with open(env_path) as f:
-                    env_vars = {}
-                    for line in f:
-                        line = line.strip()
-                        if line and not line.startswith('#'):
-                            try:
-                                key, value = line.split('=', 1)
-                                key = key.strip()
-                                env_vars[key] = parse_env_value(value)
-                                os.environ[key] = env_vars[key]  # Set in environment
-                            except ValueError:
-                                logging.warning(f"Python-dotenv could not parse statement: {line}")
+                env_vars = parse_env_file(env_path)
+                # Set environment variables
+                for key, value in env_vars.items():
+                    os.environ[key] = value
             else:
                 logging.warning(f"Environment file {env_path} not found. Using default values.")
+                env_vars = {}
             
             # Load basic configurations
             self.project_path = BASE_DIR
