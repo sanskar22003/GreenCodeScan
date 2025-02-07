@@ -207,44 +207,67 @@ class CodeRefiner:
         try:
             # Load environment variables
             env_path = os.path.abspath(".env")
-            load_dotenv(dotenv_path=env_path, verbose=True, override=True)
             BASE_DIR = os.path.dirname(env_path)
 
-            # Load environment variables
-            # env_path = os.path.join(BASE_DIR, ".env")
+            # Custom function to parse environment variables with quote handling
+            def parse_env_value(value: str) -> str:
+                if value is None:
+                    return None
+                # Remove surrounding quotes (single, double, or triple)
+                value = value.strip()
+                if (value.startswith('"""') and value.endswith('"""')) or \
+                (value.startswith("'''") and value.endswith("'''")):
+                    value = value[3:-3]
+                elif (value.startswith('"') and value.endswith('"')) or \
+                    (value.startswith("'") and value.endswith("'")):
+                    value = value[1:-1]
+                return value
+
+            # Load and parse environment file manually
             if os.path.exists(env_path):
-                load_dotenv(dotenv_path=env_path, verbose=True, override=True)
+                with open(env_path) as f:
+                    env_vars = {}
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#'):
+                            try:
+                                key, value = line.split('=', 1)
+                                key = key.strip()
+                                env_vars[key] = parse_env_value(value)
+                                os.environ[key] = env_vars[key]  # Set in environment
+                            except ValueError:
+                                logging.warning(f"Python-dotenv could not parse statement: {line}")
             else:
                 logging.warning(f"Environment file {env_path} not found. Using default values.")
             
             # Load basic configurations
             self.project_path = BASE_DIR
-            self.prompt = os.getenv('PROMPT_1')
+            self.prompt = env_vars.get('PROMPT_1') or os.getenv('PROMPT_1')
             # Add test case prompt
-            self.test_prompt = os.getenv('PROMPT_GENERATE_TESTCASES', 
+            self.test_prompt = env_vars.get('PROMPT_GENERATE_TESTCASES') or os.getenv('PROMPT_GENERATE_TESTCASES', 
                 'Create testcase functions for the given code. Provide only the code without any markdown, comments, or explanations.')
-            self.hf_token = os.getenv('HF_TOKEN')
+            self.hf_token = env_vars.get('HF_TOKEN') or os.getenv('HF_TOKEN')
 
             # Test suite directory names
             self.src_test_suite = 'SRC-TestSuite'
             self.greencode_test_suite = 'GreenCode-TestSuite'
             
             # Load API URL
-            self.api_base_url = os.getenv('API_URL', 'https://api-inference.huggingface.co/models/')
+            self.api_base_url = env_vars.get('API_URL') or os.getenv('API_URL', 'https://api-inference.huggingface.co/models/')
             
             # Load and parse file extensions
-            extensions_str = os.getenv('QWEN_FILE_EXTENSIONS', '.py,.java,.cpp,.cs,.js,.ts')
+            extensions_str = env_vars.get('QWEN_FILE_EXTENSIONS') or os.getenv('QWEN_FILE_EXTENSIONS', '.py,.java,.cpp,.cs,.js,.ts')
             self.supported_extensions = self.parse_extensions(extensions_str)
             
             # Load excluded files
-            self.excluded_files = os.getenv('EXCLUDED_FILES', '').split(',')
-            self.excluded_files = [f.strip() for f in self.excluded_files if f.strip()]
+            excluded_files_str = env_vars.get('EXCLUDED_FILES') or os.getenv('EXCLUDED_FILES', '')
+            self.excluded_files = [f.strip() for f in excluded_files_str.split(',') if f.strip()]
             
             # Use default models configuration
             self.available_models = self.get_default_models()
             
             # Get selected model from environment
-            self.model_key = os.getenv('AZURE_MODEL', '').lower()
+            self.model_key = (env_vars.get('AZURE_MODEL') or os.getenv('AZURE_MODEL', '')).lower()
             if not self.model_key or self.model_key not in self.available_models:
                 available_models = list(self.available_models.keys())
                 raise ValueError(f"Invalid or missing model selection in .env file. Choose from: {available_models}")
