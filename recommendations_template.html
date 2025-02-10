@@ -625,78 +625,7 @@
         </div>
     </header>
     <div class="wrapper">
-        <div class="container">
-            <!-- Code Overview Section -->
-            <div class="dashboard-section">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-chart-line"></i>
-                        Code Analysis Overview
-                        <div class="info-tooltip">
-                            <i class="fas fa-info"></i>
-                            <div class="tooltip-content">
-                                Comprehensive overview of code analysis metrics, including both recent and historical data.
-                            </div>
-                        </div>
-                    </h2>
-                </div>
-                <div class="overview-grid">
-                    <!-- Fresh Details Card -->
-                    <div class="overview-card">
-                        <h3><i class="fas fa-clock"></i> Fresh Details (Last Run)</h3>
-                        <div class="overview-data">
-                            <div class="data-item">
-                                <span class="data-label">Total Files Modified</span>
-                                <span class="data-value">{{ final_overview_data.fresh_details.total_files_modified_last_run }}</span>
-                            </div>
-                            <div class="data-item">
-                                <span class="data-label">Total LOC Converted</span>
-                                <span class="data-value">{{ final_overview_data.fresh_details.total_loc_converted_last_run }}</span>
-                            </div>
-                            <div class="data-item">
-                                <span class="data-label">Total Time (minutes)</span>
-                                <span class="data-value">{{ final_overview_data.fresh_details.total_time_minutes_last_run }}</span>
-                            </div>
-                            {% if final_overview_data.fresh_details.file_types_last_run %}
-                                {% for file_type, count in final_overview_data.fresh_details.file_types_last_run.items() %}
-                                <div class="data-item">
-                                    <span class="data-label">{{ file_type }} Files</span>
-                                    <span class="data-value">{{ count }}</span>
-                                </div>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <!-- Historical Overview Card -->
-                    <div class="overview-card">
-                        <h3><i class="fas fa-history"></i> Historical Overview</h3>
-                        <div class="overview-data">
-                            <div class="data-item">
-                                <span class="data-label">Total Files Modified</span>
-                                <span class="data-value">{{ final_overview_data.historical_overview.total_files_modified }}</span>
-                            </div>
-                            <div class="data-item">
-                                <span class="data-label">Total LOC Converted</span>
-                                <span class="data-value">{{ final_overview_data.historical_overview.total_loc_converted }}</span>
-                            </div>
-                            <div class="data-item">
-                                <span class="data-label">Total Time (minutes)</span>
-                                <span class="data-value">{{ final_overview_data.historical_overview.total_time_minutes }}</span>
-                            </div>
-                            {% if final_overview_data.historical_overview.file_types %}
-                                {% for file_type, count in final_overview_data.historical_overview.file_types.items() %}
-                                <div class="data-item">
-                                    <span class="data-label">{{ file_type }} Files</span>
-                                    <span class="data-value">{{ count }}</span>
-                                </div>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        
+        <div class="container">        
             <!-- Analysis History Section -->
             <div class="dashboard-section">
                 <div class="section-header">
