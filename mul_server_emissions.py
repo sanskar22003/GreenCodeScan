@@ -460,9 +460,16 @@ def main():
 
         # Save results to CSV
         try:
+            # Save results to CSV with append mode
             filename = os.path.join(RESULT_DIR, "multiple_server_data.csv")
-            df.to_csv(filename, index=False)
-            print(f"\nDetailed metrics saved to {filename}")
+            
+            # Write header only if file doesn't exist
+            df.to_csv(filename, 
+                      mode='a', 
+                      header=not os.path.exists(filename), 
+                      index=False)
+            
+            print(f"\nDetailed metrics appended to {filename}")
         except Exception as e:
             logging.error(f"Error saving data to CSV: {e}")
             print("Error: Failed to save data to CSV. Check the logs for details.")
