@@ -483,7 +483,7 @@ solution_dirs, detailed_data = prepare_detailed_data(RESULT_DIR)
 
 def generate_html_report(result_dir, solution_dirs, detailed_data):
     # Initialize Jinja2 environment
-    env = Environment(loader=FileSystemLoader(SOLUTION_DIRECTORY))
+    env = Environment(loader=FileSystemLoader(SOURCE_DIRECTORY))
     template_path = 'report_template.html'
     last_run_template_path = 'last_run_report_template.html'
     details_template_path = 'details_template.html'
@@ -496,7 +496,7 @@ def generate_html_report(result_dir, solution_dirs, detailed_data):
     # Check if the templates exist
     for path in [details_template_path, template_path, last_run_details_template_path, 
                  last_run_template_path, details_server_template_path, recommendations_template_path]:
-        if not os.path.isfile(os.path.join(SOLUTION_DIRECTORY, path)):
+        if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, path)):
             logging.error(f"Template file not found: {path}")
             return
 
