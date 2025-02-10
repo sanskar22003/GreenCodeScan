@@ -389,7 +389,6 @@ def main():
 
     server_list = read_server_credentials(excel_file)
     if not server_list:
-        logging.error("No server credentials found in the Excel file")
         return
 
     monitor = RemoteSystemMonitor(
@@ -407,76 +406,49 @@ def main():
     print(f"Starting monitoring of {len(server_list)} servers for 60 seconds...")
     df = monitor.monitor_servers(server_list, duration_seconds=60)
 
-    # Check if DataFrame is empty
-    if df is None or df.empty:
-        logging.error("No data was collected from any servers")
-        print("Error: Failed to collect data from servers. Check the logs for details.")
-        return
+    # Generate summary statistics per server
+    print("\nSummary Statistics per Server:")
+    for hostname in df['hostname'].unique():
+        server_df = df[df['hostname'] == hostname]
+        os_type = server_df['os_type'].iloc[0]
+        os_version = server_df['os_version'].iloc[0]
+        storage_count = server_df['storage_device_count'].iloc[0]
+        storage_details = server_df['storage_devices'].iloc[0]
+        region = server_df['region'].iloc[0]
+        
+        print(f"\nServer: {hostname}")
+        print(f"OS Type: {os_type}")
+        print(f"OS Version: {os_version}")
+        print(f"Storage Devices Count: {storage_count}")
+        print(f"Storage Devices: {storage_details}")
+        print(f"Region: {region}")
+        print("\nResource Usage:")
+        print(f"Average CPU Usage: {server_df['cpu_percent'].mean():.2f}%")
+        print(f"Average RAM Usage: {server_df['ram_percent'].mean():.2f}%")
+        
+        print("\nPower Consumption:")
+        print(f"Average Total Power: {server_df['total_power'].mean():.2f} Watts")
+        print(f"Average CPU Power: {server_df['cpu_power'].mean():.2f} Watts")
+        print(f"Average RAM Power: {server_df['ram_power'].mean():.2f} Watts")
+        print(f"Average Disk Power: {(server_df['disk_base_power'] + server_df['disk_io_power']).mean():.2f} Watts")
+        
+        print("\nCO2 Emissions:")
+        print(f"CO2 Emission Factor: {server_df['co2_factor'].iloc[0]:.3f} kg CO2/kWh")
+        print(f"Total CO2 Emissions: {server_df['total_co2'].sum():.6f} kg CO2e")
+        print(f"CPU CO2 Emissions: {server_df['cpu_co2'].sum():.6f} kg CO2e")
+        print(f"RAM CO2 Emissions: {server_df['ram_co2'].sum():.6f} kg CO2e")
+        print(f"Disk CO2 Emissions: {(server_df['disk_base_co2'] + server_df['disk_io_co2']).sum():.6f} kg CO2e")
 
-    # Print DataFrame info for debugging
-    print("\nDataFrame Info:")
-    print(df.info())
-    print("\nAvailable columns:", df.columns.tolist())
-
-    try:
-        # Generate summary statistics per server
-        print("\nSummary Statistics per Server:")
-        for hostname in df['hostname'].unique():
-            server_df = df[df['hostname'] == hostname]
-            
-            try:
-                os_type = server_df['os_type'].iloc[0]
-                os_version = server_df['os_version'].iloc[0]
-                storage_count = server_df['storage_device_count'].iloc[0]
-                storage_details = server_df['storage_devices'].iloc[0]
-                region = server_df['region'].iloc[0]
-                
-                print(f"\nServer: {hostname}")
-                print(f"OS Type: {os_type}")
-                print(f"OS Version: {os_version}")
-                print(f"Storage Devices Count: {storage_count}")
-                print(f"Storage Devices: {storage_details}")
-                print(f"Region: {region}")
-                print("\nResource Usage:")
-                print(f"Average CPU Usage: {server_df['cpu_percent'].mean():.2f}%")
-                print(f"Average RAM Usage: {server_df['ram_percent'].mean():.2f}%")
-                
-                print("\nPower Consumption:")
-                print(f"Average Total Power: {server_df['total_power'].mean():.2f} Watts")
-                print(f"Average CPU Power: {server_df['cpu_power'].mean():.2f} Watts")
-                print(f"Average RAM Power: {server_df['ram_power'].mean():.2f} Watts")
-                print(f"Average Disk Power: {(server_df['disk_base_power'] + server_df['disk_io_power']).mean():.2f} Watts")
-                
-                print("\nCO2 Emissions:")
-                print(f"CO2 Emission Factor: {server_df['co2_factor'].iloc[0]:.3f} kg CO2/kWh")
-                print(f"Total CO2 Emissions: {server_df['total_co2'].sum():.6f} kg CO2e")
-                print(f"CPU CO2 Emissions: {server_df['cpu_co2'].sum():.6f} kg CO2e")
-                print(f"RAM CO2 Emissions: {server_df['ram_co2'].sum():.6f} kg CO2e")
-                print(f"Disk CO2 Emissions: {(server_df['disk_base_co2'] + server_df['disk_io_co2']).sum():.6f} kg CO2e")
-            except Exception as e:
-                logging.error(f"Error processing data for server {hostname}: {e}")
-                print(f"Error processing data for server {hostname}. Check the logs for details.")
-                continue
-
-        # Save results to CSV
-        try:
-            # Save results to CSV with append mode
-            filename = os.path.join(RESULT_DIR, "multiple_server_data.csv")
-            
-            # Write header only if file doesn't exist
-            df.to_csv(filename, 
-                      mode='a', 
-                      header=not os.path.exists(filename), 
-                      index=False)
-            
-            print(f"\nDetailed metrics appended to {filename}")
-        except Exception as e:
-            logging.error(f"Error saving data to CSV: {e}")
-            print("Error: Failed to save data to CSV. Check the logs for details.")
-
-    except Exception as e:
-        logging.error(f"Error in main processing: {e}")
-        print("Error: An unexpected error occurred. Check the logs for details.")
+    # Save results to CSV with append mode
+    filename = os.path.join(RESULT_DIR, "multiple_server_data.csv")
+    
+    # Write header only if file doesn't exist
+    df.to_csv(filename, 
+              mode='a', 
+              header=not os.path.exists(filename), 
+              index=False)
+    
+    print(f"\nDetailed metrics appended to {filename}")
 
 if __name__ == "__main__":
     main()
