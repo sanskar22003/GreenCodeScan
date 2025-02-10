@@ -408,10 +408,6 @@ def main():
     print(f"Starting monitoring of {len(server_list)} servers for 60 seconds...")
     df = monitor.monitor_servers(server_list, duration_seconds=60)
 
-    if df.empty or 'hostname' not in df.columns:
-        logging.error("No metrics collected or 'hostname' column missing in DataFrame.")
-        return
-
     # Generate summary statistics per server
     print("\nSummary Statistics per Server:")
     for hostname in df['hostname'].unique():
@@ -445,10 +441,16 @@ def main():
         print(f"RAM CO2 Emissions: {server_df['ram_co2'].sum():.6f} kg CO2e")
         print(f"Disk CO2 Emissions: {(server_df['disk_base_co2'] + server_df['disk_io_co2']).sum():.6f} kg CO2e")
 
-    # Save results to CSV
+    # Save results to CSV with append mode
     filename = os.path.join(RESULT_DIR, "multiple_server_data.csv")
-    df.to_csv(filename, index=False)
-    print(f"\nDetailed metrics saved to {filename}")
+    
+    # Write header only if file doesn't exist
+    df.to_csv(filename, 
+              mode='a', 
+              header=not os.path.exists(filename), 
+              index=False)
+    
+    print(f"\nDetailed metrics appended to {filename}")
 
 if __name__ == "__main__":
     main()
