@@ -21,12 +21,17 @@ logging.basicConfig(
     ]
 )
 
+env_path = os.path.abspath(".env")
+BASE_DIR = os.path.dirname(env_path)
+RESULT_DIR = os.path.join(BASE_DIR, 'Result')
+
 class MetricsTracker:
-    def __init__(self):
+    def __init__(self, base_dir):
         """Initialize metrics tracking."""
         self.start_time = time.time()
         self.files_modified = 0
         self.loc_by_extension = defaultdict(int)
+        self.base_dir = base_dir
         
     def count_loc(self, file_path: Path) -> int:
         """Count lines of code in a file."""
@@ -81,9 +86,9 @@ class MetricsHandler:
         return historical_data
 
     @staticmethod
-    def update_final_overview(metrics_tracker, project_path: Path):
+    def update_final_overview(self):
         """Update the final overview CSV with fresh and historical data."""
-        result_dir = project_path / 'Result'
+        result_dir = Path(self.base_dir) / 'Result'
         result_dir.mkdir(parents=True, exist_ok=True)
         csv_path = result_dir / 'final_overview.csv'
         
@@ -91,7 +96,7 @@ class MetricsHandler:
         historical_data = MetricsHandler.load_historical_data(csv_path)
         
         # Get current run metrics
-        current_metrics = MetricsHandler.get_current_run_metrics(metrics_tracker)
+        current_metrics = MetricsHandler.get_current_run_metrics(self)
         
         try:
             with open(csv_path, 'w', newline='') as csvfile:
@@ -117,6 +122,7 @@ class MetricsHandler:
             logging.info(f"Updated final overview at: {csv_path}")
         except Exception as e:
             logging.error(f"Failed to update final overview: {e}")
+
 
     @staticmethod
     def get_current_run_metrics(metrics_tracker) -> dict:
@@ -171,11 +177,102 @@ class MetricsHandler:
         
         return combined
 
+def ensure_result_directory():
+    """Ensure the Result directory exists."""
+    if not os.path.exists(RESULT_DIR):
+        try:
+            os.makedirs(RESULT_DIR)
+            logging.info(f"Created Result directory at: {RESULT_DIR}")
+        except Exception as e:
+            logging.error(f"Failed to create Result directory: {e}")
+            raise
+
+def ensure_csv_exists():
+    """Ensure the CSV file exists and has the correct headers."""
+    ensure_result_directory()  # Make sure the Result directory exists
+    csv_path = os.path.join(RESULT_DIR, 'modification_overview.csv')
+    
+    if not os.path.exists(csv_path):
+        try:
+            with open(csv_path, 'w', newline='') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=['File Name', 'Modification Timestamp', 'Changes', 'Next Steps'])
+                writer.writeheader()
+            logging.info(f"Created modification_overview.csv at: {csv_path}")
+        except Exception as e:
+            logging.error(f"Failed to create CSV file: {e}")
+            raise
+
+def extract_section(content, start_marker, end_marker):
+    """Extract content between specific markers."""
+    try:
+        start_idx = content.find(start_marker)
+        if start_idx == -1:
+            return None
+        
+        start_idx += len(start_marker)
+        end_idx = content.find(end_marker, start_idx)
+        
+        if end_idx == -1:
+            # If no end marker, take till the end
+            section = content[start_idx:].strip()
+        else:
+            section = content[start_idx:end_idx].strip()
+        
+        # Extract the first meaningful line if multiple lines exist
+        lines = [line.strip('- *•').strip() for line in section.split('\n') 
+                 if line.strip('- *•').strip() and 
+                 not any(marker in line.lower() for marker in ['here is', 'summary', 'changes made'])]
+        
+        return lines[0] if lines else None
+    except Exception as e:
+        logging.warning(f"Error extracting section: {e}")
+        return None
+
+def log_modifications(file_name, changes, next_steps):
+    """Log modifications to the CSV file."""
+    csv_path = os.path.join(RESULT_DIR, 'modification_overview.csv')
+    ensure_csv_exists()
+    
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    try:
+        with open(csv_path, 'a', newline='') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=['File Name', 'Modification Timestamp', 'Changes', 'Next Steps'])
+            writer.writerow({
+                'File Name': file_name,
+                'Modification Timestamp': timestamp,
+                'Changes': changes,
+                'Next Steps': next_steps
+            })
+        logging.info(f"Logged modifications for file: {file_name}")
+    except Exception as e:
+        logging.error(f"Failed to log modifications: {e}")
+
+def extract_changes_summary(response):
+    """Extract changes summary from the assistant's response."""
+    try:
+        if not response or not isinstance(response, list) or not response[0].get('generated_text'):
+            return None, None
+            
+        content = response[0]['generated_text']
+        
+        # Extract changes
+        changes = extract_section(content, 'CHANGES_START', 'CHANGES_END')
+        
+        # Extract next steps
+        next_steps = extract_section(content, 'NEXT_STEPS_START', 'NEXT_STEPS_END')
+        
+        return (changes or "No specific changes provided", 
+                next_steps or "No specific next steps identified")
+        
+    except Exception as e:
+        logging.warning(f"Error extracting changes summary: {e}")
+        return "Error extracting changes", "Error identifying next steps"
 
 class CodeRefiner:    
     def __init__(self):
         """Initialize the CodeRefiner with model from environment variables."""
-        self.metrics_tracker = MetricsTracker()
+        self.metrics_tracker = MetricsTracker(BASE_DIR)
         self.load_environment()
         self.setup_api()
 
@@ -205,9 +302,6 @@ class CodeRefiner:
     def load_environment(self) -> None:
         """Load and validate environment variables."""
         try:
-            env_path = os.path.abspath(".env")
-            BASE_DIR = os.path.dirname(env_path)
-
             def parse_env_file(file_path: str) -> dict:
                 env_vars = {}
                 current_key = None
@@ -322,7 +416,7 @@ class CodeRefiner:
         except Exception as e:
             logging.error(f"Error loading environment: {str(e)}")
             raise
-            
+   
     def setup_api(self) -> None:
         """Setup the API connection."""
         try:
@@ -355,7 +449,7 @@ class CodeRefiner:
                 logging.warning(f"API request attempt {attempt + 1} failed, retrying in {retry_delay} seconds...")
                 time.sleep(retry_delay)
 
-    def refine_code(self, code: str) -> str:
+    def refine_code(self, code: str, file_path: Path) -> str:
         """Refine code using the Hugging Face API."""
         try:
             # Prepare the prompt
@@ -379,6 +473,11 @@ class CodeRefiner:
             if isinstance(response, list) and len(response) > 0:
                 generated_text = response[0].get('generated_text', '')
                 refined_code = generated_text.split("Refined Code:")[-1].strip()
+                
+                # Extract changes and next steps
+                changes, next_steps = extract_changes_summary(response)
+                log_modifications(file_path.name, changes, next_steps)
+                
                 return refined_code
             else:
                 raise ValueError("Unexpected API response format")
@@ -399,8 +498,8 @@ class CodeRefiner:
             with open(file_path, 'r', encoding='utf-8') as f:
                 original_code = f.read()
                 
-            # Refine the code
-            refined_code = self.refine_code(original_code)
+            # Refine the code (pass file_path to refine_code)
+            refined_code = self.refine_code(original_code, file_path)
             
             # Calculate relative path
             relative_path = file_path.relative_to(self.project_path)
@@ -644,6 +743,9 @@ class CodeRefiner:
         try:
             print(f"Starting code refinement and test generation process...")
             
+            # Ensure Result directory exists
+            ensure_result_directory()
+
             # First phase: Code refinement
             self.setup_output_directory()
             code_files = self.get_code_files()
@@ -677,9 +779,12 @@ class CodeRefiner:
 
             # Track metrics for generated test files
             self.track_test_files()
+
+            # Update final overview
+            self.metrics_tracker.update_final_overview()
             
             # Update final overview
-            MetricsHandler.update_final_overview(self.metrics_tracker, self.project_path)
+            # MetricsHandler.update_final_overview(self.metrics_tracker, self.project_path)
             
             logging.info("Test case generation completed successfully")
             print("\nCode refinement and test generation process completed!")
