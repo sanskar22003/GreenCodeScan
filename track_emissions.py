@@ -635,7 +635,10 @@ def generate_html_report(result_dir, solution_dirs, detailed_data):
             template_vars['total_last_run_co2'] = f"{total_last_run_co2:.6f}"  # Format to 6 decimal places
             template_vars['total_last_run_power'] = f"{total_last_run_power:.6f}"  # Format to 6 decimal places
             # template_vars['total_last_run_power'] = last_run_records['total_power'].sum()
-            template_vars['formatted_timestamp'] = latest_timestamp.strftime('%d-%m-%Y %H:%M:%S')
+            if pd.notna(latest_timestamp):
+                template_vars['formatted_timestamp'] = latest_timestamp.strftime('%d-%m-%Y %H:%M:%S')
+            else:
+                template_vars['formatted_timestamp'] = "N/A"  # Or any default value
 
             # Count of unique servers by 'os_type' and 'os_version'
             os_type_counts = mul_server_df.groupby(['os_type', 'hostname']).size().reset_index(name='count').groupby('os_type').agg({'hostname': 'count'}).rename(columns={'hostname': 'count'})
