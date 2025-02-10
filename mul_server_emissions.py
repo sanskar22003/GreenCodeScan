@@ -303,7 +303,7 @@ class RemoteSystemMonitor:
 
             # Add common metrics with a formatted timestamp
             metrics.update({
-                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),  # Formatted timestamp
+                'timestamp': datetime.now(),
                 'hostname': hostname,
                 'os_type': os_type
             })
