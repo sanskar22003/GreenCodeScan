@@ -479,9 +479,11 @@ def prepare_detailed_data(result_dir):
     
     return solution_dirs, detailed_data
 
-def generate_html_report(result_dir):
+solution_dirs, detailed_data = prepare_detailed_data(RESULT_DIR)
+
+def generate_html_report(result_dir, solution_dirs, detailed_data):
     # Initialize Jinja2 environment
-    env = Environment(loader=FileSystemLoader(SOURCE_DIRECTORY))
+    env = Environment(loader=FileSystemLoader(SOLUTION_DIRECTORY))
     template_path = 'report_template.html'
     last_run_template_path = 'last_run_report_template.html'
     details_template_path = 'details_template.html'
@@ -489,10 +491,12 @@ def generate_html_report(result_dir):
     details_server_template_path = 'details_server_template.html'
     recommendations_template_path = 'recommendations_template.html'
 
+    solution_dirs, detailed_data = prepare_detailed_data(result_dir)
+
     # Check if the templates exist
     for path in [details_template_path, template_path, last_run_details_template_path, 
                  last_run_template_path, details_server_template_path, recommendations_template_path]:
-        if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, path)):
+        if not os.path.isfile(os.path.join(SOLUTION_DIRECTORY, path)):
             logging.error(f"Template file not found: {path}")
             return
 
@@ -579,7 +583,13 @@ def generate_html_report(result_dir):
         'total_last_run_co2': 0.0,
         'total_last_run_power': 0.0,
         'formatted_timestamp': "No data",
-        'final_overview_data': None
+        'final_overview_data': None,
+        'fresh_details': None,
+        'total_files_modified_last_run': 0,
+        'total_loc_converted_last_run': 0,
+        'recommendations_details': None,
+        'unique_dates': [],
+        'server_details': []
     }
 
     # Process server data if available
@@ -621,8 +631,10 @@ def generate_html_report(result_dir):
             
             # Format the total_last_run_co2 to avoid scientific notation
             total_last_run_co2 = last_run_records['total_co2'].sum()
+            total_last_run_power = last_run_records['total_power'].sum()
             template_vars['total_last_run_co2'] = f"{total_last_run_co2:.6f}"  # Format to 6 decimal places
-            template_vars['total_last_run_power'] = last_run_records['total_power'].sum()
+            template_vars['total_last_run_power'] = f"{total_last_run_power:.6f}"  # Format to 6 decimal places
+            # template_vars['total_last_run_power'] = last_run_records['total_power'].sum()
             template_vars['formatted_timestamp'] = latest_timestamp.strftime('%d-%m-%Y %H:%M:%S')
 
             # Count of unique servers by 'os_type' and 'os_version'
@@ -719,6 +731,38 @@ def generate_html_report(result_dir):
             template_vars['final_overview_data'] = final_overview_data
         except Exception as e:
             logging.error(f"Error processing final_overview.csv: {e}")
+            # Set default values if final_overview.csv is missing or has incorrect data
+            template_vars['final_overview_data'] = {
+                'fresh_details': {
+                    'total_files_modified_last_run': 0,
+                    'total_loc_converted_last_run': 0,
+                    'total_time_minutes_last_run': 0,
+                    'file_types_last_run': {}
+                },
+                'historical_overview': {
+                    'total_files_modified': 0,
+                    'total_loc_converted': 0,
+                    'total_time_minutes': 0,
+                    'file_types': {}
+                }
+            }
+    else:
+        logging.warning("final_overview.csv not found or could not be loaded.")
+        # Set default values if final_overview.csv is missing or could not be loaded
+        template_vars['final_overview_data'] = {
+            'fresh_details': {
+                'total_files_modified_last_run': 0,
+                'total_loc_converted_last_run': 0,
+                'total_time_minutes_last_run': 0,
+                'file_types_last_run': {}
+            },
+            'historical_overview': {
+                'total_files_modified': 0,
+                'total_loc_converted': 0,
+                'total_time_minutes': 0,
+                'file_types': {}
+            }
+        }
 
     # Process before and after data if available
     if before_df is not None and after_df is not None:
@@ -875,9 +919,10 @@ def generate_html_report(result_dir):
     try:
         html_content = template.render(**template_vars)
         html_details_content = details_template.render(
-            solution_dirs=template_vars.get('solution_dirs', []),
+            solution_dirs=solution_dirs,  # Directly use the parameter
             before_details=template_vars.get('before_details', []),
-            after_details=template_vars.get('after_details', [])
+            after_details=template_vars.get('after_details', []),
+            detailed_data=detailed_data  # Directly use the parameter
         )
         timestamp_html_content = lastrun_template.render(
             latest_total_before=f"{template_vars.get('latest_total_before', 0.0):.2f}",
@@ -889,12 +934,30 @@ def generate_html_report(result_dir):
             last_run_timestamp=template_vars.get('last_run_timestamp', "No data"),
             unique_hosts=template_vars.get('unique_hosts', 0),
             average_co2_emission=round(template_vars.get('average_co2_emission', 0.0), 4),
-            average_energy_consumption=round(template_vars.get('average_energy_consumption', 0.0), 4)
+            average_energy_consumption=round(template_vars.get('average_energy_consumption', 0.0), 4),
+            average_cpu_usage=round(template_vars.get('average_cpu_usage', 0.0), 2),
+            average_ram_usage=round(template_vars.get('average_ram_usage', 0.0), 2),
+            average_disk_usage=round(template_vars.get('average_disk_usage', 0.0), 2),
+            average_network_usage=round(template_vars.get('average_network_usage', 0.0), 2),
+            cpu_usage_data=template_vars.get('cpu_usage_data', []),
+            ram_usage_data=template_vars.get('ram_usage_data', []),
+            disk_usage_data=template_vars.get('disk_usage_data', []),
+            network_usage_data=template_vars.get('network_usage_data', []),
+            disk_read_data=template_vars.get('disk_read_data', []),
+            disk_write_data=template_vars.get('disk_write_data', []),
+            max_network=round(template_vars.get('max_network', 0.0), 2),
+            critical_servers=template_vars.get('critical_servers', None),
+            div_combined_graph=template_vars.get('div_combined_graph', "<p>Energy consumption data unavailable</p>"),
+            div_emissions_combined_graph=template_vars.get('div_emissions_combined_graph', "<p>Emissions data unavailable</p>"),
+            div_pie_chart_non_embedded=template_vars.get('div_pie_chart_non_embedded', "<p>Non-embedded code data unavailable</p>"),
+            div_pie_chart_embedded=template_vars.get('div_pie_chart_embedded', "<p>Embedded code data unavailable</p>"),
+            final_overview_data=template_vars.get('final_overview_data', {})
         )
         timestamp_html_details_content = lastrun_details_template.render(
-            solution_dirs=template_vars.get('solution_dirs', []),
+            solution_dirs=solution_dirs,  # Directly use the parameter
             latest_before_details=template_vars.get('latest_before_details', []),
-            latest_after_details=template_vars.get('latest_after_details', [])
+            latest_after_details=template_vars.get('latest_after_details', []),
+            detailed_data=detailed_data  # Directly use the parameter
         )
         server_details = details_server_template.render(
             unique_servers=template_vars.get('unique_servers', []),
@@ -951,4 +1014,4 @@ def generate_html_report(result_dir):
             logging.error(f"Failed to save report {name}: {e}")
 
 # Generate HTML report
-generate_html_report(RESULT_DIR)
+generate_html_report(RESULT_DIR, solution_dirs=solution_dirs, detailed_data=detailed_data)
