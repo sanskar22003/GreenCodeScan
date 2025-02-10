@@ -11,6 +11,7 @@ from tqdm import tqdm
 import csv
 from collections import defaultdict
 from datetime import datetime
+import openpyxl
 
 # Configure logging
 logging.basicConfig(
@@ -88,7 +89,7 @@ class MetricsHandler:
     @staticmethod
     def update_final_overview(metrics_tracker, project_path: Path):
         """Update the final overview CSV with fresh and historical data."""
-        result_dir = project_path / 'Result'
+        result_dir = project_path / 'Result'  # Use the provided project_path
         result_dir.mkdir(parents=True, exist_ok=True)
         csv_path = result_dir / 'final_overview.csv'
         
@@ -780,10 +781,10 @@ class CodeRefiner:
             self.track_test_files()
 
             # Update final overview
-            self.metrics_tracker.update_final_overview()
+            # self.metrics_tracker.update_final_overview()
             
             # Update final overview
-            # MetricsHandler.update_final_overview(self.metrics_tracker, self.project_path)
+            MetricsHandler.update_final_overview(self.metrics_tracker, self.project_path)
             
             logging.info("Test case generation completed successfully")
             print("\nCode refinement and test generation process completed!")
