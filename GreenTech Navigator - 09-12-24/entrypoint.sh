@@ -108,6 +108,9 @@ info "Detected AZURE_MODEL: ${AZURE_MODEL}"
 # Run server_emissions.py first
 run_python_script "server_emissions.py"
 
+# Run Multiple server python file (optional)
+# run_python_script "mul_server_metrices.py"
+
 # Conditionally run the appropriate refiner script
 case "${AZURE_MODEL,,}" in  # Convert to lowercase for comparison
     "gpt4o" | "gpt-4o-mini")
