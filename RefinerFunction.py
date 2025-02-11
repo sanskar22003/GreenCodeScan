@@ -374,7 +374,7 @@ def create_unit_test_files(client, assistant, file_list, test_file_directory):
             # -----------------modefied code-----------------
 
         # Get the relative path of the file from the source directory
-        relative_path = os.path.relpath(file_path, BASE_DIR)       #added
+        relative_path = os.path.relpath(file_path, source_directory)       #added
             
         # test_file_name = f"{base_name}Test{ext}"
         # test_file_path = os.path.join(test_file_directory, test_file_name)
