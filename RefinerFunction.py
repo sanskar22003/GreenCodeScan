@@ -101,12 +101,14 @@ def load_prompts_from_env():
     prompts = []
     for key in os.environ:
         if key.startswith("PROMPT_"):
-            # Split the prompt and its flag
-            prompt_data = os.getenv(key).split(", ")
-            if len(prompt_data) == 2 and prompt_data[1].lower() == "y":
-                prompts.append(prompt_data[0])
+            prompt_value = os.getenv(key)
+            # Check if the prompt ends with ", y" or ", Y"
+            if prompt_value.strip().lower().endswith(", y"):
+                # Extract the prompt text (remove ", y" from the end)
+                prompt_text = prompt_value.rsplit(",", 1)[0].strip()
+                prompts.append(prompt_text)
             else:
-                logging.warning(f"Skipping prompt '{key}' as per .env configuration.")
+                logging.warning(f"Skipping prompt '{key}' as it does not end with ', y'.")
     return prompts
 
 # Define base directories
@@ -402,7 +404,7 @@ NEXT_STEPS_END
         try:
             with open(file_path, "rb") as file:
                 uploaded_file = client.files.create(file=file, purpose='assistants')
-            logging.info(f"File uploaded for unit test creation: {file_name}")
+                logging.info(f"File uploaded for unit test creation: {file_name}")
 
             thread = client.beta.threads.create(
                 messages=[{"role": "user", "content": prompt_testcase, "file_ids": [uploaded_file.id]}]
