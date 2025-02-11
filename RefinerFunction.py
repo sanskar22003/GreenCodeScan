@@ -102,14 +102,14 @@ def load_prompts_from_env():
     for key in os.environ:
         if key.startswith("PROMPT_"):
             prompt_value = os.getenv(key)
-            # Check if the prompt ends with ", y" or ", Y"
-            if prompt_value.strip().lower().endswith(", y"):
-                # Extract the prompt text (remove ", y" from the end)
-                prompt_text = prompt_value.rsplit(",", 1)[0].strip()
-                prompts.append(prompt_text)
+            # Split into two parts at the last comma, then strip whitespace
+            parts = [part.strip() for part in prompt_value.rsplit(',', 1)]
+            if len(parts) == 2 and parts[1].lower() == 'y':
+                prompts.append(parts[0])
             else:
-                logging.warning(f"Skipping prompt '{key}' as it does not end with ', y'.")
+                logging.warning(f"Skipping prompt '{key}' due to incorrect format or 'y' flag missing.")
     return prompts
+
 
 # Define base directories
 env_path = os.path.abspath(".env")
