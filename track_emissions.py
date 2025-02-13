@@ -373,7 +373,6 @@ process_folder(
 )
 logging.info("Emissions data processed successfully.")
 
-# Compare emissions logic
 def compare_emissions():
     # Load environment variables again (if needed)
     load_dotenv(dotenv_path=env_path, verbose=True, override=True)
@@ -434,7 +433,7 @@ def compare_emissions():
     # Format float columns to display with fixed decimal places
     float_columns = ["Before", "After", "Final Emission"]
     for col in float_columns:
-        result_df[col] = result_df[col].apply(lambda x: '{:.10f}'.format(x))
+        result_df[col] = result_df[col].apply(lambda x: '{:.6f}'.format(x))
 
     # Create 'Result' folder if it doesn't exist
     if not os.path.exists(RESULT_DIR):
