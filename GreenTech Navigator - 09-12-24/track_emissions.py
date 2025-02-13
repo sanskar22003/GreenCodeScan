@@ -301,7 +301,6 @@ process_folder(
 
 logging.info("Emissions tracking completed successfully.")
 
-# Compare emissions logic
 def compare_emissions():
     # Load environment variables again (if needed)
     load_dotenv(dotenv_path=env_path, verbose=True, override=True)
@@ -318,7 +317,7 @@ def compare_emissions():
         logging.info(f"Refined emissions data file not found: {result_green_refined_dir}")
         return
 
-    # Read CSV files
+    # Read CSV files with float_precision option
     emissions_df = pd.read_csv(result_source_dir)
     emissions_after_df = pd.read_csv(result_green_refined_dir)
 
@@ -359,6 +358,11 @@ def compare_emissions():
         "Result"
     ]
 
+    # Format float columns to display with fixed decimal places
+    float_columns = ["Before", "After", "Final Emission"]
+    for col in float_columns:
+        result_df[col] = result_df[col].apply(lambda x: '{:.6f}'.format(x))
+
     # Create 'Result' folder if it doesn't exist
     if not os.path.exists(RESULT_DIR):
         os.makedirs(RESULT_DIR)
@@ -366,7 +370,7 @@ def compare_emissions():
     else:
         logging.info(f"Directory '{RESULT_DIR}' already exists.")
 
-    # Write to new CSV file
+    # Write to new CSV file with float_format parameter
     result_file_path = os.path.join(RESULT_DIR, "comparison_results.csv")
     result_df.to_csv(result_file_path, index=False)
 
