@@ -11,6 +11,14 @@ from openai import AzureOpenAI
 import ast
 import sys
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s: %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 # Load environment variables
@@ -106,12 +114,9 @@ prompts = load_prompts_from_env()
 metrics_tracker = MetricsTracker()
 processing_start_time = time.time()
 
-# Step 1: Create unit test files
+# Process each file sequentially through all steps
 file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
-create_unit_test_files(client, assistant, file_list, test_file_directory)
 
-# Step 2: Process and refine files
-file_list = list(identify_source_files(source_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
 for file_path in file_list:
     relative_path = os.path.relpath(file_path, source_directory)
     file_name = os.path.basename(file_path)
@@ -128,28 +133,28 @@ for file_path in file_list:
         continue
     
     try:
-        # Upload file
+        # Step 1: Create unit test for the source file
+        create_unit_test_files(client, assistant, [file_path], test_file_directory)
+        
+        # Step 2: Refine the file and move to GreenCode
         with open(file_path, "rb") as file:
             uploaded_file = client.files.create(file=file, purpose='assistants')
         
         refined_temp_file_path = os.path.join(temp_directory, file_name)
         ensure_directory_structure(os.path.dirname(refined_temp_file_path))
         
-        # Apply prompts
-        # refined_success = False
+        refined_success = False
+        for prompt in prompts:
+            if apply_green_prompts(client, assistant, uploaded_file.id, prompt, refined_temp_file_path):
+                refined_success = True
+                logging.info(f"Successfully applied prompt: '{prompt}' to {file_name}")
+            else:
+                logging.warning(f"Failed to apply prompt: '{prompt}' to {file_name}")
         
-        # Apply green prompts - now just calling once since prompt is handled internally
-        refined_success = apply_green_prompts(client, assistant, uploaded_file.id, refined_temp_file_path)
-        
-        if refined_success:
-            logging.info(f"Successfully applied green prompts to {file_name}")
-        else:
-            logging.warning(f"Failed to apply green prompts to {file_name}")
-            # Copy original file as fallback
+        if not refined_success:
             shutil.copy2(file_path, refined_temp_file_path)
             logging.warning(f"Using original file as fallback for: {file_name}")
         
-        # Move file to final location
         final_file_path = os.path.join(green_code_directory, relative_path)
         ensure_directory_structure(os.path.dirname(final_file_path))
         
@@ -160,18 +165,16 @@ for file_path in file_list:
             logging.error(f"Temp file not found: {refined_temp_file_path}")
             shutil.copy2(file_path, final_file_path)
             logging.warning(f"Copied original file as fallback to: {final_file_path}")
-            
+        
+        # Step 3: Create unit test for the refined file
+        create_unit_test_files(client, assistant, [final_file_path], green_test_file_directory)
+        
     except Exception as e:
         logging.error(f"Error processing file {file_name}: {e}")
-        # Copy original file as fallback
         final_file_path = os.path.join(green_code_directory, relative_path)
         ensure_directory_structure(os.path.dirname(final_file_path))
         shutil.copy2(file_path, final_file_path)
         logging.warning(f"Copied original file as fallback due to error: {final_file_path}")
-
-# Step 3: Create test cases for refined files
-green_file_list = list(identify_source_files(green_code_directory, FILE_EXTENSIONS, EXCLUDED_FILES))
-create_unit_test_files(client, assistant, green_file_list, green_test_file_directory)
 
 # Generate final overview after all processing is complete
 finalize_processing()
