@@ -17,6 +17,11 @@ import plotly.graph_objs as go
 import logging
 import sys
 from plotly.subplots import make_subplots
+# Handle Future warnings
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning, module="codecarbon")
+# Handle the nvml error 
+from pynvml import nvmlInit, nvmlShutdown, NVMLError
 
 # Base Directory and Environment Configuration
 BASE_DIR = '/app/project'
@@ -129,6 +134,7 @@ def process_emissions_for_file(tracker, script_path, emissions_csv, file_type, r
     is_green_refined = os.path.commonpath([script_path, GREEN_REFINED_DIRECTORY]) == GREEN_REFINED_DIRECTORY
 
     try:
+        nvmlInit()  # Initialize NVML
         with EmissionsTracker() as tracker:
             start_time = time.time()
             test_result = subprocess.run(test_command, capture_output=True, text=True, timeout=20)
@@ -136,9 +142,14 @@ def process_emissions_for_file(tracker, script_path, emissions_csv, file_type, r
             test_output = 'Pass' if test_result.returncode == 0 else 'Fail'
     except subprocess.TimeoutExpired:
         test_output = 'Timeout'
+    except NVMLError as nvml_error:
+        logging.error(f"NVML error: {nvml_error}")
+        test_output = 'NVML Error'
     except Exception as e:
         logging.error(f"Error processing {script_name}: {e}")
         test_output = 'Error'
+    finally:
+        nvmlShutdown()  # Shutdown NVML
 
     emissions_csv_target = os.path.join(result_dir, 'emissions.csv')
     if os.path.exists('emissions.csv'):
